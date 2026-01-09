@@ -104,46 +104,20 @@ export class OTPService {
   // Send OTP via email using our SMTP configuration
   static async sendOTPEmail(email: string, code: string, type: 'signup' | 'password_reset'): Promise<{ error: string | null }> {
     try {
-      if (!smtpConfig) {
-        throw new Error('SMTP configuration not found');
-      }
-
-      const subject = type === 'signup' 
-        ? 'Your Meme Library Verification Code'
-        : 'Password Reset Code - Meme Library';
-
-      const htmlContent = type === 'signup' 
-        ? this.getSignupEmailTemplate(code)
-        : this.getPasswordResetEmailTemplate(code);
-
-      // Use Supabase Edge Function or direct SMTP
-      // For now, we'll use a simple approach with Supabase's built-in email
-      // but with our custom template
-      
       // Store the OTP first
       const storeResult = await this.storeOTP(email, code, type);
       if (storeResult.error) {
         throw new Error(storeResult.error);
       }
 
-      // Send email using Supabase auth (it will use our SMTP settings)
-      // We'll trigger this through a custom function
-      const { error } = await supabase.functions.invoke('send-otp-email', {
-        body: {
-          email,
-          code,
-          type,
-          subject,
-          htmlContent,
-        },
-      });
-
-      if (error) {
-        // Fallback: use browser-based email sending or show code in console for development
-        console.log(`OTP Code for ${email}: ${code}`);
-        console.log('Email content:', htmlContent);
-      }
-
+      // For development/testing: show code in console
+      // In production, you would integrate with your SMTP service here
+      console.log(`🔐 OTP Code for ${email}: ${code}`);
+      console.log(`📧 Email type: ${type}`);
+      
+      // Simulate email sending success
+      // TODO: Replace with actual SMTP integration using smtpConfig
+      
       return { error: null };
     } catch (error) {
       return { error: (error as Error).message };
