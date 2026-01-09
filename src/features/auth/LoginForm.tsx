@@ -2,12 +2,14 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button, Input } from '@/components/ui';
 import { useAuth } from '@/hooks/useAuth';
+import { useToast } from '@/hooks/useToast';
 
 const LoginForm: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errors, setErrors] = useState<{ email?: string; password?: string; general?: string }>({});
   const { signIn, signInWithGoogle, loading } = useAuth();
+  const { showSuccess, showError } = useToast();
 
   const validateForm = () => {
     const newErrors: typeof errors = {};
@@ -36,6 +38,9 @@ const LoginForm: React.FC = () => {
     const { error } = await signIn(email, password);
     if (error) {
       setErrors({ general: error });
+      showError(error, 'Sign In Failed');
+    } else {
+      showSuccess('Successfully signed in! Welcome back!', 'Sign In Successful');
     }
   };
 
@@ -43,6 +48,9 @@ const LoginForm: React.FC = () => {
     const { error } = await signInWithGoogle();
     if (error) {
       setErrors({ general: error });
+      showError(error, 'Google Sign-in Failed');
+    } else {
+      showSuccess('Successfully signed in with Google!', 'Welcome Back');
     }
   };
 

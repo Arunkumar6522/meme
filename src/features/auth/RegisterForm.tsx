@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button, Input } from '@/components/ui';
 import { useAuth } from '@/hooks/useAuth';
+import { useToast } from '@/hooks/useToast';
 
 const RegisterForm: React.FC = () => {
   const [formData, setFormData] = useState({
@@ -18,6 +19,7 @@ const RegisterForm: React.FC = () => {
     general?: string;
   }>({});
   const { signUp, signInWithGoogle, loading } = useAuth();
+  const { showSuccess, showError } = useToast();
 
   const validateForm = () => {
     const newErrors: typeof errors = {};
@@ -56,6 +58,16 @@ const RegisterForm: React.FC = () => {
     const { error } = await signUp(formData.email, formData.password, formData.fullName);
     if (error) {
       setErrors({ general: error });
+      showError(error, 'Registration Failed');
+    } else {
+      showSuccess('Account created successfully! Welcome to Meme Library!', 'Registration Successful');
+      // Clear form
+      setFormData({
+        fullName: '',
+        email: '',
+        password: '',
+        confirmPassword: '',
+      });
     }
   };
 
@@ -63,6 +75,9 @@ const RegisterForm: React.FC = () => {
     const { error } = await signInWithGoogle();
     if (error) {
       setErrors({ general: error });
+      showError(error, 'Google Sign-in Failed');
+    } else {
+      showSuccess('Successfully signed in with Google!', 'Welcome Back');
     }
   };
 
