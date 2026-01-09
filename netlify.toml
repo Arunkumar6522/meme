@@ -5,12 +5,8 @@
   # Directory to publish (Vite outputs to 'dist')
   publish = "dist"
   
-  # Node.js version
-  environment = { NODE_VERSION = "18" }
-
-[build.environment]
-  # Build-time environment variables
-  NODE_ENV = "production"
+  # Node.js version and environment variables
+  environment = { NODE_VERSION = "18", NODE_ENV = "production" }
 
 # Redirect rules for SPA (Single Page Application)
 [[redirects]]
