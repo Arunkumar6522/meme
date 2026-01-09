@@ -43,81 +43,32 @@ export class DatabaseService {
     }
   }
 
-  // Create tables using Supabase SQL execution
+  // Create tables by attempting to insert/select - simpler approach
   private static async createTables(): Promise<void> {
-    const createTablesSQL = `
-      -- Enable necessary extensions
-      CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+    try {
+      // Just try to query the tables - if they don't exist, user needs to create them manually
+      console.log('Checking if database tables exist...');
+      
+      // Try to access users table
+      const { error: usersError } = await supabase
+        .from('users')
+        .select('id')
+        .limit(1);
 
-      -- Create custom types
-      DO $$ BEGIN
-        CREATE TYPE emotion_type AS ENUM (
-          'happy', 'sad', 'funny', 'thug', 'angry', 
-          'surprised', 'confused', 'excited', 'dramatic', 'sarcastic'
-        );
-      EXCEPTION
-        WHEN duplicate_object THEN null;
-      END $$;
+      // Try to access library_items table  
+      const { error: itemsError } = await supabase
+        .from('library_items')
+        .select('id')
+        .limit(1);
 
-      DO $$ BEGIN
-        CREATE TYPE media_type AS ENUM ('audio', 'video');
-      EXCEPTION
-        WHEN duplicate_object THEN null;
-      END $$;
-
-      DO $$ BEGIN
-        CREATE TYPE user_role AS ENUM ('user', 'admin');
-      EXCEPTION
-        WHEN duplicate_object THEN null;
-      END $$;
-
-      -- Users table (extends Supabase auth.users)
-      CREATE TABLE IF NOT EXISTS public.users (
-        id UUID REFERENCES auth.users(id) ON DELETE CASCADE PRIMARY KEY,
-        email TEXT UNIQUE NOT NULL,
-        full_name TEXT,
-        avatar_url TEXT,
-        role user_role DEFAULT 'user' NOT NULL,
-        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
-        updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
-      );
-
-      -- Library items table
-      CREATE TABLE IF NOT EXISTS public.library_items (
-        id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
-        title TEXT NOT NULL,
-        description TEXT,
-        keywords TEXT[] DEFAULT '{}',
-        emotion emotion_type NOT NULL,
-        media_type media_type NOT NULL,
-        file_url TEXT NOT NULL,
-        thumbnail_url TEXT,
-        duration INTEGER,
-        file_size BIGINT,
-        is_published BOOLEAN DEFAULT false NOT NULL,
-        download_count INTEGER DEFAULT 0 NOT NULL,
-        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
-        updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
-        created_by UUID REFERENCES public.users(id) ON DELETE CASCADE NOT NULL
-      );
-
-      -- Create indexes
-      CREATE INDEX IF NOT EXISTS idx_library_items_published ON public.library_items(is_published);
-      CREATE INDEX IF NOT EXISTS idx_library_items_emotion ON public.library_items(emotion);
-      CREATE INDEX IF NOT EXISTS idx_library_items_media_type ON public.library_items(media_type);
-      CREATE INDEX IF NOT EXISTS idx_library_items_download_count ON public.library_items(download_count DESC);
-      CREATE INDEX IF NOT EXISTS idx_library_items_created_at ON public.library_items(created_at DESC);
-      CREATE INDEX IF NOT EXISTS idx_library_items_keywords ON public.library_items USING GIN(keywords);
-
-      -- Full text search index
-      CREATE INDEX IF NOT EXISTS idx_library_items_search ON public.library_items 
-      USING GIN(to_tsvector('english', title || ' ' || COALESCE(description, '')));
-    `;
-
-    const { error } = await supabase.rpc('exec_sql', { sql: createTablesSQL });
-    if (error) {
-      console.error('Error creating tables:', error);
-      throw error;
+      if (usersError || itemsError) {
+        console.warn('Database tables not found. Please run the setup SQL in Supabase dashboard.');
+        console.warn('Check SUPABASE_SETUP.md for instructions.');
+      } else {
+        console.log('Database tables found and accessible.');
+      }
+    } catch (error) {
+      console.warn('Database check failed:', error);
     }
   }
 

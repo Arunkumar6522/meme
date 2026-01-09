@@ -1,20 +1,34 @@
 import React, { useEffect } from 'react';
 import AppProviders from '@/app/providers/AppProviders';
 import AppRoutes from '@/app/routes/AppRoutes';
+import DatabaseSetupNotice from '@/components/DatabaseSetupNotice';
+import { DatabaseService } from '@/services/database.service';
 import { validateConfig, isDevelopment } from '@/config';
 import '@/styles/globals.css';
 
 function App() {
   useEffect(() => {
-    // Validate configuration
-    if (!validateConfig()) {
-      console.error('Invalid configuration. Please check your environment variables.');
-      return;
-    }
+    // Initialize application
+    const initializeApp = async () => {
+      try {
+        // Validate configuration
+        if (!validateConfig()) {
+          console.error('Invalid configuration. Please check your environment variables.');
+          return;
+        }
 
-    if (isDevelopment) {
-      console.log('Application initialized successfully');
-    }
+        // Check database tables (and show helpful messages if missing)
+        await DatabaseService.initializeDatabase();
+
+        if (isDevelopment) {
+          console.log('Application initialized successfully');
+        }
+      } catch (error) {
+        console.error('Application initialization failed:', error);
+      }
+    };
+
+    initializeApp();
   }, []);
 
   return (
@@ -26,6 +40,9 @@ function App() {
       >
         Skip to main content
       </a>
+      
+      {/* Database setup notice */}
+      <DatabaseSetupNotice />
       
       <div id="main-content">
         <AppRoutes />
