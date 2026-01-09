@@ -7,6 +7,7 @@ import ProtectedRoute from './ProtectedRoute';
 // Lazy load components for code splitting
 const LandingPage = React.lazy(() => import('./public/LandingPage'));
 const AuthPage = React.lazy(() => import('./public/AuthPage'));
+const AuthCallbackPage = React.lazy(() => import('./public/AuthCallbackPage'));
 const HomePage = React.lazy(() => import('./protected/HomePage'));
 const LibraryPage = React.lazy(() => import('./protected/LibraryPage'));
 
@@ -30,6 +31,7 @@ const AppRoutes: React.FC = () => {
         <Route path="/" element={<AppLayout />}>
           <Route index element={<LandingPage />} />
           <Route path="auth/:type" element={<AuthPage />} />
+          <Route path="auth/callback" element={<AuthCallbackPage />} />
           
           {/* Protected Routes */}
           <Route path="home" element={
