@@ -3,38 +3,9 @@ import { supabase } from '@/services/supabase';
 import { Button } from '@/components/ui';
 
 const DatabaseSetupNotice: React.FC = () => {
-  const [showNotice, setShowNotice] = useState(false);
-  const [checking, setChecking] = useState(true);
-
-  useEffect(() => {
-    const checkTables = async () => {
-      try {
-        // Try to access the tables
-        const { error: usersError } = await supabase
-          .from('users')
-          .select('id')
-          .limit(1);
-
-        const { error: itemsError } = await supabase
-          .from('library_items')
-          .select('id')
-          .limit(1);
-
-        // If either table doesn't exist, show setup notice
-        if (usersError || itemsError) {
-          setShowNotice(true);
-        }
-      } catch (error) {
-        setShowNotice(true);
-      } finally {
-        setChecking(false);
-      }
-    };
-
-    checkTables();
-  }, []);
-
-  if (checking || !showNotice) return null;
+  // Tables are assumed to exist, so never show this notice
+  // This prevents 401 errors from RLS policies during table checks
+  return null;
 
   return (
     <div className="fixed top-0 left-0 right-0 bg-yellow-50 border-b border-yellow-200 p-4 z-50">
