@@ -193,7 +193,7 @@ export class TableCreatorService {
   // Check if tables exist
   static async checkTablesExist(): Promise<boolean> {
     try {
-      // Try to query both tables
+      // Try to query both tables - even if RLS blocks data, table exists if no PGRST116 error
       const { error: usersError } = await supabase
         .from('users')
         .select('id')
@@ -204,9 +204,15 @@ export class TableCreatorService {
         .select('id')
         .limit(1);
 
-      // If no errors, tables exist
-      return !usersError && !itemsError;
+      // Tables exist if errors are NOT "relation does not exist" (PGRST116)
+      const usersExist = !usersError || (usersError.code !== 'PGRST116' && !usersError.message.includes('relation') && !usersError.message.includes('does not exist'));
+      const itemsExist = !itemsError || (itemsError.code !== 'PGRST116' && !itemsError.message.includes('relation') && !itemsError.message.includes('does not exist'));
+
+      console.log('Table check results:', { usersExist, itemsExist, usersError, itemsError });
+      
+      return usersExist && itemsExist;
     } catch (error) {
+      console.error('Error checking tables:', error);
       return false;
     }
   }
