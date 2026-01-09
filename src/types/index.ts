@@ -1,0 +1,107 @@
+// Database Types
+export interface User {
+  id: string;
+  email: string;
+  full_name?: string;
+  avatar_url?: string;
+  role: 'user' | 'admin';
+  created_at: string;
+  updated_at: string;
+}
+
+export interface LibraryItem {
+  id: string;
+  title: string;
+  description?: string;
+  keywords: string[];
+  emotion: EmotionType;
+  media_type: 'audio' | 'video';
+  file_url: string;
+  thumbnail_url?: string;
+  duration?: number;
+  file_size?: number;
+  is_published: boolean;
+  download_count: number;
+  created_at: string;
+  updated_at: string;
+  created_by: string;
+}
+
+// Emotion categories for filtering
+export type EmotionType = 
+  | 'happy'
+  | 'sad' 
+  | 'funny'
+  | 'thug'
+  | 'angry'
+  | 'surprised'
+  | 'confused'
+  | 'excited'
+  | 'dramatic'
+  | 'sarcastic';
+
+// Filter and Sort Types
+export interface LibraryFilters {
+  search?: string;
+  emotion?: EmotionType;
+  media_type?: 'audio' | 'video';
+  sort_by?: 'trending' | 'latest' | 'title';
+}
+
+// Auth Types
+export interface AuthUser {
+  id: string;
+  email: string;
+  user_metadata: {
+    full_name?: string;
+    avatar_url?: string;
+  };
+}
+
+export interface AuthState {
+  user: AuthUser | null;
+  loading: boolean;
+  error: string | null;
+}
+
+// Component Props Types
+export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  variant?: 'primary' | 'secondary' | 'outline' | 'ghost';
+  size?: 'sm' | 'md' | 'lg';
+  loading?: boolean;
+  children: React.ReactNode;
+}
+
+export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+  label?: string;
+  error?: string;
+  helperText?: string;
+}
+
+export interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
+  label?: string;
+  error?: string;
+  options: Array<{ value: string; label: string }>;
+}
+
+// API Response Types
+export interface ApiResponse<T> {
+  data: T | null;
+  error: string | null;
+  loading: boolean;
+}
+
+export interface PaginatedResponse<T> {
+  data: T[];
+  count: number;
+  page: number;
+  per_page: number;
+  total_pages: number;
+}
+
+// Upload Types
+export interface UploadProgress {
+  progress: number;
+  status: 'idle' | 'uploading' | 'success' | 'error';
+  error?: string;
+}

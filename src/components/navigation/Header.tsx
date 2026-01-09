@@ -1,0 +1,207 @@
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Menu, X, User, LogOut, Settings } from 'lucide-react';
+import { Button } from '@/components/ui';
+import { useAuth } from '@/hooks/useAuth';
+import { cn } from '@/utils/cn';
+
+const Header: React.FC = () => {
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/');
+  };
+
+  const navigation = [
+    { name: 'Home', href: '/' },
+    { name: 'Library', href: '/library' },
+    { name: 'Create', href: '/create' },
+  ];
+
+  const userNavigation = [
+    { name: 'Profile', href: '/profile', icon: User },
+    { name: 'Settings', href: '/settings', icon: Settings },
+  ];
+
+  return (
+    <header className="bg-white shadow-sm border-b border-gray-200">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="flex h-16 justify-between items-center">
+          {/* Logo */}
+          <div className="flex items-center">
+            <Link
+              to="/"
+              className="flex items-center space-x-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 rounded"
+            >
+              <div className="h-8 w-8 bg-primary-600 rounded-lg flex items-center justify-center">
+                <span className="text-white font-bold text-lg">M</span>
+              </div>
+              <span className="text-xl font-bold text-gray-900">Meme Library</span>
+            </Link>
+          </div>
+
+          {/* Desktop Navigation */}
+          <nav className="hidden md:flex space-x-8" aria-label="Main navigation">
+            {navigation.map((item) => (
+              <Link
+                key={item.name}
+                to={item.href}
+                className="text-gray-600 hover:text-gray-900 px-3 py-2 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 rounded"
+              >
+                {item.name}
+              </Link>
+            ))}
+          </nav>
+
+          {/* User Menu / Auth Buttons */}
+          <div className="flex items-center space-x-4">
+            {user ? (
+              <div className="relative">
+                <button
+                  onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                  className="flex items-center space-x-2 text-sm bg-white rounded-full focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 p-1"
+                  aria-expanded={isUserMenuOpen}
+                  aria-haspopup="true"
+                  aria-label="User menu"
+                >
+                  <div className="h-8 w-8 bg-primary-100 rounded-full flex items-center justify-center">
+                    {user.user_metadata?.avatar_url ? (
+                      <img
+                        src={user.user_metadata.avatar_url}
+                        alt="Profile"
+                        className="h-8 w-8 rounded-full"
+                      />
+                    ) : (
+                      <User className="h-4 w-4 text-primary-600" aria-hidden="true" />
+                    )}
+                  </div>
+                  <span className="hidden md:block text-gray-700">
+                    {user.user_metadata?.full_name || user.email}
+                  </span>
+                </button>
+
+                {/* User Dropdown */}
+                {isUserMenuOpen && (
+                  <div className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                    {userNavigation.map((item) => (
+                      <Link
+                        key={item.name}
+                        to={item.href}
+                        className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 focus:outline-none focus:bg-gray-100"
+                        onClick={() => setIsUserMenuOpen(false)}
+                      >
+                        <item.icon className="h-4 w-4 mr-3" aria-hidden="true" />
+                        {item.name}
+                      </Link>
+                    ))}
+                    <button
+                      onClick={handleSignOut}
+                      className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 focus:outline-none focus:bg-gray-100"
+                    >
+                      <LogOut className="h-4 w-4 mr-3" aria-hidden="true" />
+                      Sign Out
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => navigate('/auth/login')}
+                >
+                  Sign In
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={() => navigate('/auth/register')}
+                >
+                  Sign Up
+                </Button>
+              </div>
+            )}
+
+            {/* Mobile menu button */}
+            <button
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="md:hidden inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+              aria-expanded={isMobileMenuOpen}
+              aria-label="Toggle mobile menu"
+            >
+              {isMobileMenuOpen ? (
+                <X className="h-6 w-6" aria-hidden="true" />
+              ) : (
+                <Menu className="h-6 w-6" aria-hidden="true" />
+              )}
+            </button>
+          </div>
+        </div>
+
+        {/* Mobile Navigation */}
+        {isMobileMenuOpen && (
+          <div className="md:hidden border-t border-gray-200 py-4">
+            <nav className="space-y-1" aria-label="Mobile navigation">
+              {navigation.map((item) => (
+                <Link
+                  key={item.name}
+                  to={item.href}
+                  className="block px-3 py-2 text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  {item.name}
+                </Link>
+              ))}
+              
+              {user && (
+                <>
+                  <div className="border-t border-gray-200 pt-4 mt-4">
+                    {userNavigation.map((item) => (
+                      <Link
+                        key={item.name}
+                        to={item.href}
+                        className="flex items-center px-3 py-2 text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                      >
+                        <item.icon className="h-5 w-5 mr-3" aria-hidden="true" />
+                        {item.name}
+                      </Link>
+                    ))}
+                    <button
+                      onClick={() => {
+                        handleSignOut();
+                        setIsMobileMenuOpen(false);
+                      }}
+                      className="flex items-center w-full px-3 py-2 text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+                    >
+                      <LogOut className="h-5 w-5 mr-3" aria-hidden="true" />
+                      Sign Out
+                    </button>
+                  </div>
+                </>
+              )}
+            </nav>
+          </div>
+        )}
+      </div>
+
+      {/* Click outside to close dropdowns */}
+      {(isUserMenuOpen || isMobileMenuOpen) && (
+        <div
+          className="fixed inset-0 z-0"
+          onClick={() => {
+            setIsUserMenuOpen(false);
+            setIsMobileMenuOpen(false);
+          }}
+          aria-hidden="true"
+        />
+      )}
+    </header>
+  );
+};
+
+export default Header;
