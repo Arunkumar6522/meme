@@ -7,10 +7,10 @@ Add these **4 environment variables** in your Netlify dashboard:
 ### Required Variables:
 
 ```env
-VITE_SUPABASE_URL=https://gqmyazrdbhoilhorhond.supabase.co
-VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdxbXlhenJkYmhvaWxob3Job25kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzc3MzI4NjMsImV4cCI6MjA1MzMwODg2M30.SwVEwV9w51ertiH5G4ZvkA_jxwzclJY
+VITE_SUPABASE_URL=https://csajwbsedfaegygaeooy.supabase.co
+VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNzYWp3YnNlZGZhZWd5Z2Flb295Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc5NTc3NjksImV4cCI6MjA4MzUzMzc2OX0.Hw69uftUhcF2E49crp-KLWh_URAQC-RX0L7PCQoZdCo
 NODE_ENV=production
-SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdxbXlhenJkYmhvaWxob3Job25kIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2Nzk1MzA5NCwiZXhwIjoyMDgzNTI5MDk0fQ.qB8tDAU1a2-kj9HoYgt9SavQq7ZHERAKEILVWvLiW9Q
+SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNzYWp3YnNlZGZhZWd5Z2Flb295Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2Nzk1Nzc2OSwiZXhwIjoyMDgzNTMzNzY5fQ.o3aIHMelGC6wNdVYoXTp4JjC4uERfd0Nnhp0UO6X9Uo
 ```
 
 ### Optional Variables:
@@ -28,11 +28,11 @@ VITE_ENABLE_ANALYTICS=false
 
 **Variable 1:**
 - Name: `VITE_SUPABASE_URL`
-- Value: `https://gqmyazrdbhoilhorhond.supabase.co`
+- Value: `https://csajwbsedfaegygaeooy.supabase.co`
 
 **Variable 2:**
 - Name: `VITE_SUPABASE_ANON_KEY`  
-- Value: `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdxbXlhenJkYmhvaWxob3Job25kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzc3MzI4NjMsImV4cCI6MjA1MzMwODg2M30.SwVEwV9w51ertiH5G4ZvkA_jxwzclJY`
+- Value: `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNzYWp3YnNlZGZhZWd5Z2Flb295Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc5NTc3NjksImV4cCI6MjA4MzUzMzc2OX0.Hw69uftUhcF2E49crp-KLWh_URAQC-RX0L7PCQoZdCo`
 
 **Variable 3:**
 - Name: `NODE_ENV`
@@ -40,7 +40,7 @@ VITE_ENABLE_ANALYTICS=false
 
 **Variable 4:** ⚠️ **IMPORTANT - This creates the database tables!**
 - Name: `SUPABASE_SERVICE_ROLE_KEY`
-- Value: `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdxbXlhenJkYmhvaWxob3Job25kIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2Nzk1MzA5NCwiZXhwIjoyMDgzNTI5MDk0fQ.qB8tDAU1a2-kj9HoYgt9SavQq7ZHERAKEILVWvLiW9Q`
+- Value: `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNzYWp3YnNlZGZhZWd5Z2Flb295Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2Nzk1Nzc2OSwiZXhwIjoyMDgzNTMzNzY5fQ.o3aIHMelGC6wNdVYoXTp4JjC4uERfd0Nnhp0UO6X9Uo`
 
 ## What Each Key Does:
 
