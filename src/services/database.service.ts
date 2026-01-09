@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { TableCreatorService } from './table-creator.service';
 import type { EmotionType } from '@/types';
 
 // Database schema definitions - code-level table creation
@@ -6,71 +7,37 @@ export class DatabaseService {
   // Check if tables exist and create them if they don't
   static async initializeDatabase(): Promise<boolean> {
     try {
-      console.log('Initializing database...');
+      console.log('🔄 Initializing database...');
       
       // Check if tables exist
-      const tablesExist = await this.checkTablesExist();
+      const tablesExist = await TableCreatorService.checkTablesExist();
       
       if (!tablesExist) {
-        console.log('Tables do not exist, creating...');
-        await this.createTables();
-        await this.createStorageBuckets();
-        await this.setupRLS();
-        console.log('Database initialized successfully');
+        console.log('📋 Tables do not exist, creating...');
+        const created = await TableCreatorService.createAllTables();
+        
+        if (created) {
+          console.log('✅ Database initialized successfully!');
+          return true;
+        } else {
+          console.log('⚠️ Automatic table creation failed - manual setup required');
+          return false;
+        }
       } else {
-        console.log('Database already initialized');
+        console.log('✅ Database already initialized');
+        return true;
       }
-      
-      return true;
     } catch (error) {
-      console.error('Database initialization failed:', error);
+      console.error('❌ Database initialization failed:', error);
       return false;
     }
   }
 
-  // Check if required tables exist
+  // Check if required tables exist (delegated to TableCreatorService)
   private static async checkTablesExist(): Promise<boolean> {
-    try {
-      const { data, error } = await supabase
-        .from('library_items')
-        .select('id')
-        .limit(1);
-      
-      // If no error, table exists
-      return !error;
-    } catch {
-      return false;
-    }
+    return await TableCreatorService.checkTablesExist();
   }
 
-  // Create tables by attempting to insert/select - simpler approach
-  private static async createTables(): Promise<void> {
-    try {
-      // Just try to query the tables - if they don't exist, user needs to create them manually
-      console.log('Checking if database tables exist...');
-      
-      // Try to access users table
-      const { error: usersError } = await supabase
-        .from('users')
-        .select('id')
-        .limit(1);
-
-      // Try to access library_items table  
-      const { error: itemsError } = await supabase
-        .from('library_items')
-        .select('id')
-        .limit(1);
-
-      if (usersError || itemsError) {
-        console.warn('Database tables not found. Please run the setup SQL in Supabase dashboard.');
-        console.warn('Check SUPABASE_SETUP.md for instructions.');
-      } else {
-        console.log('Database tables found and accessible.');
-      }
-    } catch (error) {
-      console.warn('Database check failed:', error);
-    }
-  }
 
   // Create storage buckets
   private static async createStorageBuckets(): Promise<void> {
