@@ -61,7 +61,7 @@ export const config: AppConfig = {
   } : undefined,
   app: {
     name: getEnvVar('VITE_APP_NAME', 'Meme Library') || 'Meme Library',
-    version: getEnvVar('VITE_APP_VERSION', '1.0.0') || '1.0.0',
+    version: getEnvVar('VITE_APP_VERSION', '1.1.0') || '1.1.0',
     environment: (getEnvVar('NODE_ENV', 'development') as any) || 'development',
   },
   features: {
