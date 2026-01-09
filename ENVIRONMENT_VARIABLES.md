@@ -12,7 +12,11 @@ VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFz
 NODE_ENV=production
 SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNzYWp3YnNlZGZhZWd5Z2Flb295Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2Nzk1Nzc2OSwiZXhwIjoyMDgzNTMzNzY5fQ.o3aIHMelGC6wNdVYoXTp4JjC4uERfd0Nnhp0UO6X9Uo
 
-# Email Configuration (Optional - for custom branding)
+# SMTP Email Configuration (Secure)
+VITE_SMTP_HOST=smtp.gmail.com
+VITE_SMTP_PORT=587
+VITE_SMTP_USER=arunkumark1664@gmail.com
+VITE_SMTP_PASSWORD=lilf nlea gvrw joif
 VITE_SMTP_FROM_EMAIL=arunkumark1664@gmail.com
 VITE_SMTP_FROM_NAME=Meme Library
 ```
