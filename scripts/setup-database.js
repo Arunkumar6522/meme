@@ -3,7 +3,7 @@
 // Build-time database setup script
 // This runs during Netlify build with service role key
 
-const { createClient } = require('@supabase/supabase-js');
+import { createClient } from '@supabase/supabase-js';
 
 // Use service role key for admin operations during build
 const supabaseUrl = process.env.VITE_SUPABASE_URL;
