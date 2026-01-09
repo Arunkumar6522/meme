@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "npm run setup-db && vite build",
-    "setup-db": "node scripts/setup-database.js",
+    "setup-db": "node scripts/create-tables.js",
     "type-check": "tsc --noEmit",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview"

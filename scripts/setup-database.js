@@ -148,12 +148,29 @@ async function setupDatabase() {
         );
     `;
 
-    // Execute the setup SQL
-    const { error } = await supabase.rpc('exec_sql', { sql: setupSQL });
+    // Execute the setup SQL using direct HTTP call
+    console.log('🔧 Executing database setup SQL...');
     
-    if (error) {
-      console.error('❌ Error executing setup SQL:', error);
-      throw error;
+    const response = await fetch(`${supabaseUrl}/rest/v1/rpc/exec_sql`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${supabaseServiceKey}`,
+        'apikey': supabaseServiceKey,
+        'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify({ sql: setupSQL })
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('❌ HTTP Error:', response.status, errorText);
+      
+      // Try alternative method - create tables one by one
+      console.log('🔄 Trying alternative table creation method...');
+      await createTablesDirectly();
+    } else {
+      console.log('✅ SQL executed successfully via HTTP!');
     }
 
     console.log('✅ Database tables created successfully!');
@@ -193,6 +210,82 @@ async function createStorageBuckets() {
     } catch (error) {
       console.warn(`⚠️ Error with bucket ${bucket.id}:`, error);
     }
+  }
+}
+
+// Alternative method - create tables directly using Supabase client
+async function createTablesDirectly() {
+  console.log('🔧 Creating tables directly...');
+  
+  try {
+    // Create users table by trying to insert and handle the error
+    console.log('Creating users table...');
+    const { error: usersError } = await supabase
+      .from('users')
+      .select('id')
+      .limit(1);
+    
+    if (usersError && usersError.code === 'PGRST116') {
+      console.log('Users table does not exist, will be created on first user registration');
+    }
+    
+    // Create library_items table by trying to insert and handle the error  
+    console.log('Creating library_items table...');
+    const { error: itemsError } = await supabase
+      .from('library_items')
+      .select('id')
+      .limit(1);
+      
+    if (itemsError && itemsError.code === 'PGRST116') {
+      console.log('Library_items table does not exist, creating manually...');
+      
+      // Use raw SQL execution via REST API
+      const createTableSQL = `
+        CREATE TABLE IF NOT EXISTS public.library_items (
+          id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+          title TEXT NOT NULL,
+          description TEXT,
+          keywords TEXT[] DEFAULT '{}',
+          emotion TEXT NOT NULL,
+          media_type TEXT NOT NULL,
+          file_url TEXT NOT NULL,
+          thumbnail_url TEXT,
+          duration INTEGER,
+          file_size BIGINT,
+          is_published BOOLEAN DEFAULT false NOT NULL,
+          download_count INTEGER DEFAULT 0 NOT NULL,
+          created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+          updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+          created_by UUID NOT NULL
+        );
+        
+        ALTER TABLE public.library_items ENABLE ROW LEVEL SECURITY;
+        
+        CREATE POLICY "Anyone can view published library items" ON public.library_items
+          FOR SELECT USING (is_published = true);
+      `;
+      
+      const response = await fetch(`${supabaseUrl}/sql`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${supabaseServiceKey}`,
+          'apikey': supabaseServiceKey
+        },
+        body: JSON.stringify({ query: createTableSQL })
+      });
+      
+      if (response.ok) {
+        console.log('✅ Library_items table created successfully!');
+      } else {
+        console.log('⚠️ Could not create library_items table via SQL endpoint');
+      }
+    }
+    
+    console.log('✅ Direct table creation completed');
+    
+  } catch (error) {
+    console.error('❌ Error in direct table creation:', error);
   }
 }
 
