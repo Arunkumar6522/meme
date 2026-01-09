@@ -3,8 +3,10 @@ import { Link } from 'react-router-dom';
 import { Button, Input } from '@/components/ui';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/useToast';
+import OTPVerificationForm from './OTPVerificationForm';
 
 const RegisterForm: React.FC = () => {
+  const [step, setStep] = useState<'form' | 'otp'>('form');
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -60,14 +62,8 @@ const RegisterForm: React.FC = () => {
       setErrors({ general: error });
       showError(error, 'Registration Failed');
     } else {
-      showSuccess('Account created successfully! Welcome to Meme Library!', 'Registration Successful');
-      // Clear form
-      setFormData({
-        fullName: '',
-        email: '',
-        password: '',
-        confirmPassword: '',
-      });
+      showSuccess('Verification code sent to your email!', 'Check Your Email');
+      setStep('otp');
     }
   };
 
@@ -88,6 +84,17 @@ const RegisterForm: React.FC = () => {
       setErrors(prev => ({ ...prev, [field]: undefined }));
     }
   };
+
+  // Show OTP verification form if on OTP step
+  if (step === 'otp') {
+    return (
+      <OTPVerificationForm
+        email={formData.email}
+        type="signup"
+        onBack={() => setStep('form')}
+      />
+    );
+  }
 
   return (
     <div className="w-full max-w-md space-y-6 mobile-form">

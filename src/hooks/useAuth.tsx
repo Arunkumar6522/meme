@@ -9,6 +9,8 @@ interface AuthContextType extends AuthState {
   signOut: () => Promise<{ error: string | null }>;
   resetPassword: (email: string) => Promise<{ error: string | null }>;
   updatePassword: (password: string) => Promise<{ error: string | null }>;
+  verifyOTP: (email: string, token: string, type: 'signup' | 'reset-password') => Promise<{ error: string | null }>;
+  resendOTP: (email: string, type: 'signup' | 'reset-password') => Promise<{ error: string | null }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -87,6 +89,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return { error };
   };
 
+  const verifyOTP = async (email: string, token: string, type: 'signup' | 'reset-password') => {
+    setState(prev => ({ ...prev, loading: true, error: null }));
+    const otpType = type === 'signup' ? 'signup' : 'recovery';
+    const { error } = await AuthService.verifyOTP(email, token, otpType);
+    setState(prev => ({ ...prev, loading: false, error }));
+    return { error };
+  };
+
+  const resendOTP = async (email: string, type: 'signup' | 'reset-password') => {
+    setState(prev => ({ ...prev, loading: true, error: null }));
+    const otpType = type === 'signup' ? 'signup' : 'recovery';
+    const { error } = await AuthService.resendOTP(email, otpType);
+    setState(prev => ({ ...prev, loading: false, error }));
+    return { error };
+  };
+
   const value: AuthContextType = {
     ...state,
     signIn,
@@ -95,6 +113,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     signOut,
     resetPassword,
     updatePassword,
+    verifyOTP,
+    resendOTP,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

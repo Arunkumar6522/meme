@@ -3,10 +3,11 @@ import { Link } from 'react-router-dom';
 import { Button, Input } from '@/components/ui';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/useToast';
+import OTPVerificationForm from './OTPVerificationForm';
 
 const ForgotPasswordForm: React.FC = () => {
+  const [step, setStep] = useState<'form' | 'otp'>('form');
   const [email, setEmail] = useState('');
-  const [isSubmitted, setIsSubmitted] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; general?: string }>({});
   const { resetPassword, loading } = useAuth();
   const { showSuccess, showError } = useToast();
@@ -34,86 +35,19 @@ const ForgotPasswordForm: React.FC = () => {
       setErrors({ general: error });
       showError(error, 'Password Reset Failed');
     } else {
-      setIsSubmitted(true);
-      showSuccess(
-        'Password reset instructions have been sent to your email!',
-        'Check Your Email'
-      );
+      showSuccess('Verification code sent to your email!', 'Check Your Email');
+      setStep('otp');
     }
   };
 
-  if (isSubmitted) {
+  // Show OTP verification form if on OTP step
+  if (step === 'otp') {
     return (
-      <div className="w-full max-w-md space-y-6 mobile-form">
-        <div className="text-center">
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
-            <svg
-              className="h-6 w-6 text-green-600"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M5 13l4 4L19 7"
-              />
-            </svg>
-          </div>
-          <h1 className="mt-4 text-2xl sm:text-3xl font-bold text-gray-900">
-            Check Your Email
-          </h1>
-          <p className="mt-2 text-sm sm:text-base text-gray-600">
-            We've sent password reset instructions to:
-          </p>
-          <p className="mt-1 text-sm font-medium text-gray-900">{email}</p>
-        </div>
-
-        <div className="rounded-md bg-blue-50 p-4 border border-blue-200">
-          <div className="flex">
-            <div className="flex-shrink-0">
-              <svg
-                className="h-5 w-5 text-blue-400"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
-                  clipRule="evenodd"
-                />
-              </svg>
-            </div>
-            <div className="ml-3">
-              <h3 className="text-sm font-medium text-blue-800">
-                What's next?
-              </h3>
-              <div className="mt-2 text-sm text-blue-700">
-                <ul className="list-disc list-inside space-y-1">
-                  <li>Check your email inbox (and spam folder)</li>
-                  <li>Click the reset link in the email</li>
-                  <li>Create a new password</li>
-                  <li>Sign in with your new password</li>
-                </ul>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="flex flex-col sm:flex-row gap-3">
-          <Button
-            variant="outline"
-            className="flex-1"
-            onClick={() => setIsSubmitted(false)}
-          >
-            Try Different Email
-          </Button>
-          <Button className="flex-1" asChild>
-            <Link to="/auth/login">Back to Sign In</Link>
-          </Button>
-        </div>
-      </div>
+      <OTPVerificationForm
+        email={email}
+        type="reset-password"
+        onBack={() => setStep('form')}
+      />
     );
   }
 

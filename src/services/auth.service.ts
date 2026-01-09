@@ -93,6 +93,46 @@ export class AuthService {
     }
   }
 
+  // Verify OTP code
+  static async verifyOTP(email: string, token: string, type: 'signup' | 'recovery') {
+    try {
+      const { data, error } = await supabase.auth.verifyOtp({
+        email,
+        token,
+        type: type === 'signup' ? 'signup' : 'recovery',
+      });
+
+      if (error) throw error;
+      return { data, error: null };
+    } catch (error) {
+      return { data: null, error: (error as Error).message };
+    }
+  }
+
+  // Resend OTP code
+  static async resendOTP(email: string, type: 'signup' | 'recovery') {
+    try {
+      if (type === 'signup') {
+        // For signup, we need to resend signup confirmation
+        const { error } = await supabase.auth.resend({
+          type: 'signup',
+          email: email,
+        });
+        if (error) throw error;
+      } else {
+        // For password reset, send new reset email
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: `${window.location.origin}/auth/reset-password`,
+        });
+        if (error) throw error;
+      }
+      
+      return { error: null };
+    } catch (error) {
+      return { error: (error as Error).message };
+    }
+  }
+
   // Reset password
   static async resetPassword(email: string) {
     try {
