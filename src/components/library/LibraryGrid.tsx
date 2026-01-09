@@ -15,7 +15,7 @@ const LibraryGrid: React.FC<LibraryGridProps> = ({ items, loading = false, class
     return (
       <div
         className={cn(
-          'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6',
+          'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6',
           className
         )}
         aria-label="Loading library items"
@@ -57,7 +57,7 @@ const LibraryGrid: React.FC<LibraryGridProps> = ({ items, loading = false, class
   return (
     <div
       className={cn(
-        'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6',
+        'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6',
         className
       )}
       role="grid"
