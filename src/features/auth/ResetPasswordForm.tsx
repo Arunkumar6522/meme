@@ -1,10 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Button, Input } from '@/components/ui';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/useToast';
+import { CustomAuthService } from '@/services/custom-auth.service';
 
-const ResetPasswordForm: React.FC = () => {
+interface ResetPasswordFormProps {
+  email?: string;
+}
+
+const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({ email }) => {
   const [formData, setFormData] = useState({
     password: '',
     confirmPassword: '',
@@ -14,21 +19,21 @@ const ResetPasswordForm: React.FC = () => {
     confirmPassword?: string;
     general?: string;
   }>({});
-  const [searchParams] = useSearchParams();
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const { updatePassword, loading } = useAuth();
+  const location = useLocation();
   const { showSuccess, showError } = useToast();
 
+  // Get email from props or location state
+  const userEmail = email || (location.state as any)?.email;
+
   useEffect(() => {
-    // Check if we have the required tokens from the URL
-    const accessToken = searchParams.get('access_token');
-    const refreshToken = searchParams.get('refresh_token');
-    
-    if (!accessToken || !refreshToken) {
-      showError('Invalid or expired reset link. Please request a new one.', 'Invalid Link');
+    // Check if we have the user email
+    if (!userEmail) {
+      showError('Invalid reset session. Please start over.', 'Session Error');
       navigate('/auth/forgot-password');
     }
-  }, [searchParams, navigate, showError]);
+  }, [userEmail, navigate, showError]);
 
   const validateForm = () => {
     const newErrors: typeof errors = {};
@@ -52,15 +57,27 @@ const ResetPasswordForm: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!validateForm()) return;
+    if (!validateForm() || !userEmail) return;
 
-    const { error } = await updatePassword(formData.password);
-    if (error) {
-      setErrors({ general: error });
-      showError(error, 'Password Reset Failed');
-    } else {
-      showSuccess('Password updated successfully! You can now sign in with your new password.', 'Password Reset Complete');
-      navigate('/auth/login');
+    setLoading(true);
+    setErrors({});
+
+    try {
+      const { error } = await CustomAuthService.updatePasswordWithEmail(userEmail, formData.password);
+      
+      if (error) {
+        setErrors({ general: error });
+        showError(error, 'Password Reset Failed');
+      } else {
+        showSuccess('Password updated successfully! You can now sign in with your new password.', 'Password Reset Complete');
+        navigate('/auth/login');
+      }
+    } catch (err) {
+      const errorMessage = (err as Error).message;
+      setErrors({ general: errorMessage });
+      showError(errorMessage, 'Password Reset Failed');
+    } finally {
+      setLoading(false);
     }
   };
 

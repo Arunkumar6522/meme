@@ -2,21 +2,12 @@ import { supabase } from './supabase';
 import type { AuthUser } from '@/types';
 
 export class AuthService {
-  // Sign up with email and password
+  // Sign up with email and password (using custom OTP system)
   static async signUp(email: string, password: string, fullName?: string) {
     try {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            full_name: fullName,
-          },
-        },
-      });
-
-      if (error) throw error;
-      return { data, error: null };
+      const { CustomAuthService } = await import('./custom-auth.service');
+      const { error } = await CustomAuthService.sendSignupOTP(email, password, fullName);
+      return { data: null, error };
     } catch (error) {
       return { data: null, error: (error as Error).message };
     }
@@ -65,15 +56,12 @@ export class AuthService {
     }
   }
 
-  // Reset password
+  // Reset password (using custom OTP system to avoid rate limits)
   static async resetPassword(email: string) {
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/auth/reset-password`,
-      });
-
-      if (error) throw error;
-      return { error: null };
+      // Use our custom OTP service instead of Supabase's built-in reset
+      const { CustomAuthService } = await import('./custom-auth.service');
+      return await CustomAuthService.sendPasswordResetOTP(email);
     } catch (error) {
       return { error: (error as Error).message };
     }
@@ -93,41 +81,29 @@ export class AuthService {
     }
   }
 
-  // Verify OTP code
+  // Verify OTP code (using custom OTP system)
   static async verifyOTP(email: string, token: string, type: 'signup' | 'recovery') {
     try {
-      const { data, error } = await supabase.auth.verifyOtp({
-        email,
-        token,
-        type: type === 'signup' ? 'signup' : 'recovery',
-      });
-
-      if (error) throw error;
-      return { data, error: null };
+      const { CustomAuthService } = await import('./custom-auth.service');
+      
+      if (type === 'signup') {
+        const { error } = await CustomAuthService.verifySignupOTP(email, token);
+        return { data: null, error };
+      } else {
+        const { valid, error } = await CustomAuthService.verifyPasswordResetOTP(email, token);
+        return { data: valid ? { user: null } : null, error };
+      }
     } catch (error) {
       return { data: null, error: (error as Error).message };
     }
   }
 
-  // Resend OTP code
+  // Resend OTP code (using custom OTP system)
   static async resendOTP(email: string, type: 'signup' | 'recovery') {
     try {
-      if (type === 'signup') {
-        // For signup, we need to resend signup confirmation
-        const { error } = await supabase.auth.resend({
-          type: 'signup',
-          email: email,
-        });
-        if (error) throw error;
-      } else {
-        // For password reset, send new reset email
-        const { error } = await supabase.auth.resetPasswordForEmail(email, {
-          redirectTo: `${window.location.origin}/auth/reset-password`,
-        });
-        if (error) throw error;
-      }
-      
-      return { error: null };
+      const { CustomAuthService } = await import('./custom-auth.service');
+      const otpType = type === 'signup' ? 'signup' : 'password_reset';
+      return await CustomAuthService.resendOTP(email, otpType);
     } catch (error) {
       return { error: (error as Error).message };
     }

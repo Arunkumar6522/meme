@@ -31,9 +31,20 @@ CREATE TABLE IF NOT EXISTS public.library_items (
   created_by UUID NOT NULL
 );
 
+-- Create OTP codes table for email verification
+CREATE TABLE IF NOT EXISTS public.otp_codes (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  email TEXT NOT NULL,
+  code TEXT NOT NULL,
+  type TEXT NOT NULL CHECK (type IN ('signup', 'password_reset')),
+  expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
+);
+
 -- Enable Row Level Security
 ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.library_items ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.otp_codes ENABLE ROW LEVEL SECURITY;
 
 -- Create RLS Policies for users table
 DROP POLICY IF EXISTS "Users can view their own profile" ON public.users;
@@ -126,12 +137,20 @@ CREATE INDEX IF NOT EXISTS idx_library_items_emotion ON public.library_items(emo
 CREATE INDEX IF NOT EXISTS idx_library_items_media_type ON public.library_items(media_type);
 CREATE INDEX IF NOT EXISTS idx_library_items_created_at ON public.library_items(created_at);
 
+-- OTP codes indexes
+CREATE INDEX IF NOT EXISTS idx_otp_codes_email ON public.otp_codes(email);
+CREATE INDEX IF NOT EXISTS idx_otp_codes_expires_at ON public.otp_codes(expires_at);
+
 -- Grant necessary permissions
 GRANT USAGE ON SCHEMA public TO anon, authenticated;
 GRANT SELECT ON public.users TO anon, authenticated;
 GRANT SELECT ON public.library_items TO anon, authenticated;
 GRANT ALL ON public.users TO authenticated;
 GRANT ALL ON public.library_items TO authenticated;
+GRANT ALL ON public.otp_codes TO anon, authenticated;
+
+-- RLS Policies for OTP codes
+CREATE POLICY "Allow all access to otp_codes" ON public.otp_codes USING (true) WITH CHECK (true);
 
 -- Storage setup (create these buckets manually in Supabase dashboard)
 -- Bucket names: library-audio, library-video, thumbnails

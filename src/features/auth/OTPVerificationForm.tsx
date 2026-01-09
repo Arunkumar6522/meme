@@ -88,7 +88,7 @@ const OTPVerificationForm: React.FC<OTPVerificationFormProps> = ({ email, type, 
           navigate('/home');
         } else {
           showSuccess('Email verified! You can now reset your password.', 'Verification Complete');
-          navigate('/auth/reset-password');
+          navigate('/auth/reset-password', { state: { email } });
         }
       }
     } catch (err) {
