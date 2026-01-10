@@ -24,16 +24,17 @@ const AuthPage: React.FC = () => {
     return <Navigate to="/" replace />;
   }
 
+  // Render form based on type - use key to preserve state when type doesn't change
   const renderForm = () => {
     switch (type) {
       case 'register':
-        return <RegisterForm />;
+        return <RegisterForm key="register-form" />;
       case 'forgot-password':
-        return <ForgotPasswordForm />;
+        return <ForgotPasswordForm key="forgot-password-form" />;
       case 'reset-password':
-        return <ResetPasswordForm />;
+        return <ResetPasswordForm key="reset-password-form" />;
       default:
-        return <LoginForm />;
+        return <LoginForm key="login-form" />;
     }
   };
 

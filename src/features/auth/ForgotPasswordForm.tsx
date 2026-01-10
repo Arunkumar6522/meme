@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { Button, Input } from '@/components/ui';
 import { useAuth } from '@/hooks/useAuth';
@@ -11,6 +11,12 @@ const ForgotPasswordForm: React.FC = () => {
   const [errors, setErrors] = useState<{ email?: string; general?: string }>({});
   const { resetPassword, loading } = useAuth();
   const { showSuccess, showError } = useToast();
+  const stepRef = useRef(step);
+  
+  // Keep ref in sync with state
+  useEffect(() => {
+    stepRef.current = step;
+  }, [step]);
 
   // Debug: Log step changes
   useEffect(() => {
@@ -56,15 +62,20 @@ const ForgotPasswordForm: React.FC = () => {
         return;
       }
 
-      // Success - Update step to OTP FIRST (before toast)
-      // This ensures the screen changes immediately
-      setStep('otp');
+      // Success - Update step to OTP IMMEDIATELY
+      // Use functional update to ensure we get the latest state
+      setStep((prevStep) => {
+        if (import.meta.env.MODE === 'development') {
+          console.log('🔍 Updating step from', prevStep, 'to otp');
+        }
+        return 'otp';
+      });
       
-      // Then show success message
+      // Show success message
       showSuccess('Verification code sent to your email!', 'Check Your Email');
       
       if (import.meta.env.MODE === 'development') {
-        console.log('🔍 Step set to otp immediately');
+        console.log('🔍 Step update queued, waiting for re-render...');
       }
       
     } catch (err) {
@@ -76,14 +87,13 @@ const ForgotPasswordForm: React.FC = () => {
 
   // Show OTP verification form if on OTP step
   // CRITICAL: This check must happen BEFORE the main return statement
-  // Use a unique key that includes step to force React to re-render
   if (step === 'otp') {
     if (import.meta.env.MODE === 'development') {
-      console.log('✅ RENDERING OTP SCREEN - step:', step, 'email:', email);
+      console.log('✅✅✅ RENDERING OTP SCREEN NOW - step:', step, 'email:', email);
     }
     return (
       <OTPVerificationForm
-        key={`otp-screen-${email}-${Date.now()}`}
+        key={`otp-${email}`}
         email={email}
         type="reset-password"
         onBack={() => {
