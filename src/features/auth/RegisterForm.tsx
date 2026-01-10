@@ -95,6 +95,29 @@ const RegisterForm: React.FC = () => {
       // Ignore sessionStorage errors
     }
   }, [formData, step]);
+  
+  // CRITICAL: If user is typing and email becomes invalid, ensure we're on form step
+  // This prevents OTP screen from showing with incomplete emails
+  useEffect(() => {
+    const normalizedEmail = formData.email?.trim().toLowerCase() || '';
+    const isEmailValid = normalizedEmail.length >= 5 && validateEmail(normalizedEmail);
+    
+    // If we're on OTP step but email is invalid or incomplete, go back to form
+    if (step === 'otp' && (!isEmailValid || !normalizedEmail)) {
+      console.log('Email invalid or incomplete, resetting to form step');
+      flushSync(() => {
+        setStep('form');
+        stepRef.current = 'form';
+      });
+      // Clear sessionStorage
+      try {
+        sessionStorage.removeItem('register-step');
+        sessionStorage.removeItem('register-email');
+      } catch (e) {
+        // Ignore
+      }
+    }
+  }, [formData.email, step]);
 
   // Proper email validation regex
   const validateEmail = (email: string): boolean => {
