@@ -5,10 +5,23 @@ export class CustomAuthService {
   // Send password reset OTP (checks if user exists first)
   static async sendPasswordResetOTP(email: string): Promise<{ error: string | null }> {
     try {
-      // First check if user exists
-      const userExists = await OTPService.checkUserExists(email);
+      // Try to check if user exists (but don't fail if RLS blocks it)
+      // If RLS blocks the check, we'll proceed anyway - email service will handle non-existent users
+      let userExists = false;
+      try {
+        userExists = await OTPService.checkUserExists(email);
+      } catch (checkError) {
+        // If check fails due to RLS, proceed anyway
+        console.warn('User existence check failed, proceeding with OTP send:', checkError);
+        userExists = true; // Assume user exists to allow OTP send
+      }
       
-      if (!userExists) {
+      // Only return error if we're certain user doesn't exist
+      // (not if RLS blocked the check)
+      if (userExists === false) {
+        // Double-check: try to send OTP anyway - if user doesn't exist, 
+        // they simply won't receive the email (which is fine for security)
+        // But for UX, we'll show the error
         return { error: 'No account found with this email address' };
       }
 

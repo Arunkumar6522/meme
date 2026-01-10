@@ -57,11 +57,16 @@ const ForgotPasswordForm: React.FC = () => {
       }
 
       // Success - immediately set step to OTP (synchronous update)
+      // Force re-render by updating state
       setStep('otp');
       
       // Debug log after state update
       if (import.meta.env.MODE === 'development') {
         console.log('🔍 Step set to otp, component should re-render');
+        // Force a re-render check
+        setTimeout(() => {
+          console.log('🔍 Step after timeout:', step);
+        }, 100);
       }
       
       // Show success message
