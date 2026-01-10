@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Upload, Plus } from 'lucide-react';
 import LibraryFilters from '@/components/library/LibraryFilters';
@@ -10,6 +10,10 @@ import { useLibrary } from '@/hooks/useLibrary';
 import { useAuth } from '@/hooks/useAuth';
 import { DatabaseService } from '@/services/database.service';
 import type { LibraryFilters as LibraryFiltersType } from '@/types';
+
+// Cache admin status to avoid repeated API calls
+const adminStatusCache = new Map<string, { status: boolean; timestamp: number }>();
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
 const LibraryPage: React.FC = () => {
   const navigate = useNavigate();
@@ -30,25 +34,37 @@ const LibraryPage: React.FC = () => {
     goToPage,
   } = useLibrary(filters);
 
-  // Check if user is admin
+  // Check if user is admin (with caching)
   useEffect(() => {
     const checkAdmin = async () => {
-      if (user?.id) {
-        try {
-          const adminStatus = await DatabaseService.isUserAdmin(user.id);
-          setIsAdmin(adminStatus);
-        } catch (error) {
-          setIsAdmin(false);
-        }
+      if (!user?.id) {
+        setIsAdmin(false);
+        return;
+      }
+
+      // Check cache first
+      const cached = adminStatusCache.get(user.id);
+      if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+        setIsAdmin(cached.status);
+        return;
+      }
+
+      try {
+        const adminStatus = await DatabaseService.isUserAdmin(user.id);
+        setIsAdmin(adminStatus);
+        // Update cache
+        adminStatusCache.set(user.id, { status: adminStatus, timestamp: Date.now() });
+      } catch (error) {
+        setIsAdmin(false);
       }
     };
     checkAdmin();
   }, [user?.id]);
 
-  const handleFiltersChange = (newFilters: LibraryFiltersType) => {
+  const handleFiltersChange = useCallback((newFilters: LibraryFiltersType) => {
     setFilters(newFilters);
     updateFilters(newFilters);
-  };
+  }, [updateFilters]);
 
   return (
     <div className="min-h-screen bg-gray-50">

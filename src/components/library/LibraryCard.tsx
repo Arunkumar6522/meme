@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback, memo } from 'react';
 import { Play, Pause, Download, Share2, Heart, Volume2, Video } from 'lucide-react';
-import { useLibraryItem } from '@/hooks/useLibrary';
+import { LibraryService } from '@/services/library.service';
 import { useToast } from '@/hooks/useToast';
 import type { LibraryItem } from '@/types';
 import { cn } from '@/utils/cn';
@@ -10,11 +10,11 @@ interface LibraryCardProps {
   className?: string;
 }
 
-const LibraryCard: React.FC<LibraryCardProps> = ({ item, className }) => {
+const LibraryCard: React.FC<LibraryCardProps> = memo(({ item, className }) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
-  const [audioElement, setAudioElement] = useState<HTMLAudioElement | null>(null);
-  const { downloadItem } = useLibraryItem(item.id);
+  const [downloading, setDownloading] = useState(false);
+  const audioElementRef = useRef<HTMLAudioElement | null>(null);
   const { showSuccess, showError } = useToast();
 
   const emotionColors = {
@@ -46,24 +46,25 @@ const LibraryCard: React.FC<LibraryCardProps> = ({ item, className }) => {
   // Cleanup audio element on unmount
   useEffect(() => {
     return () => {
-      if (audioElement) {
-        audioElement.pause();
-        audioElement.src = '';
+      if (audioElementRef.current) {
+        audioElementRef.current.pause();
+        audioElementRef.current.src = '';
+        audioElementRef.current = null;
       }
     };
-  }, [audioElement]);
+  }, []);
 
-  const handlePlay = async () => {
+  const handlePlay = useCallback(async () => {
     if (item.media_type === 'audio') {
-      if (isPlaying && audioElement) {
-        audioElement.pause();
+      if (isPlaying && audioElementRef.current) {
+        audioElementRef.current.pause();
         setIsPlaying(false);
       } else {
         try {
-          if (audioElement) {
-            await audioElement.play();
-          } else {
+          // Reuse existing audio element or create new one
+          if (!audioElementRef.current) {
             const audio = new Audio(item.file_url);
+            audio.preload = 'auto'; // Preload for faster playback
             audio.addEventListener('ended', () => setIsPlaying(false));
             audio.addEventListener('error', () => {
               setIsPlaying(false);
@@ -71,9 +72,10 @@ const LibraryCard: React.FC<LibraryCardProps> = ({ item, className }) => {
             });
             audio.addEventListener('play', () => setIsPlaying(true));
             audio.addEventListener('pause', () => setIsPlaying(false));
-            setAudioElement(audio);
-            await audio.play();
+            audioElementRef.current = audio;
           }
+          
+          await audioElementRef.current.play();
           setIsPlaying(true);
         } catch (error) {
           console.error('Error playing audio:', error);
@@ -82,18 +84,50 @@ const LibraryCard: React.FC<LibraryCardProps> = ({ item, className }) => {
       }
     } else {
       // For video, open in new tab
-      window.open(item.file_url, '_blank');
+      window.open(item.file_url, '_blank', 'noopener,noreferrer');
     }
-  };
+  }, [item.media_type, item.file_url, isPlaying, showError]);
 
-  const [downloading, setDownloading] = useState(false);
-
-  const handleDownload = async () => {
+  const handleDownload = useCallback(async () => {
     if (downloading) return;
     
     setDownloading(true);
     try {
-      await downloadItem();
+      // Increment download count (non-blocking)
+      LibraryService.incrementDownloadCount(item.id).catch(() => {
+        // Silently fail - not critical
+      });
+      
+      // Use the file_url directly - it should be a public URL from Supabase storage
+      const downloadUrl = item.file_url;
+      
+      if (!downloadUrl) {
+        throw new Error('File URL not available');
+      }
+
+      // Fetch the file and create a blob URL for download
+      const response = await fetch(downloadUrl);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch file: ${response.statusText}`);
+      }
+      
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      
+      // Trigger download
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = `${item.title.replace(/[^a-z0-9]/gi, '_')}.${item.media_type === 'audio' ? 'mp3' : 'mp4'}`;
+      link.style.display = 'none';
+      document.body.appendChild(link);
+      link.click();
+      
+      // Cleanup
+      setTimeout(() => {
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(blobUrl);
+      }, 100);
+      
       showSuccess('Download started!', 'Download');
     } catch (error: any) {
       console.error('Download error:', error);
@@ -101,14 +135,14 @@ const LibraryCard: React.FC<LibraryCardProps> = ({ item, className }) => {
     } finally {
       setDownloading(false);
     }
-  };
+  }, [item.id, item.file_url, item.title, item.media_type, downloading, showSuccess, showError]);
 
-  const handleLike = () => {
-    setIsLiked(!isLiked);
+  const handleLike = useCallback(() => {
+    setIsLiked(prev => !prev);
     // TODO: Implement like functionality with backend
-  };
+  }, []);
 
-  const handleShare = async () => {
+  const handleShare = useCallback(async () => {
     const shareUrl = `${window.location.origin}/library/${item.id}`;
     try {
       if (navigator.share) {
@@ -132,7 +166,7 @@ const LibraryCard: React.FC<LibraryCardProps> = ({ item, className }) => {
         }
       }
     }
-  };
+  }, [item.id, item.title, item.description, showSuccess, showError]);
 
   // Get thumbnail with fallback color based on emotion
   const getThumbnailColor = () => {
@@ -176,6 +210,8 @@ const LibraryCard: React.FC<LibraryCardProps> = ({ item, className }) => {
             src={item.thumbnail_url}
             alt={`Thumbnail for ${item.title}`}
             className="w-full h-full object-cover rounded-full"
+            loading="lazy"
+            decoding="async"
           />
         ) : (
           <div className="flex items-center justify-center w-full h-full">
@@ -260,6 +296,17 @@ const LibraryCard: React.FC<LibraryCardProps> = ({ item, className }) => {
       </div>
     </div>
   );
-};
+}, (prevProps, nextProps) => {
+  // Custom comparison function for React.memo
+  return (
+    prevProps.item.id === nextProps.item.id &&
+    prevProps.item.title === nextProps.item.title &&
+    prevProps.item.thumbnail_url === nextProps.item.thumbnail_url &&
+    prevProps.item.file_url === nextProps.item.file_url &&
+    prevProps.className === nextProps.className
+  );
+});
+
+LibraryCard.displayName = 'LibraryCard';
 
 export default LibraryCard;

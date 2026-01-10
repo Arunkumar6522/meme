@@ -1,10 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Menu, X, User, LogOut, Settings, Shield } from 'lucide-react';
 import { Button } from '@/components/ui';
 import { useAuth } from '@/hooks/useAuth';
 import { DatabaseService } from '@/services/database.service';
 import { cn } from '@/utils/cn';
+
+// Cache admin status to avoid repeated API calls
+const adminStatusCache = new Map<string, { status: boolean; timestamp: number }>();
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
 const Header: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -13,17 +17,27 @@ const Header: React.FC = () => {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
 
-  // Check if user is admin
+  // Check if user is admin (with caching)
   useEffect(() => {
     const checkAdmin = async () => {
-      if (user?.id) {
-        try {
-          const adminStatus = await DatabaseService.isUserAdmin(user.id);
-          setIsAdmin(adminStatus);
-        } catch (error) {
-          setIsAdmin(false);
-        }
-      } else {
+      if (!user?.id) {
+        setIsAdmin(false);
+        return;
+      }
+
+      // Check cache first
+      const cached = adminStatusCache.get(user.id);
+      if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+        setIsAdmin(cached.status);
+        return;
+      }
+
+      try {
+        const adminStatus = await DatabaseService.isUserAdmin(user.id);
+        setIsAdmin(adminStatus);
+        // Update cache
+        adminStatusCache.set(user.id, { status: adminStatus, timestamp: Date.now() });
+      } catch (error) {
         setIsAdmin(false);
       }
     };

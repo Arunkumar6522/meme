@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { LibraryService } from '@/services/library.service';
 import type { LibraryItem, LibraryFilters, PaginatedResponse } from '@/types';
 
@@ -14,20 +14,27 @@ export const useLibrary = (initialFilters: LibraryFilters = {}, initialPage = 1,
   const [error, setError] = useState<string | null>(null);
   const [filters, setFilters] = useState<LibraryFilters>(initialFilters);
   const [page, setPage] = useState(initialPage);
+  
+  // Use ref to always have latest filters without causing re-renders
+  const filtersRef = useRef(filters);
+  useEffect(() => {
+    filtersRef.current = filters;
+  }, [filters]);
 
   const fetchLibraryItems = useCallback(async () => {
     setLoading(true);
     setError(null);
     
     try {
-      const response = await LibraryService.getLibraryItems(filters, page, perPage);
+      // Use ref to get latest filters
+      const response = await LibraryService.getLibraryItems(filtersRef.current, page, perPage);
       setData(response);
     } catch (err) {
       setError((err as Error).message);
     } finally {
       setLoading(false);
     }
-  }, [filters, page, perPage]);
+  }, [page, perPage]);
 
   useEffect(() => {
     fetchLibraryItems();
@@ -35,7 +42,7 @@ export const useLibrary = (initialFilters: LibraryFilters = {}, initialPage = 1,
 
   const updateFilters = useCallback((newFilters: LibraryFilters) => {
     setFilters(newFilters);
-    setPage(1); // Reset to first page when filters change
+    setPage(1); // Reset to first page when filters change - this will trigger fetchLibraryItems via page dependency
   }, []);
 
   const nextPage = useCallback(() => {

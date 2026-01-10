@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import LibraryCard from './LibraryCard';
 import { SkeletonCard } from '@/components/ui';
 import type { LibraryItem } from '@/types';
@@ -10,7 +10,7 @@ interface LibraryGridProps {
   className?: string;
 }
 
-const LibraryGrid: React.FC<LibraryGridProps> = ({ items, loading = false, className }) => {
+const LibraryGrid: React.FC<LibraryGridProps> = memo(({ items, loading = false, className }) => {
   if (loading) {
     return (
       <div
@@ -76,6 +76,16 @@ const LibraryGrid: React.FC<LibraryGridProps> = ({ items, loading = false, class
       </div>
     </div>
   );
-};
+}, (prevProps, nextProps) => {
+  // Only re-render if items array reference changes or loading state changes
+  return (
+    prevProps.loading === nextProps.loading &&
+    prevProps.items.length === nextProps.items.length &&
+    prevProps.items.every((item, index) => item.id === nextProps.items[index]?.id) &&
+    prevProps.className === nextProps.className
+  );
+});
+
+LibraryGrid.displayName = 'LibraryGrid';
 
 export default LibraryGrid;
