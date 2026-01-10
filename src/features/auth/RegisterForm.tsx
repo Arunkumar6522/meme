@@ -1,53 +1,19 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { flushSync } from 'react-dom';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { Button, Input } from '@/components/ui';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/useToast';
 import OTPVerificationForm from './OTPVerificationForm';
 
 const RegisterForm: React.FC = () => {
-  const [step, setStep] = useState<'form' | 'otp'>(() => {
-    // Only restore from sessionStorage if we're coming back from OTP screen
-    // Otherwise, always start fresh
-    try {
-      const persisted = sessionStorage.getItem('register-step');
-      return persisted === 'otp' ? 'otp' : 'form';
-    } catch {
-      return 'form';
-    }
-  });
-  const [formData, setFormData] = useState(() => {
-    try {
-      const persistedStep = sessionStorage.getItem('register-step');
-      if (persistedStep === 'otp') {
-        // If we're on OTP step, restore form data
-        const saved = sessionStorage.getItem('register-form-data');
-        return saved ? JSON.parse(saved) : {
-          fullName: '',
-          email: '',
-          password: '',
-          confirmPassword: '',
-        };
-      }
-      // Clear sessionStorage if we're starting fresh
-      sessionStorage.removeItem('register-step');
-      sessionStorage.removeItem('register-email');
-      sessionStorage.removeItem('register-form-data');
-      return {
-        fullName: '',
-        email: '',
-        password: '',
-        confirmPassword: '',
-      };
-    } catch {
-      return {
-        fullName: '',
-        email: '',
-        password: '',
-        confirmPassword: '',
-      };
-    }
+  const location = useLocation();
+  const [step, setStep] = useState<'form' | 'otp'>('form');
+  const [formData, setFormData] = useState({
+    fullName: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
   });
   const [errors, setErrors] = useState<{
     fullName?: string;
@@ -64,18 +30,44 @@ const RegisterForm: React.FC = () => {
     stepRef.current = step;
   }, [step]);
 
-  // Clear sessionStorage on mount if form data is empty (fresh start)
+  // Clear sessionStorage on mount - always start fresh when component mounts
+  // Only restore if we're coming from OTP screen (via state or sessionStorage check)
   useEffect(() => {
-    if (!formData.email && step === 'form') {
-      try {
+    // Check if we have a valid OTP flow in progress
+    try {
+      const persistedStep = sessionStorage.getItem('register-step');
+      const persistedEmail = sessionStorage.getItem('register-email');
+      
+      // Only restore if we have both step and email, and email is valid
+      if (persistedStep === 'otp' && persistedEmail && /\S+@\S+\.\S+/.test(persistedEmail)) {
+        // Restore OTP step
+        setStep('otp');
+        stepRef.current = 'otp';
+        
+        // Restore form data if available
+        const savedFormData = sessionStorage.getItem('register-form-data');
+        if (savedFormData) {
+          try {
+            const parsed = JSON.parse(savedFormData);
+            setFormData(parsed);
+          } catch (e) {
+            // Ignore parse errors
+          }
+        }
+      } else {
+        // Clear everything - fresh start
         sessionStorage.removeItem('register-step');
         sessionStorage.removeItem('register-email');
         sessionStorage.removeItem('register-form-data');
-      } catch (e) {
-        // Ignore
+        setStep('form');
+        stepRef.current = 'form';
       }
+    } catch (e) {
+      // If sessionStorage fails, just start fresh
+      setStep('form');
+      stepRef.current = 'form';
     }
-  }, []); // Only run on mount
+  }, [location.pathname]); // Re-run when route changes
 
   // Persist form data to sessionStorage
   useEffect(() => {
@@ -189,57 +181,15 @@ const RegisterForm: React.FC = () => {
     }
   };
 
-  // Check sessionStorage for persisted step (similar to ForgotPasswordForm)
-  useEffect(() => {
-    if (import.meta.env.MODE === 'development') {
-      console.log('🔍 RegisterForm step changed to:', step);
-    }
-  }, [step]);
-
-  // Check sessionStorage for persisted step
-  const persistedStep = (() => {
-    try {
-      return sessionStorage.getItem('register-step') as 'form' | 'otp' | null;
-    } catch {
-      return null;
-    }
-  })();
-
-  const persistedEmail = (() => {
-    try {
-      const stored = sessionStorage.getItem('register-email');
-      // Validate email format before using
-      if (stored && /\S+@\S+\.\S+/.test(stored)) {
-        return stored;
-      }
-      return formData.email;
-    } catch {
-      return formData.email;
-    }
-  })();
-
-  const shouldShowOTP = step === 'otp' || stepRef.current === 'otp' || persistedStep === 'otp';
-  const emailToUse = persistedEmail || formData.email;
-  
-  // Validate email format before showing OTP screen
-  const isValidEmail = emailToUse && /\S+@\S+\.\S+/.test(emailToUse);
-
-  // Show OTP verification form if on OTP step and email is valid
-  if (shouldShowOTP && isValidEmail) {
-    // Sync state if it's out of sync
-    if (step !== 'otp') {
-      flushSync(() => {
-        setStep('otp');
-        stepRef.current = 'otp';
-      });
-    }
-
+  // Show OTP verification form if on OTP step
+  if (step === 'otp' && formData.email && /\S+@\S+\.\S+/.test(formData.email)) {
     return (
       <OTPVerificationForm
-        key={`otp-${emailToUse}`}
-        email={emailToUse}
+        key={`otp-${formData.email}`}
+        email={formData.email}
         type="signup"
         onBack={() => {
+          // Clear sessionStorage and reset to form
           try {
             sessionStorage.removeItem('register-step');
             sessionStorage.removeItem('register-email');
@@ -250,6 +200,13 @@ const RegisterForm: React.FC = () => {
           flushSync(() => {
             setStep('form');
             stepRef.current = 'form';
+          });
+          // Reset form data
+          setFormData({
+            fullName: '',
+            email: '',
+            password: '',
+            confirmPassword: '',
           });
           setErrors({});
         }}

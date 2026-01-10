@@ -1,37 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { flushSync } from 'react-dom';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { Button, Input } from '@/components/ui';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/useToast';
 import OTPVerificationForm from './OTPVerificationForm';
 
 const ForgotPasswordForm: React.FC = () => {
-  const [step, setStep] = useState<'form' | 'otp'>(() => {
-    // Only restore from sessionStorage if we're coming back from OTP screen
-    // Otherwise, always start fresh
-    try {
-      const persisted = sessionStorage.getItem('forgot-password-step');
-      return persisted === 'otp' ? 'otp' : 'form';
-    } catch {
-      return 'form';
-    }
-  });
-  const [email, setEmail] = useState(() => {
-    // Only restore email if we're on OTP step
-    try {
-      const persistedStep = sessionStorage.getItem('forgot-password-step');
-      if (persistedStep === 'otp') {
-        return sessionStorage.getItem('forgot-password-email') || '';
-      }
-      // Clear sessionStorage if we're starting fresh
-      sessionStorage.removeItem('forgot-password-step');
-      sessionStorage.removeItem('forgot-password-email');
-      return '';
-    } catch {
-      return '';
-    }
-  });
+  const location = useLocation();
+  const [step, setStep] = useState<'form' | 'otp'>('form');
+  const [email, setEmail] = useState('');
   const [errors, setErrors] = useState<{ email?: string; general?: string }>({});
   const { resetPassword, loading } = useAuth();
   const { showSuccess, showError } = useToast();
@@ -42,18 +20,35 @@ const ForgotPasswordForm: React.FC = () => {
     stepRef.current = step;
   }, [step]);
 
-
-  // Clear sessionStorage on mount if email is empty (fresh start)
+  // Clear sessionStorage on mount - always start fresh when component mounts
+  // Only restore if we're coming from OTP screen (via state or sessionStorage check)
   useEffect(() => {
-    if (!email && step === 'form') {
-      try {
+    // Check if we have a valid OTP flow in progress
+    try {
+      const persistedStep = sessionStorage.getItem('forgot-password-step');
+      const persistedEmail = sessionStorage.getItem('forgot-password-email');
+      
+      // Only restore if we have both step and email, and email is valid
+      if (persistedStep === 'otp' && persistedEmail && /\S+@\S+\.\S+/.test(persistedEmail)) {
+        // Restore OTP step
+        setStep('otp');
+        stepRef.current = 'otp';
+        setEmail(persistedEmail);
+      } else {
+        // Clear everything - fresh start
         sessionStorage.removeItem('forgot-password-step');
         sessionStorage.removeItem('forgot-password-email');
-      } catch (e) {
-        // Ignore
+        setStep('form');
+        stepRef.current = 'form';
+        setEmail('');
       }
+    } catch (e) {
+      // If sessionStorage fails, just start fresh
+      setStep('form');
+      stepRef.current = 'form';
+      setEmail('');
     }
-  }, []); // Only run on mount
+  }, [location.pathname]); // Re-run when route changes
 
   const validateForm = () => {
     const newErrors: typeof errors = {};
@@ -111,51 +106,15 @@ const ForgotPasswordForm: React.FC = () => {
     }
   };
 
-  // Check sessionStorage as well in case component was remounted
-  const persistedStep = (() => {
-    try {
-      return sessionStorage.getItem('forgot-password-step') as 'form' | 'otp' | null;
-    } catch {
-      return null;
-    }
-  })();
-  
-  const persistedEmail = (() => {
-    try {
-      const stored = sessionStorage.getItem('forgot-password-email');
-      // Validate email format before using
-      if (stored && /\S+@\S+\.\S+/.test(stored)) {
-        return stored;
-      }
-      return null;
-    } catch {
-      return null;
-    }
-  })();
-  
-  const shouldShowOTP = step === 'otp' || stepRef.current === 'otp' || persistedStep === 'otp';
-  // Only use persisted email if current email is empty and persisted email is valid
-  const emailToUse = email || persistedEmail || '';
-  
-  // Validate email format before showing OTP screen
-  const isValidEmail = emailToUse && /\S+@\S+\.\S+/.test(emailToUse);
-  
-  // Show OTP verification form if on OTP step and email is valid
-  if (shouldShowOTP && isValidEmail) {
-    // Sync state if it's out of sync
-    if (step !== 'otp') {
-      flushSync(() => {
-        setStep('otp');
-        stepRef.current = 'otp';
-      });
-    }
-    
+  // Show OTP verification form if on OTP step
+  if (step === 'otp' && email && /\S+@\S+\.\S+/.test(email)) {
     return (
       <OTPVerificationForm
-        key={`otp-${emailToUse}`}
-        email={emailToUse}
+        key={`otp-${email}`}
+        email={email}
         type="reset-password"
         onBack={() => {
+          // Clear sessionStorage and reset to form
           try {
             sessionStorage.removeItem('forgot-password-step');
             sessionStorage.removeItem('forgot-password-email');
