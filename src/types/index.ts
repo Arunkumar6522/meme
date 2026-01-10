@@ -67,6 +67,7 @@ export interface AuthState {
 // Component Props Types
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'outline' | 'ghost';
+  asChild?: boolean;
   size?: 'sm' | 'md' | 'lg';
   loading?: boolean;
   children: React.ReactNode;

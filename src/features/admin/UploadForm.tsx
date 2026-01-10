@@ -176,7 +176,12 @@ const UploadForm: React.FC<UploadFormProps> = ({ onSuccess, onCancel }) => {
       const fileName = `${Date.now()}-${formData.file.name}`;
       
       setUploadProgress(25);
-      const fileUrl = await LibraryService.uploadFile(formData.file, bucket, fileName);
+      let fileUrl: string | null;
+      try {
+        fileUrl = await LibraryService.uploadFile(formData.file, bucket, fileName);
+      } catch (uploadError: any) {
+        throw new Error(uploadError.message || 'Failed to upload file. Please ensure storage buckets are created in Supabase.');
+      }
       
       if (!fileUrl) {
         throw new Error('Failed to upload file');

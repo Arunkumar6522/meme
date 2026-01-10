@@ -1,9 +1,27 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { cn } from '@/utils/cn';
 import type { ButtonProps } from '@/types';
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant = 'primary', size = 'md', loading = false, disabled, children, ...props }, ref) => {
+  ({ className, variant = 'primary', size = 'md', loading = false, disabled, children, asChild, ...props }, ref) => {
+    // If asChild is true, render children directly (for composition patterns)
+    if (asChild && React.isValidElement(children)) {
+      return React.cloneElement(children as React.ReactElement<any>, {
+        className: cn(
+          'inline-flex items-center justify-center rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
+          variant === 'primary' && 'bg-primary-600 text-white hover:bg-primary-700',
+          variant === 'outline' && 'border border-gray-300 bg-white text-gray-700 hover:bg-gray-50',
+          variant === 'secondary' && 'bg-gray-100 text-gray-900 hover:bg-gray-200',
+          variant === 'ghost' && 'text-gray-700 hover:bg-gray-100',
+          size === 'sm' && 'h-9 px-3 text-sm',
+          size === 'md' && 'h-11 px-4 text-base',
+          size === 'lg' && 'h-12 px-6 text-lg',
+          className,
+          (children as React.ReactElement).props.className
+        ),
+      });
+    }
     const baseStyles = 'inline-flex items-center justify-center rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50';
     
     const variants = {

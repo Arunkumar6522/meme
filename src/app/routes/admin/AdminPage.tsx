@@ -3,6 +3,7 @@ import { Routes, Route, Link } from 'react-router-dom';
 import { Upload, Users, BarChart3, Settings, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui';
 import UploadForm from '@/features/admin/UploadForm';
+import { useToast } from '@/hooks/useToast';
 
 const AdminPage: React.FC = () => {
   return (
@@ -60,17 +61,14 @@ const AdminDashboard: React.FC = () => {
         <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {quickActions.map((action) => (
-            <Button
+            <Link
               key={action.label}
-              variant="outline"
-              className="h-auto p-4 flex flex-col items-center space-y-2"
-              asChild
+              to={action.href}
+              className="inline-flex flex-col items-center justify-center h-auto p-4 rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
             >
-              <a href={action.href}>
-                <action.icon className="h-6 w-6" />
-                <span className="text-sm font-medium">{action.label}</span>
-              </a>
-            </Button>
+              <action.icon className="h-6 w-6" />
+              <span className="text-sm font-medium mt-2">{action.label}</span>
+            </Link>
           ))}
         </div>
       </div>

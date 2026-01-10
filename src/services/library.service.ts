@@ -177,6 +177,19 @@ export class LibraryService {
   // Admin: Upload file to storage
   static async uploadFile(file: File, bucket: string, fileName: string): Promise<string | null> {
     try {
+      // Check if bucket exists, if not provide helpful error
+      const { data: buckets, error: listError } = await supabase.storage.listBuckets();
+      
+      if (listError) {
+        console.error('Error listing buckets:', listError);
+        throw new Error('Unable to access storage. Please check your Supabase configuration.');
+      }
+
+      const bucketExists = buckets?.some(b => b.name === bucket);
+      if (!bucketExists) {
+        throw new Error(`Storage bucket "${bucket}" does not exist. Please create it in Supabase Dashboard → Storage → Create Bucket. Required buckets: library-audio, library-video, thumbnails`);
+      }
+
       const { data, error } = await supabase.storage
         .from(bucket)
         .upload(fileName, file, {
@@ -184,7 +197,13 @@ export class LibraryService {
           upsert: false,
         });
 
-      if (error) throw error;
+      if (error) {
+        // Provide more helpful error messages
+        if (error.message.includes('Bucket not found')) {
+          throw new Error(`Bucket "${bucket}" not found. Please create it in Supabase Dashboard → Storage.`);
+        }
+        throw error;
+      }
 
       // Get public URL
       const { data: { publicUrl } } = supabase.storage
@@ -194,7 +213,7 @@ export class LibraryService {
       return publicUrl;
     } catch (error) {
       console.error('Error uploading file:', error);
-      return null;
+      throw error; // Re-throw to show error message to user
     }
   }
 

@@ -12,8 +12,10 @@ interface LibraryCardProps {
 
 const LibraryCard: React.FC<LibraryCardProps> = ({ item, className }) => {
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isLiked, setIsLiked] = useState(false);
   const [audioElement, setAudioElement] = useState<HTMLAudioElement | null>(null);
   const { downloadItem } = useLibraryItem(item.id);
+  const { showSuccess, showError } = useToast();
 
   const emotionColors = {
     happy: 'bg-yellow-100 text-yellow-800 border-yellow-200',
@@ -41,31 +43,87 @@ const LibraryCard: React.FC<LibraryCardProps> = ({ item, className }) => {
     return `${mb.toFixed(1)} MB`;
   };
 
+  // Cleanup audio element on unmount
+  useEffect(() => {
+    return () => {
+      if (audioElement) {
+        audioElement.pause();
+        audioElement.src = '';
+      }
+    };
+  }, [audioElement]);
+
   const handlePlay = async () => {
     if (item.media_type === 'audio') {
       if (isPlaying && audioElement) {
         audioElement.pause();
         setIsPlaying(false);
       } else {
-        if (audioElement) {
-          audioElement.play();
-        } else {
-          const audio = new Audio(item.file_url);
-          audio.addEventListener('ended', () => setIsPlaying(false));
-          audio.addEventListener('error', () => setIsPlaying(false));
-          setAudioElement(audio);
-          audio.play();
+        try {
+          if (audioElement) {
+            await audioElement.play();
+          } else {
+            const audio = new Audio(item.file_url);
+            audio.addEventListener('ended', () => setIsPlaying(false));
+            audio.addEventListener('error', () => {
+              setIsPlaying(false);
+              showError('Failed to play audio', 'Playback Error');
+            });
+            audio.addEventListener('play', () => setIsPlaying(true));
+            audio.addEventListener('pause', () => setIsPlaying(false));
+            setAudioElement(audio);
+            await audio.play();
+          }
+          setIsPlaying(true);
+        } catch (error) {
+          console.error('Error playing audio:', error);
+          showError('Failed to play audio', 'Playback Error');
         }
-        setIsPlaying(true);
       }
     } else {
-      // For video, we'll open in a modal or new tab
+      // For video, open in new tab
       window.open(item.file_url, '_blank');
     }
   };
 
   const handleDownload = async () => {
-    await downloadItem();
+    try {
+      await downloadItem();
+      showSuccess('Download started!', 'Download');
+    } catch (error) {
+      showError('Failed to download', 'Download Error');
+    }
+  };
+
+  const handleLike = () => {
+    setIsLiked(!isLiked);
+    // TODO: Implement like functionality with backend
+  };
+
+  const handleShare = async () => {
+    const shareUrl = `${window.location.origin}/library/${item.id}`;
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: item.title,
+          text: item.description || `Check out ${item.title}`,
+          url: shareUrl,
+        });
+      } else {
+        await navigator.clipboard.writeText(shareUrl);
+        showSuccess('Link copied to clipboard!', 'Share');
+      }
+    } catch (error: any) {
+      if (error.name !== 'AbortError') {
+        // Fallback to copy
+        try {
+          await navigator.clipboard.writeText(shareUrl);
+          showSuccess('Link copied to clipboard!', 'Share');
+        } catch (copyError) {
+          showError('Failed to share', 'Share Error');
+        }
+      }
+    }
   };
 
   // Get thumbnail with fallback color based on emotion
@@ -119,9 +177,13 @@ const LibraryCard: React.FC<LibraryCardProps> = ({ item, className }) => {
             )}
           </div>
         )}
-        {/* Play icon overlay */}
+        {/* Play/Pause icon overlay */}
         <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all duration-200 rounded-full">
-          <Play className="h-6 w-6 sm:h-8 sm:w-8 text-white ml-0.5 opacity-0 group-hover:opacity-100 transition-opacity" />
+          {isPlaying ? (
+            <Pause className="h-6 w-6 sm:h-8 sm:w-8 text-white opacity-100 transition-opacity" />
+          ) : (
+            <Play className="h-6 w-6 sm:h-8 sm:w-8 text-white ml-0.5 opacity-0 group-hover:opacity-100 transition-opacity" />
+          )}
         </div>
       </button>
 
@@ -134,31 +196,39 @@ const LibraryCard: React.FC<LibraryCardProps> = ({ item, className }) => {
       <div className="flex items-center justify-center gap-2 sm:gap-3">
         {/* Like/Heart */}
         <button
-          className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-gray-100 hover:bg-red-50 flex items-center justify-center transition-colors focus:outline-none focus:ring-2 focus:ring-red-300"
+          onClick={(e) => {
+            e.stopPropagation();
+            handleLike();
+          }}
+          className={cn(
+            'w-6 h-6 sm:w-7 sm:h-7 rounded-full flex items-center justify-center transition-colors focus:outline-none focus:ring-2 focus:ring-red-300',
+            isLiked 
+              ? 'bg-red-100 text-red-500' 
+              : 'bg-gray-100 hover:bg-red-50 text-gray-600 hover:text-red-500'
+          )}
           aria-label="Like"
         >
-          <svg className="w-3 h-3 sm:w-4 sm:h-4 text-gray-600 hover:text-red-500" fill="currentColor" viewBox="0 0 20 20">
-            <path fillRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd" />
-          </svg>
+          <Heart className={cn('w-3 h-3 sm:w-4 sm:h-4', isLiked && 'fill-current')} />
         </button>
 
-        {/* Copy Link */}
+        {/* Share */}
         <button
           onClick={(e) => {
             e.stopPropagation();
-            navigator.clipboard.writeText(window.location.origin + '/library/' + item.id);
+            handleShare();
           }}
           className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-gray-100 hover:bg-blue-50 flex items-center justify-center transition-colors focus:outline-none focus:ring-2 focus:ring-blue-300"
-          aria-label="Copy link"
+          aria-label="Share"
         >
-          <svg className="w-3 h-3 sm:w-4 sm:h-4 text-gray-600 hover:text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-          </svg>
+          <Share2 className="w-3 h-3 sm:w-4 sm:h-4 text-gray-600 hover:text-blue-500" />
         </button>
 
-        {/* Share/Download */}
+        {/* Download */}
         <button
-          onClick={handleDownload}
+          onClick={(e) => {
+            e.stopPropagation();
+            handleDownload();
+          }}
           className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-gray-100 hover:bg-green-50 flex items-center justify-center transition-colors focus:outline-none focus:ring-2 focus:ring-green-300"
           aria-label="Download"
         >
@@ -169,5 +239,4 @@ const LibraryCard: React.FC<LibraryCardProps> = ({ item, className }) => {
   );
 };
 
-export default LibraryCard;
 export default LibraryCard;
