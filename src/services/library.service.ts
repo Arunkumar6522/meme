@@ -177,18 +177,8 @@ export class LibraryService {
   // Admin: Upload file to storage
   static async uploadFile(file: File, bucket: string, fileName: string): Promise<string | null> {
     try {
-      // Check if bucket exists, if not provide helpful error
-      const { data: buckets, error: listError } = await supabase.storage.listBuckets();
-      
-      if (listError) {
-        console.error('Error listing buckets:', listError);
-        throw new Error('Unable to access storage. Please check your Supabase configuration.');
-      }
-
-      const bucketExists = buckets?.some(b => b.name === bucket);
-      if (!bucketExists) {
-        throw new Error(`Storage bucket "${bucket}" does not exist. Please create it in Supabase Dashboard → Storage → Create Bucket. Required buckets: library-audio, library-video, thumbnails`);
-      }
+      // Try to upload directly - if bucket doesn't exist, Supabase will return an error
+      // This is more reliable than checking buckets first (which might fail due to permissions)
 
       const { data, error } = await supabase.storage
         .from(bucket)
@@ -199,8 +189,18 @@ export class LibraryService {
 
       if (error) {
         // Provide more helpful error messages
-        if (error.message.includes('Bucket not found')) {
-          throw new Error(`Bucket "${bucket}" not found. Please create it in Supabase Dashboard → Storage.`);
+        if (error.message.includes('Bucket not found') || error.message.includes('does not exist')) {
+          // Try to list buckets to give better error message
+          const { data: buckets } = await supabase.storage.listBuckets();
+          const existingBuckets = buckets?.map(b => b.name).join(', ') || 'none';
+          throw new Error(
+            `Storage bucket "${bucket}" does not exist.\n\n` +
+            `Required buckets: library-audio, library-video, thumbnails\n` +
+            `Existing buckets: ${existingBuckets}\n\n` +
+            `Please create the missing buckets in Supabase Dashboard → Storage → New Bucket\n` +
+            `Or use SQL Editor to create them:\n` +
+            `INSERT INTO storage.buckets (id, name, public) VALUES ('${bucket}', '${bucket}', true);`
+          );
         }
         throw error;
       }

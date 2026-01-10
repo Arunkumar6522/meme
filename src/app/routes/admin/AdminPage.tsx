@@ -111,7 +111,7 @@ const AdminDashboard: React.FC = () => {
                 <p>Required storage buckets are not set up. Uploads will fail until buckets are created.</p>
                 <p className="mt-1 font-mono text-xs">Required: library-audio, library-video, thumbnails</p>
               </div>
-              <div className="mt-4">
+              <div className="mt-4 space-y-2">
                 <Button
                   size="sm"
                   onClick={handleCreateBuckets}
@@ -120,9 +120,19 @@ const AdminDashboard: React.FC = () => {
                 >
                   {checkingBuckets ? 'Creating...' : 'Create Buckets Automatically'}
                 </Button>
-                <p className="mt-2 text-xs text-yellow-600">
-                  Or create them manually in Supabase Dashboard → Storage
-                </p>
+                <div className="text-xs text-yellow-600">
+                  <p className="font-semibold mb-1">Or create manually:</p>
+                  <p>1. Go to Supabase Dashboard → Storage</p>
+                  <p>2. Click "New bucket"</p>
+                  <p>3. Create: library-audio, library-video, thumbnails (all public)</p>
+                  <p className="mt-2 font-semibold">Or use SQL Editor:</p>
+                  <code className="block mt-1 p-2 bg-yellow-100 rounded text-xs overflow-x-auto">
+                    INSERT INTO storage.buckets (id, name, public) VALUES<br/>
+                    ('library-audio', 'library-audio', true),<br/>
+                    ('library-video', 'library-video', true),<br/>
+                    ('thumbnails', 'thumbnails', true);
+                  </code>
+                </div>
               </div>
             </div>
           </div>
