@@ -67,6 +67,14 @@ const ForgotPasswordForm: React.FC = () => {
       console.log('✅ No error, setting step to OTP...');
       console.log('📝 Step before update:', step);
       
+      // Store in sessionStorage FIRST to persist across remounts
+      try {
+        sessionStorage.setItem('forgot-password-step', 'otp');
+        sessionStorage.setItem('forgot-password-email', email);
+      } catch (e) {
+        console.warn('Could not save to sessionStorage:', e);
+      }
+      
       // Use flushSync to force synchronous state update and re-render
       flushSync(() => {
         setStep('otp');
@@ -74,6 +82,7 @@ const ForgotPasswordForm: React.FC = () => {
       });
       
       console.log('✅ Step set to otp (synchronously), component should re-render NOW');
+      console.log('✅ SessionStorage updated, step persisted');
       
       // Show success message after state update
       showSuccess('Verification code sent to your email!', 'Check Your Email');
@@ -86,38 +95,61 @@ const ForgotPasswordForm: React.FC = () => {
     }
   };
 
-  // Show OTP verification form if on OTP step
-  // Check state first, then ref as fallback
-  if (step === 'otp') {
-    console.log('✅✅✅ RENDERING OTP SCREEN - step is otp!');
-    return (
-      <OTPVerificationForm
-        key={`otp-${email}`}
-        email={email}
-        type="reset-password"
-        onBack={() => {
-          flushSync(() => {
-            setStep('form');
-            stepRef.current = 'form';
-          });
-          setErrors({});
-        }}
-      />
-    );
-  }
+  // Check sessionStorage as well in case component was remounted
+  const persistedStep = (() => {
+    try {
+      return sessionStorage.getItem('forgot-password-step') as 'form' | 'otp' | null;
+    } catch {
+      return null;
+    }
+  })();
   
-  // Fallback check using ref (shouldn't be needed but just in case)
-  if (stepRef.current === 'otp' && step !== 'otp') {
-    console.warn('⚠️ Ref says otp but state says form - forcing state update');
-    flushSync(() => {
-      setStep('otp');
-    });
+  const persistedEmail = (() => {
+    try {
+      return sessionStorage.getItem('forgot-password-email');
+    } catch {
+      return null;
+    }
+  })();
+  
+  const shouldShowOTP = step === 'otp' || stepRef.current === 'otp' || persistedStep === 'otp';
+  const emailToUse = email || persistedEmail || '';
+  
+  console.log('🎨 Render check:', {
+    step,
+    stepRef: stepRef.current,
+    persistedStep,
+    shouldShowOTP,
+    email,
+    persistedEmail,
+    emailToUse
+  });
+  
+  // Show OTP verification form if on OTP step
+  if (shouldShowOTP && emailToUse) {
+    console.log('✅✅✅ RENDERING OTP SCREEN NOW!!!');
+    
+    // Sync state if it's out of sync
+    if (step !== 'otp') {
+      console.log('🔄 Syncing state to otp from sessionStorage');
+      flushSync(() => {
+        setStep('otp');
+        stepRef.current = 'otp';
+      });
+    }
+    
     return (
       <OTPVerificationForm
-        key={`otp-${email}`}
-        email={email}
+        key={`otp-${emailToUse}`}
+        email={emailToUse}
         type="reset-password"
         onBack={() => {
+          try {
+            sessionStorage.removeItem('forgot-password-step');
+            sessionStorage.removeItem('forgot-password-email');
+          } catch (e) {
+            // Ignore
+          }
           flushSync(() => {
             setStep('form');
             stepRef.current = 'form';
