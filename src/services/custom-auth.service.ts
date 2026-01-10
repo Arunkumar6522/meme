@@ -8,9 +8,8 @@ export class CustomAuthService {
       // Normalize email
       const normalizedEmail = email.trim().toLowerCase();
       
-      // Validate email format
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(normalizedEmail)) {
+      // Validate email format (use shared validator)
+      if (!OTPService.validateEmail(normalizedEmail)) {
         return { error: 'Invalid email address format' };
       }
       
@@ -137,9 +136,8 @@ export class CustomAuthService {
       // Normalize email
       const normalizedEmail = email.trim().toLowerCase();
       
-      // Validate email format
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(normalizedEmail)) {
+      // Validate email format (use shared validator)
+      if (!OTPService.validateEmail(normalizedEmail)) {
         return { error: 'Invalid email address format' };
       }
 

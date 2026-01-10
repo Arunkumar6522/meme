@@ -15,6 +15,14 @@ export class OTPService {
     return Math.floor(100000 + Math.random() * 900000).toString();
   }
 
+  // Validate email format (strict, with min TLD length 2 and length bounds)
+  static validateEmail(email: string): boolean {
+    const normalized = email.trim().toLowerCase();
+    // Allow subdomains; require TLD of at least 2 chars; length within 6..254
+    const emailRegex = /^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/i;
+    return normalized.length >= 6 && normalized.length <= 254 && emailRegex.test(normalized);
+  }
+
   // Check if user exists in database
   // Uses auth.users table via admin API or checks public.users with proper error handling
   static async checkUserExists(email: string, allowRLSFallback: boolean = false): Promise<boolean> {
@@ -23,8 +31,7 @@ export class OTPService {
       const normalizedEmail = email.trim().toLowerCase();
       
       // Validate email format first
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(normalizedEmail)) {
+      if (!OTPService.validateEmail(normalizedEmail)) {
         console.warn('Invalid email format:', normalizedEmail);
         return false;
       }
