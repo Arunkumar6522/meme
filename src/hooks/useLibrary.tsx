@@ -102,34 +102,70 @@ export const useLibraryItem = (id: string) => {
   }, [id]);
 
   const downloadItem = useCallback(async () => {
-    if (!item) return null;
+    if (!item) {
+      throw new Error('Item not found');
+    }
 
     try {
-      // Increment download count
-      await LibraryService.incrementDownloadCount(item.id);
+      // Increment download count (don't wait for it to complete)
+      LibraryService.incrementDownloadCount(item.id).catch(err => {
+        console.warn('Failed to increment download count:', err);
+      });
       
-      // Get download URL
-      const downloadUrl = await LibraryService.getDownloadUrl(item.file_url);
+      // Use the file_url directly - it should be a public URL from Supabase storage
+      const downloadUrl = item.file_url;
       
-      if (downloadUrl) {
+      if (!downloadUrl) {
+        throw new Error('File URL not available');
+      }
+
+      // Fetch the file and create a blob URL for download
+      try {
+        const response = await fetch(downloadUrl);
+        if (!response.ok) {
+          throw new Error(`Failed to fetch file: ${response.statusText}`);
+        }
+        
+        const blob = await response.blob();
+        const blobUrl = window.URL.createObjectURL(blob);
+        
         // Trigger download
         const link = document.createElement('a');
-        link.href = downloadUrl;
-        link.download = `${item.title}.${item.media_type === 'audio' ? 'mp3' : 'mp4'}`;
+        link.href = blobUrl;
+        link.download = `${item.title.replace(/[^a-z0-9]/gi, '_')}.${item.media_type === 'audio' ? 'mp3' : 'mp4'}`;
+        link.style.display = 'none';
         document.body.appendChild(link);
         link.click();
-        document.body.removeChild(link);
+        
+        // Cleanup
+        setTimeout(() => {
+          document.body.removeChild(link);
+          window.URL.revokeObjectURL(blobUrl);
+        }, 100);
         
         // Update local state
         setItem(prev => prev ? { ...prev, download_count: prev.download_count + 1 } : null);
         
         return downloadUrl;
+      } catch (fetchError) {
+        // Fallback: try direct download link
+        const link = document.createElement('a');
+        link.href = downloadUrl;
+        link.download = `${item.title.replace(/[^a-z0-9]/gi, '_')}.${item.media_type === 'audio' ? 'mp3' : 'mp4'}`;
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        link.style.display = 'none';
+        document.body.appendChild(link);
+        link.click();
+        setTimeout(() => {
+          document.body.removeChild(link);
+        }, 100);
+        
+        return downloadUrl;
       }
-      
-      return null;
     } catch (err) {
       console.error('Error downloading item:', err);
-      return null;
+      throw err; // Re-throw to show error to user
     }
   }, [item]);
 
