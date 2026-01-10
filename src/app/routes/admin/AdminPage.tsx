@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Routes, Route, Link } from 'react-router-dom';
-import { Upload, Users, BarChart3, Settings, ArrowLeft } from 'lucide-react';
+import { Upload, Users, BarChart3, Settings, ArrowLeft, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui';
 import UploadForm from '@/features/admin/UploadForm';
 import { useToast } from '@/hooks/useToast';
+import { createStorageBuckets } from '@/utils/createStorageBuckets';
 
 const AdminPage: React.FC = () => {
   return (
@@ -21,6 +22,45 @@ const AdminPage: React.FC = () => {
 };
 
 const AdminDashboard: React.FC = () => {
+  const { showSuccess, showError } = useToast();
+  const [checkingBuckets, setCheckingBuckets] = useState(false);
+  const [bucketsStatus, setBucketsStatus] = useState<'unknown' | 'exists' | 'missing'>('unknown');
+
+  // Check if buckets exist on mount
+  useEffect(() => {
+    checkBuckets();
+  }, []);
+
+  const checkBuckets = async () => {
+    try {
+      const { data: buckets } = await supabase.storage.listBuckets();
+      const requiredBuckets = ['library-audio', 'library-video', 'thumbnails'];
+      const existingBuckets = buckets?.map(b => b.name) || [];
+      const allExist = requiredBuckets.every(name => existingBuckets.includes(name));
+      setBucketsStatus(allExist ? 'exists' : 'missing');
+    } catch (error) {
+      setBucketsStatus('unknown');
+    }
+  };
+
+  const handleCreateBuckets = async () => {
+    setCheckingBuckets(true);
+    try {
+      const result = await createStorageBuckets();
+      if (result.success) {
+        showSuccess('Storage buckets created successfully!', 'Setup Complete');
+        setBucketsStatus('exists');
+      } else {
+        showError(result.message, 'Bucket Creation');
+      }
+    } catch (error: any) {
+      showError(error.message || 'Failed to create buckets. Please create them manually in Supabase Dashboard.', 'Error');
+    } finally {
+      setCheckingBuckets(false);
+      checkBuckets();
+    }
+  };
+
   const stats = [
     { label: 'Total Memes', value: '10,247', change: '+127 today' },
     { label: 'Total Users', value: '52,891', change: '+89 today' },
@@ -55,6 +95,39 @@ const AdminDashboard: React.FC = () => {
           </div>
         ))}
       </div>
+
+      {/* Storage Buckets Warning */}
+      {bucketsStatus === 'missing' && (
+        <div className="mb-8 rounded-md bg-yellow-50 p-4 border border-yellow-200">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <AlertCircle className="h-5 w-5 text-yellow-400" />
+            </div>
+            <div className="ml-3 flex-1">
+              <h3 className="text-sm font-medium text-yellow-800">
+                Storage Buckets Missing
+              </h3>
+              <div className="mt-2 text-sm text-yellow-700">
+                <p>Required storage buckets are not set up. Uploads will fail until buckets are created.</p>
+                <p className="mt-1 font-mono text-xs">Required: library-audio, library-video, thumbnails</p>
+              </div>
+              <div className="mt-4">
+                <Button
+                  size="sm"
+                  onClick={handleCreateBuckets}
+                  loading={checkingBuckets}
+                  disabled={checkingBuckets}
+                >
+                  {checkingBuckets ? 'Creating...' : 'Create Buckets Automatically'}
+                </Button>
+                <p className="mt-2 text-xs text-yellow-600">
+                  Or create them manually in Supabase Dashboard → Storage
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Quick Actions */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
