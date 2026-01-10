@@ -21,6 +21,9 @@ const OTPVerificationForm: React.FC<OTPVerificationFormProps> = ({ email, type, 
   const { verifyOTP, resendOTP } = useAuth();
   const { showSuccess, showError } = useToast();
 
+  // Normalize email for display and use
+  const normalizedEmail = email.trim().toLowerCase();
+
   // Get dev code from sessionStorage in development mode
   useEffect(() => {
     if (import.meta.env.MODE === 'development') {
