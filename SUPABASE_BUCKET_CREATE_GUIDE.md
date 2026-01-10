@@ -81,24 +81,58 @@ After creating buckets, you should see:
 - Each bucket shows "Public" badge
 - You can click on each bucket to see its contents (will be empty initially)
 
-## Set Storage Policies
+## Set Storage Policies (CRITICAL!)
 
-After creating buckets, set up policies:
+After creating buckets, you MUST set up storage policies. Without policies, uploads will fail with "row-level security policy" error.
 
-1. Click on each bucket name
+### Quick Method: Use SQL Editor (Recommended)
+
+1. Go to **SQL Editor** in Supabase Dashboard
+2. Click **"New query"**
+3. Copy and paste the entire contents of `STORAGE_POLICIES_SETUP.sql` file
+4. Click **"Run"**
+5. You should see "Success" message
+
+### Manual Method: Via UI
+
+For each bucket (`library-audio`, `library-video`, `thumbnails`):
+
+1. Click on the bucket name
 2. Go to **"Policies"** tab
 3. Click **"New Policy"**
-4. Create these policies for each bucket:
+4. Create these policies:
 
 **Policy 1: Public Read**
-- Name: "Public read access"
-- Operation: SELECT
-- Policy: `true`
+- Policy name: "Public read access"
+- Allowed operation: SELECT
+- Policy definition: `true`
 
 **Policy 2: Admin Upload**
-- Name: "Admin upload access"  
-- Operation: INSERT
-- Policy:
+- Policy name: "Admin upload access"  
+- Allowed operation: INSERT
+- Policy definition:
+```sql
+EXISTS (
+  SELECT 1 FROM public.users 
+  WHERE id = auth.uid() AND role = 'admin'
+)
+```
+
+**Policy 3: Admin Update** (optional but recommended)
+- Policy name: "Admin update access"
+- Allowed operation: UPDATE
+- Policy definition:
+```sql
+EXISTS (
+  SELECT 1 FROM public.users 
+  WHERE id = auth.uid() AND role = 'admin'
+)
+```
+
+**Policy 4: Admin Delete** (optional but recommended)
+- Policy name: "Admin delete access"
+- Allowed operation: DELETE
+- Policy definition:
 ```sql
 EXISTS (
   SELECT 1 FROM public.users 
