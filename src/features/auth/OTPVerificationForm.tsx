@@ -25,7 +25,7 @@ const OTPVerificationForm: React.FC<OTPVerificationFormProps> = ({ email, type, 
   useEffect(() => {
     if (import.meta.env.MODE === 'development') {
       try {
-        const storedCode = sessionStorage.getItem(`dev_otp_${email}`);
+        const storedCode = sessionStorage.getItem(`dev_otp_${normalizedEmail}`);
         if (storedCode) {
           setDevCode(storedCode);
         }
@@ -33,7 +33,7 @@ const OTPVerificationForm: React.FC<OTPVerificationFormProps> = ({ email, type, 
         // Ignore if sessionStorage unavailable
       }
     }
-  }, [email]);
+  }, [normalizedEmail]);
 
   useEffect(() => {
     // Focus first input on mount
@@ -95,10 +95,7 @@ const OTPVerificationForm: React.FC<OTPVerificationFormProps> = ({ email, type, 
       return;
     }
 
-    // Normalize email
-    const normalizedEmail = email.trim().toLowerCase();
-    
-    // Validate email format
+    // Validate email format (use normalizedEmail from component scope)
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(normalizedEmail)) {
       setError('Invalid email address');
@@ -149,7 +146,7 @@ const OTPVerificationForm: React.FC<OTPVerificationFormProps> = ({ email, type, 
     setError(null);
 
     try {
-      const { error } = await resendOTP(email, type);
+      const { error } = await resendOTP(normalizedEmail, type);
       
       if (error) {
         showError(error, 'Resend Failed');
@@ -190,7 +187,18 @@ const OTPVerificationForm: React.FC<OTPVerificationFormProps> = ({ email, type, 
         <p className="mt-2 text-xs sm:text-sm text-gray-600">
           We sent a 6-digit code to:
         </p>
-        <p className="mt-1 text-xs sm:text-sm font-medium text-gray-900 break-all px-2">{email}</p>
+        <p 
+          className="mt-1 text-xs sm:text-sm font-medium text-gray-900 px-2" 
+          style={{ 
+            wordBreak: 'break-word', 
+            overflowWrap: 'break-word',
+            maxWidth: '100%',
+            overflow: 'visible'
+          }}
+          title={normalizedEmail}
+        >
+          {normalizedEmail}
+        </p>
       </div>
 
       {error && (
