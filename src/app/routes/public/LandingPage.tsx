@@ -1,10 +1,21 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
-import { Play, Download, Search, Zap } from 'lucide-react';
-import { Button } from '@/components/ui';
+import { Link, useNavigate } from 'react-router-dom';
+import { Play, Download, Search, Zap, Lock } from 'lucide-react';
+import { Button, SkeletonCard } from '@/components/ui';
 import { BannerAd } from '@/components/ads/AdBanner';
+import { useLibrary } from '@/hooks/useLibrary';
+import { useAuth } from '@/hooks/useAuth';
+import LibraryCard from '@/components/library/LibraryCard';
 
 const LandingPage: React.FC = () => {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+
+  // Fetch top 10 audio memes for public preview
+  const {
+    data: topAudios,
+    loading: topAudiosLoading,
+  } = useLibrary({ media_type: 'audio', sort_by: 'trending' }, 1, 10);
   const features = [
     {
       icon: Search,
@@ -67,6 +78,69 @@ const LandingPage: React.FC = () => {
         {/* Background decoration */}
         <div className="absolute inset-x-0 top-[calc(100%-13rem)] -z-10 transform-gpu overflow-hidden blur-3xl sm:top-[calc(100%-30rem)]">
           <div className="relative left-[calc(50%+3rem)] aspect-[1155/678] w-[36.125rem] -translate-x-1/2 bg-gradient-to-tr from-primary-200 to-primary-400 opacity-30 sm:left-[calc(50%+36rem)] sm:w-[72.1875rem]" />
+        </div>
+      </div>
+
+      {/* Top Audios Preview (public) */}
+      <div className="bg-gray-50">
+        <div className="mx-auto max-w-7xl px-4 py-12 sm:py-16 lg:py-20 sm:px-6 lg:px-8">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+            <div>
+              <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">Top 10 Audio Memes</h2>
+              <p className="mt-2 text-sm sm:text-base text-gray-600">
+                Preview the hottest audio memes. Sign in to unlock the full library.
+              </p>
+            </div>
+            <div className="flex gap-3">
+              {!user && (
+                <Button
+                  variant="outline"
+                  onClick={() => navigate('/auth/login')}
+                  className="flex items-center gap-2"
+                >
+                  <Lock className="h-4 w-4" />
+                  Unlock Full Library
+                </Button>
+              )}
+              <Button onClick={() => navigate('/library')}>Go to Library</Button>
+            </div>
+          </div>
+
+          <div
+            className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 sm:gap-6 justify-items-center"
+            aria-label="Top audio memes"
+          >
+            {topAudiosLoading &&
+              Array.from({ length: 10 }).map((_, idx) => <SkeletonCard key={idx} />)}
+
+            {!topAudiosLoading && topAudios && topAudios.length > 0 && topAudios.map((item) => (
+              <LibraryCard key={item.id} item={item} />
+            ))}
+
+            {!topAudiosLoading && (!topAudios || topAudios.length === 0) && (
+              <div className="col-span-full text-center text-gray-600">
+                No audio memes available yet. Check back soon!
+              </div>
+            )}
+          </div>
+
+          {!user && (
+            <div className="mt-8 flex flex-col sm:flex-row items-center justify-between gap-3 rounded-lg border border-gray-200 bg-white p-4 sm:p-5">
+              <div className="flex items-center gap-3 text-gray-700">
+                <Lock className="h-5 w-5 text-primary-600" />
+                <div>
+                  <p className="font-semibold">Want more? Unlock the full library</p>
+                  <p className="text-sm text-gray-600">
+                    Sign in to browse all audio and video memes, downloads, and filters.
+                  </p>
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <Button variant="outline" onClick={() => navigate('/auth/login')}>Sign In</Button>
+                <Button onClick={() => navigate('/auth/register')}>Create Account</Button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
