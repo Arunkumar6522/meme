@@ -38,9 +38,20 @@ const RegisterForm: React.FC = () => {
       const persistedStep = sessionStorage.getItem('register-step');
       const persistedEmail = sessionStorage.getItem('register-email');
       
-      // Only restore if we have both step and email, and email is valid
+      // Only restore if we have both step and email, and email is FULLY valid
+      // Must be a complete, valid email address (not partial)
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (persistedStep === 'otp' && persistedEmail && emailRegex.test(persistedEmail.trim().toLowerCase())) {
+      const normalizedPersistedEmail = persistedEmail?.trim().toLowerCase() || '';
+      
+      // CRITICAL: Only restore OTP step if:
+      // 1. Step is 'otp'
+      // 2. Email exists and is not empty
+      // 3. Email is FULLY valid (matches regex completely)
+      // 4. Email is at least 5 characters (a@b.c minimum)
+      if (persistedStep === 'otp' && 
+          normalizedPersistedEmail && 
+          normalizedPersistedEmail.length >= 5 &&
+          emailRegex.test(normalizedPersistedEmail)) {
         // Restore OTP step
         setStep('otp');
         stepRef.current = 'otp';
@@ -50,13 +61,17 @@ const RegisterForm: React.FC = () => {
         if (savedFormData) {
           try {
             const parsed = JSON.parse(savedFormData);
-            setFormData(parsed);
+            // Only restore if the email matches
+            if (parsed.email && parsed.email.trim().toLowerCase() === normalizedPersistedEmail) {
+              setFormData(parsed);
+            }
           } catch (e) {
             // Ignore parse errors
           }
         }
       } else {
         // Clear everything - fresh start
+        // This ensures we don't show OTP screen with incomplete emails
         sessionStorage.removeItem('register-step');
         sessionStorage.removeItem('register-email');
         sessionStorage.removeItem('register-form-data');
@@ -277,12 +292,18 @@ const RegisterForm: React.FC = () => {
 
   // Show OTP verification form ONLY if:
   // 1. Step is 'otp'
-  // 2. Email is valid
-  // 3. NO errors exist (critical - don't show OTP if there's an error)
-  // 4. We have a valid email in formData
+  // 2. Email exists and is not empty
+  // 3. Email is FULLY valid (complete email address, not partial)
+  // 4. Email is at least 5 characters (minimum: a@b.c)
+  // 5. NO errors exist (critical - don't show OTP if there's an error)
+  // 6. We have a valid email in formData
+  const normalizedEmail = formData.email?.trim().toLowerCase() || '';
+  const isEmailComplete = normalizedEmail.length >= 5 && validateEmail(normalizedEmail);
+  
   const shouldShowOTP = step === 'otp' && 
-                        formData.email && 
-                        validateEmail(formData.email) && 
+                        normalizedEmail && 
+                        normalizedEmail.length >= 5 &&
+                        isEmailComplete && 
                         !errors.general &&
                         Object.keys(errors).length === 0;
 
