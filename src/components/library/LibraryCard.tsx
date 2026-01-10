@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
-import { Play, Download, Volume2, Video } from 'lucide-react';
-import { Button } from '@/components/ui';
+import React, { useState, useEffect } from 'react';
+import { Play, Pause, Download, Share2, Heart, Volume2, Video } from 'lucide-react';
 import { useLibraryItem } from '@/hooks/useLibrary';
+import { useToast } from '@/hooks/useToast';
 import type { LibraryItem } from '@/types';
 import { cn } from '@/utils/cn';
 
