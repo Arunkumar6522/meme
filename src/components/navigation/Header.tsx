@@ -10,6 +10,11 @@ import { cn } from '@/utils/cn';
 const adminStatusCache = new Map<string, { status: boolean; timestamp: number }>();
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
+// Export function to clear admin cache (used on logout)
+export const clearAdminCache = () => {
+  adminStatusCache.clear();
+};
+
 const Header: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);

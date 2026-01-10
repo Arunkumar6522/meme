@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { AuthService } from '@/services/auth.service';
+import { clearAdminCache } from '@/components/navigation/Header';
 import type { AuthUser, AuthState } from '@/types';
 
 interface AuthContextType extends AuthState {
@@ -70,7 +71,38 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signOut = async () => {
     setState(prev => ({ ...prev, loading: true, error: null }));
+    
+    // Clear all local storage and session storage
+    try {
+      // Clear localStorage
+      localStorage.clear();
+      
+      // Clear sessionStorage (but keep it selective to avoid clearing other tabs' data)
+      // Clear auth-related sessionStorage items
+      const keysToRemove: string[] = [];
+      for (let i = 0; i < sessionStorage.length; i++) {
+        const key = sessionStorage.key(i);
+        if (key && (
+          key.startsWith('register-') ||
+          key.startsWith('forgot-password-') ||
+          key.startsWith('dev_otp_') ||
+          key.startsWith('login-') ||
+          key.startsWith('pending_')
+        )) {
+          keysToRemove.push(key);
+        }
+      }
+      keysToRemove.forEach(key => sessionStorage.removeItem(key));
+    } catch (e) {
+      console.warn('Error clearing storage:', e);
+    }
+    
+    // Sign out from Supabase
     const { error } = await AuthService.signOut();
+    
+    // Clear admin cache
+    clearAdminCache();
+    
     setState(prev => ({ ...prev, user: null, loading: false, error }));
     return { error };
   };

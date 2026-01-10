@@ -207,7 +207,12 @@ const RegisterForm: React.FC = () => {
 
   const persistedEmail = (() => {
     try {
-      return sessionStorage.getItem('register-email') || formData.email;
+      const stored = sessionStorage.getItem('register-email');
+      // Validate email format before using
+      if (stored && /\S+@\S+\.\S+/.test(stored)) {
+        return stored;
+      }
+      return formData.email;
     } catch {
       return formData.email;
     }
@@ -215,9 +220,12 @@ const RegisterForm: React.FC = () => {
 
   const shouldShowOTP = step === 'otp' || stepRef.current === 'otp' || persistedStep === 'otp';
   const emailToUse = persistedEmail || formData.email;
+  
+  // Validate email format before showing OTP screen
+  const isValidEmail = emailToUse && /\S+@\S+\.\S+/.test(emailToUse);
 
-  // Show OTP verification form if on OTP step
-  if (shouldShowOTP && emailToUse) {
+  // Show OTP verification form if on OTP step and email is valid
+  if (shouldShowOTP && isValidEmail) {
     // Sync state if it's out of sync
     if (step !== 'otp') {
       flushSync(() => {

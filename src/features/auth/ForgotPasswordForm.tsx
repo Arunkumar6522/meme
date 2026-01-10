@@ -42,12 +42,6 @@ const ForgotPasswordForm: React.FC = () => {
     stepRef.current = step;
   }, [step]);
 
-  // Debug: Log step changes
-  useEffect(() => {
-    if (import.meta.env.MODE === 'development') {
-      console.log('🔍 ForgotPasswordForm step changed to:', step);
-    }
-  }, [step]);
 
   // Clear sessionStorage on mount if email is empty (fresh start)
   useEffect(() => {
@@ -83,31 +77,21 @@ const ForgotPasswordForm: React.FC = () => {
     setErrors({});
 
     try {
-      console.log('🚀 Starting password reset for:', email);
       const result = await resetPassword(email);
-      
-      console.log('📦 resetPassword result:', JSON.stringify(result, null, 2));
-      console.log('📊 Current step state:', step);
-      console.log('❓ Has error?', !!result?.error);
       
       // Check if there's an error
       if (result?.error) {
-        console.error('❌ Error in resetPassword:', result.error);
         setErrors({ general: result.error });
         showError(result.error, 'Password Reset Failed');
         return;
       }
 
-      // Success - FORCE step update to OTP using flushSync for immediate render
-      console.log('✅ No error, setting step to OTP...');
-      console.log('📝 Step before update:', step);
-      
-      // Store in sessionStorage FIRST to persist across remounts
+      // Success - Store email in sessionStorage and update step
       try {
         sessionStorage.setItem('forgot-password-step', 'otp');
         sessionStorage.setItem('forgot-password-email', email);
       } catch (e) {
-        console.warn('Could not save to sessionStorage:', e);
+        // Ignore sessionStorage errors
       }
       
       // Use flushSync to force synchronous state update and re-render
@@ -115,9 +99,6 @@ const ForgotPasswordForm: React.FC = () => {
         setStep('otp');
         stepRef.current = 'otp';
       });
-      
-      console.log('✅ Step set to otp (synchronously), component should re-render NOW');
-      console.log('✅ SessionStorage updated, step persisted');
       
       // Show success message after state update
       showSuccess('Verification code sent to your email!', 'Check Your Email');
@@ -141,32 +122,28 @@ const ForgotPasswordForm: React.FC = () => {
   
   const persistedEmail = (() => {
     try {
-      return sessionStorage.getItem('forgot-password-email');
+      const stored = sessionStorage.getItem('forgot-password-email');
+      // Validate email format before using
+      if (stored && /\S+@\S+\.\S+/.test(stored)) {
+        return stored;
+      }
+      return null;
     } catch {
       return null;
     }
   })();
   
   const shouldShowOTP = step === 'otp' || stepRef.current === 'otp' || persistedStep === 'otp';
+  // Only use persisted email if current email is empty and persisted email is valid
   const emailToUse = email || persistedEmail || '';
   
-  console.log('🎨 Render check:', {
-    step,
-    stepRef: stepRef.current,
-    persistedStep,
-    shouldShowOTP,
-    email,
-    persistedEmail,
-    emailToUse
-  });
+  // Validate email format before showing OTP screen
+  const isValidEmail = emailToUse && /\S+@\S+\.\S+/.test(emailToUse);
   
-  // Show OTP verification form if on OTP step
-  if (shouldShowOTP && emailToUse) {
-    console.log('✅✅✅ RENDERING OTP SCREEN NOW!!!');
-    
+  // Show OTP verification form if on OTP step and email is valid
+  if (shouldShowOTP && isValidEmail) {
     // Sync state if it's out of sync
     if (step !== 'otp') {
-      console.log('🔄 Syncing state to otp from sessionStorage');
       flushSync(() => {
         setStep('otp');
         stepRef.current = 'otp';
@@ -189,6 +166,7 @@ const ForgotPasswordForm: React.FC = () => {
             setStep('form');
             stepRef.current = 'form';
           });
+          setEmail(''); // Clear email field
           setErrors({});
         }}
       />
