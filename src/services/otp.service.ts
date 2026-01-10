@@ -130,7 +130,7 @@ export class OTPService {
       const normalizedEmail = email.trim().toLowerCase();
       
       // Validate email format
-      if (!this.validateEmail(normalizedEmail)) {
+      if (!OTPService.validateEmail(normalizedEmail)) {
         return { valid: false, error: 'Invalid email format' };
       }
       
