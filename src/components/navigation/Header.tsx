@@ -1,15 +1,34 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Menu, X, User, LogOut, Settings } from 'lucide-react';
+import { Menu, X, User, LogOut, Settings, Shield } from 'lucide-react';
 import { Button } from '@/components/ui';
 import { useAuth } from '@/hooks/useAuth';
+import { DatabaseService } from '@/services/database.service';
 import { cn } from '@/utils/cn';
 
 const Header: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
+
+  // Check if user is admin
+  useEffect(() => {
+    const checkAdmin = async () => {
+      if (user?.id) {
+        try {
+          const adminStatus = await DatabaseService.isUserAdmin(user.id);
+          setIsAdmin(adminStatus);
+        } catch (error) {
+          setIsAdmin(false);
+        }
+      } else {
+        setIsAdmin(false);
+      }
+    };
+    checkAdmin();
+  }, [user?.id]);
 
   const handleSignOut = async () => {
     await signOut();
@@ -58,31 +77,46 @@ const Header: React.FC = () => {
           </nav>
 
           {/* User Menu / Auth Buttons */}
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2 sm:space-x-4">
             {user ? (
-              <div className="relative">
-                <button
-                  onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                  className="flex items-center space-x-2 text-sm bg-white rounded-full focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 p-1"
-                  aria-expanded={isUserMenuOpen}
-                  aria-haspopup="true"
-                  aria-label="User menu"
-                >
-                  <div className="h-8 w-8 bg-primary-100 rounded-full flex items-center justify-center">
-                    {user.user_metadata?.avatar_url ? (
-                      <img
-                        src={user.user_metadata.avatar_url}
-                        alt="Profile"
-                        className="h-8 w-8 rounded-full"
-                      />
-                    ) : (
-                      <User className="h-4 w-4 text-primary-600" aria-hidden="true" />
-                    )}
-                  </div>
-                  <span className="hidden md:block text-gray-700">
-                    {user.user_metadata?.full_name || user.email}
-                  </span>
-                </button>
+              <>
+                {/* Admin Button */}
+                {isAdmin && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => navigate('/admin/upload')}
+                    className="hidden sm:flex items-center gap-2"
+                    aria-label="Admin Upload"
+                  >
+                    <Shield className="h-4 w-4" />
+                    <span className="hidden md:inline">Admin</span>
+                  </Button>
+                )}
+                
+                <div className="relative">
+                  <button
+                    onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                    className="flex items-center space-x-2 text-sm bg-white rounded-full focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 p-1"
+                    aria-expanded={isUserMenuOpen}
+                    aria-haspopup="true"
+                    aria-label="User menu"
+                  >
+                    <div className="h-8 w-8 bg-primary-100 rounded-full flex items-center justify-center">
+                      {user.user_metadata?.avatar_url ? (
+                        <img
+                          src={user.user_metadata.avatar_url}
+                          alt="Profile"
+                          className="h-8 w-8 rounded-full"
+                        />
+                      ) : (
+                        <User className="h-4 w-4 text-primary-600" aria-hidden="true" />
+                      )}
+                    </div>
+                    <span className="hidden md:block text-gray-700">
+                      {user.user_metadata?.full_name || user.email}
+                    </span>
+                  </button>
 
                 {/* User Dropdown */}
                 {isUserMenuOpen && (
@@ -107,7 +141,8 @@ const Header: React.FC = () => {
                     </button>
                   </div>
                 )}
-              </div>
+                </div>
+              </>
             ) : (
               <div className="flex items-center space-x-2">
                 <Button
@@ -156,6 +191,17 @@ const Header: React.FC = () => {
                   {item.name}
                 </Link>
               ))}
+              
+              {user && isAdmin && (
+                <Link
+                  to="/admin/upload"
+                  className="flex items-center px-3 py-2 text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  <Shield className="h-5 w-5 mr-3" aria-hidden="true" />
+                  Admin Upload
+                </Link>
+              )}
               
               {user && (
                 <>
