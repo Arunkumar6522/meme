@@ -1,13 +1,20 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Upload, Plus } from 'lucide-react';
 import LibraryFilters from '@/components/library/LibraryFilters';
 import LibraryGrid from '@/components/library/LibraryGrid';
 import Pagination from '@/components/library/Pagination';
 import { BannerAd, MobileAd } from '@/components/ads/AdBanner';
 import { Button } from '@/components/ui';
 import { useLibrary } from '@/hooks/useLibrary';
+import { useAuth } from '@/hooks/useAuth';
+import { DatabaseService } from '@/services/database.service';
 import type { LibraryFilters as LibraryFiltersType } from '@/types';
 
 const LibraryPage: React.FC = () => {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const [isAdmin, setIsAdmin] = useState(false);
   const [filters, setFilters] = useState<LibraryFiltersType>({
     sort_by: 'latest',
   });
@@ -22,6 +29,21 @@ const LibraryPage: React.FC = () => {
     updateFilters,
     goToPage,
   } = useLibrary(filters);
+
+  // Check if user is admin
+  useEffect(() => {
+    const checkAdmin = async () => {
+      if (user?.id) {
+        try {
+          const adminStatus = await DatabaseService.isUserAdmin(user.id);
+          setIsAdmin(adminStatus);
+        } catch (error) {
+          setIsAdmin(false);
+        }
+      }
+    };
+    checkAdmin();
+  }, [user?.id]);
 
   const handleFiltersChange = (newFilters: LibraryFiltersType) => {
     setFilters(newFilters);
@@ -45,14 +67,27 @@ const LibraryPage: React.FC = () => {
                 </p>
               )}
             </div>
-            <Button
-              onClick={() => {
-                alert('Feature coming soon! Create Meme functionality will be available in a future update.');
-              }}
-              className="w-full sm:w-auto"
-            >
-              Create Meme
-            </Button>
+            <div className="flex items-center gap-3">
+              {isAdmin && (
+                <Button
+                  onClick={() => navigate('/admin/upload')}
+                  className="w-full sm:w-auto flex items-center gap-2"
+                >
+                  <Upload className="h-4 w-4" />
+                  <span>Upload Meme</span>
+                </Button>
+              )}
+              <Button
+                onClick={() => {
+                  alert('Feature coming soon! Create Meme functionality will be available in a future update.');
+                }}
+                variant="outline"
+                className="w-full sm:w-auto flex items-center gap-2"
+              >
+                <Plus className="h-4 w-4" />
+                <span>Create Meme</span>
+              </Button>
+            </div>
           </div>
         </div>
 
