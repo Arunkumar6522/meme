@@ -110,20 +110,6 @@ export class AuthService {
     }
   }
 
-  // Update password
-  static async updatePassword(password: string) {
-    try {
-      const { data, error } = await supabase.auth.updateUser({
-        password,
-      });
-
-      if (error) throw error;
-      return { data, error: null };
-    } catch (error) {
-      return { data: null, error: (error as Error).message };
-    }
-  }
-
   // Get current user
   static async getCurrentUser(): Promise<AuthUser | null> {
     try {
