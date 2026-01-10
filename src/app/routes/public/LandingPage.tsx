@@ -48,6 +48,16 @@ const LandingPage: React.FC = () => {
 
   return (
     <div className="bg-white">
+      {/* Side Ads (desktop only) */}
+      <div className="hidden lg:block">
+        <div className="fixed left-4 top-32 z-20">
+          <BannerAd className="w-48" />
+        </div>
+        <div className="fixed right-4 top-32 z-20">
+          <BannerAd className="w-48" />
+        </div>
+      </div>
+
       {/* Hero Section */}
       <div className="relative overflow-hidden">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16 sm:py-24 lg:py-32">
