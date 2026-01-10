@@ -5,15 +5,24 @@ export class CustomAuthService {
   // Send password reset OTP (checks if user exists first)
   static async sendPasswordResetOTP(email: string): Promise<{ error: string | null }> {
     try {
-      console.log(`📧 Sending password reset OTP to ${email}...`);
+      // Normalize email
+      const normalizedEmail = email.trim().toLowerCase();
       
-      // Try to check if user exists (but don't fail if RLS blocks it)
+      // Validate email format
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(normalizedEmail)) {
+        return { error: 'Invalid email address format' };
+      }
+      
+      console.log(`📧 Sending password reset OTP to ${normalizedEmail}...`);
+      
+      // Try to check if user exists (allow RLS fallback for password reset)
       // If RLS blocks the check, we'll proceed anyway - email service will handle non-existent users
       let userExists = false;
       try {
-        userExists = await OTPService.checkUserExists(email);
+        userExists = await OTPService.checkUserExists(normalizedEmail, true); // Allow RLS fallback
       } catch (checkError) {
-        // If check fails due to RLS, proceed anyway
+        // If check fails due to RLS, proceed anyway for password reset
         console.warn('User existence check failed, proceeding with OTP send:', checkError);
         userExists = true; // Assume user exists to allow OTP send
       }
@@ -30,21 +39,21 @@ export class CustomAuthService {
       // Generate OTP code
       const otpCode = OTPService.generateOTPCode();
 
-      // Send OTP email
-      const result = await OTPService.sendOTPEmail(email, otpCode, 'password_reset');
+      // Send OTP email (use normalized email)
+      const result = await OTPService.sendOTPEmail(normalizedEmail, otpCode, 'password_reset');
       
       if (result.error) {
         console.error('❌ Failed to send password reset OTP:', result.error);
         return { error: result.error };
       }
 
-      console.log(`✅ Password reset OTP sent successfully to ${email}`);
+      console.log(`✅ Password reset OTP sent successfully to ${normalizedEmail}`);
 
       // In development, store the code for testing (never expose in production)
       if (import.meta.env.MODE === 'development' && result.devCode) {
         try {
-          sessionStorage.setItem(`dev_otp_${email}`, result.devCode);
-          console.log(`💡 Development mode: OTP code stored in sessionStorage (key: dev_otp_${email})`);
+          sessionStorage.setItem(`dev_otp_${normalizedEmail}`, result.devCode);
+          console.log(`💡 Development mode: OTP code stored in sessionStorage (key: dev_otp_${normalizedEmail})`);
           console.log(`💡 To test email sending, run 'netlify dev' instead of 'npm run dev'`);
         } catch (e) {
           // Ignore if sessionStorage unavailable
@@ -125,40 +134,65 @@ export class CustomAuthService {
   // Send signup OTP
   static async sendSignupOTP(email: string, password: string, fullName?: string): Promise<{ error: string | null }> {
     try {
-      // Check if user already exists
-      const userExists = await OTPService.checkUserExists(email);
+      // Normalize email
+      const normalizedEmail = email.trim().toLowerCase();
+      
+      // Validate email format
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(normalizedEmail)) {
+        return { error: 'Invalid email address format' };
+      }
+
+      // Validate password
+      if (!password || password.length < 6) {
+        return { error: 'Password must be at least 6 characters' };
+      }
+
+      if (password.length > 128) {
+        return { error: 'Password is too long (maximum 128 characters)' };
+      }
+
+      // Check if user already exists (don't allow RLS fallback for signup)
+      let userExists = false;
+      try {
+        userExists = await OTPService.checkUserExists(normalizedEmail, false);
+      } catch (checkError: any) {
+        // If RLS blocks the check, we can't proceed with signup
+        console.error('Cannot verify if user exists:', checkError);
+        return { error: 'Unable to verify account status. Please check your Supabase RLS policies or try again later.' };
+      }
       
       if (userExists) {
-        return { error: 'An account with this email already exists' };
+        return { error: 'An account with this email already exists. Please sign in instead.' };
       }
 
       // Generate OTP code
       const otpCode = OTPService.generateOTPCode();
       
-      console.log(`📧 Sending signup OTP to ${email}...`);
+      console.log(`📧 Sending signup OTP to ${normalizedEmail}...`);
 
-      // Send OTP email
-      const result = await OTPService.sendOTPEmail(email, otpCode, 'signup');
+      // Send OTP email (use normalized email)
+      const result = await OTPService.sendOTPEmail(normalizedEmail, otpCode, 'signup');
       
       if (result.error) {
         console.error('❌ Failed to send signup OTP:', result.error);
         return { error: result.error };
       }
 
-      console.log(`✅ Signup OTP sent successfully to ${email}`);
+      console.log(`✅ Signup OTP sent successfully to ${normalizedEmail}`);
 
-      // Store signup data in localStorage temporarily
+      // Store signup data in localStorage temporarily (use normalized email)
       const signupData = {
-        email,
+        email: normalizedEmail,
         password,
-        fullName,
+        fullName: fullName?.trim() || '',
         timestamp: Date.now(),
       };
       localStorage.setItem('pending_signup', JSON.stringify(signupData));
 
       // In development, log where to find the OTP
       if (import.meta.env.MODE === 'development' && result.devCode) {
-        console.log(`💡 Development mode: OTP code stored in sessionStorage (key: dev_otp_${email})`);
+        console.log(`💡 Development mode: OTP code stored in sessionStorage (key: dev_otp_${normalizedEmail})`);
         console.log(`💡 To test email sending, run 'netlify dev' instead of 'npm run dev'`);
       }
 
@@ -172,11 +206,25 @@ export class CustomAuthService {
   // Verify signup OTP and create account
   static async verifySignupOTP(email: string, code: string): Promise<{ error: string | null }> {
     try {
+      // Normalize email
+      const normalizedEmail = email.trim().toLowerCase();
+      
+      // Validate email format
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(normalizedEmail)) {
+        return { error: 'Invalid email address format' };
+      }
+
+      // Validate OTP code format (6 digits)
+      if (!code || code.length !== 6 || !/^\d{6}$/.test(code)) {
+        return { error: 'Invalid verification code format' };
+      }
+
       // Verify OTP
-      const { valid, error } = await OTPService.verifyOTP(email, code, 'signup');
+      const { valid, error: verifyError } = await OTPService.verifyOTP(normalizedEmail, code, 'signup');
       
       if (!valid) {
-        return { error: error || 'Invalid verification code' };
+        return { error: verifyError || 'Invalid or expired verification code' };
       }
 
       // Get stored signup data
@@ -187,8 +235,8 @@ export class CustomAuthService {
 
       const signupData = JSON.parse(storedData);
       
-      // Check if data matches and is not expired (10 minutes)
-      if (signupData.email !== email || Date.now() - signupData.timestamp > 10 * 60 * 1000) {
+      // Check if data matches (use normalized email) and is not expired (10 minutes)
+      if (signupData.email !== normalizedEmail || Date.now() - signupData.timestamp > 10 * 60 * 1000) {
         localStorage.removeItem('pending_signup');
         return { error: 'Signup session expired. Please try again.' };
       }

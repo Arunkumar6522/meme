@@ -17,13 +17,23 @@ export class OTPService {
 
   // Check if user exists in database
   // Uses auth.users table via admin API or checks public.users with proper error handling
-  static async checkUserExists(email: string): Promise<boolean> {
+  static async checkUserExists(email: string, allowRLSFallback: boolean = false): Promise<boolean> {
     try {
+      // Normalize email
+      const normalizedEmail = email.trim().toLowerCase();
+      
+      // Validate email format first
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(normalizedEmail)) {
+        console.warn('Invalid email format:', normalizedEmail);
+        return false;
+      }
+
       // Try to query users table - if RLS blocks it, try alternative method
       const { data, error } = await supabase
         .from('users')
         .select('id')
-        .eq('email', email)
+        .eq('email', normalizedEmail)
         .maybeSingle(); // Use maybeSingle instead of single to handle no results gracefully
 
       // If query succeeds and returns data, user exists
@@ -31,27 +41,37 @@ export class OTPService {
         return true;
       }
 
-      // If RLS blocks the query (406 or 401), try using auth API
-      // For password reset, we can also just proceed - if user doesn't exist, 
-      // they won't receive email anyway
-      if (error && (error.code === 'PGRST116' || error.code === '42501' || error.message?.includes('permission'))) {
-        // RLS blocked - try alternative: check via auth admin or just return true
-        // In production, we'll send OTP anyway - if user doesn't exist, email won't be sent
-        // but Supabase will handle that gracefully
-        console.warn('RLS policy blocked user check, proceeding with OTP send');
-        return true; // Allow OTP to be sent - email service will handle non-existent users
-      }
-
-      // If no data found (user doesn't exist)
+      // If no data found (user doesn't exist) - PGRST116 means no rows returned
       if (error && error.code === 'PGRST116') {
         return false;
       }
 
-      // For other errors, assume user doesn't exist to be safe
+      // If RLS blocks the query (42501 = permission denied, 406 = not acceptable)
+      if (error && (error.code === '42501' || error.code === '406' || error.message?.includes('permission') || error.message?.includes('row-level security'))) {
+        console.warn('RLS policy blocked user check:', error.message);
+        
+        // For password reset, we can proceed (allowRLSFallback = true)
+        // For signup, we should NOT proceed if RLS blocks (allowRLSFallback = false)
+        if (allowRLSFallback) {
+          // This is for password reset - proceed anyway
+          return true;
+        } else {
+          // This is for signup - we need to know if user exists
+          // Throw error so caller can handle it
+          throw new Error('Unable to verify if user exists. Please check your Supabase RLS policies.');
+        }
+      }
+
+      // For other errors, log and return false
+      console.error('Error checking user existence:', error);
       return false;
     } catch (err) {
-      console.error('Error checking user existence:', err);
-      // On error, return false to prevent OTP send to non-existent users
+      console.error('Exception checking user existence:', err);
+      // Re-throw if it's our custom error
+      if (err instanceof Error && err.message.includes('Unable to verify')) {
+        throw err;
+      }
+      // On other errors, return false to prevent OTP send
       return false;
     }
   }

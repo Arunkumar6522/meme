@@ -29,7 +29,8 @@ const ForgotPasswordForm: React.FC = () => {
       const persistedEmail = sessionStorage.getItem('forgot-password-email');
       
       // Only restore if we have both step and email, and email is valid
-      if (persistedStep === 'otp' && persistedEmail && /\S+@\S+\.\S+/.test(persistedEmail)) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (persistedStep === 'otp' && persistedEmail && emailRegex.test(persistedEmail.trim().toLowerCase())) {
         // Restore OTP step
         setStep('otp');
         stepRef.current = 'otp';
@@ -50,13 +51,24 @@ const ForgotPasswordForm: React.FC = () => {
     }
   }, [location.pathname]); // Re-run when route changes
 
+  // Proper email validation regex
+  const validateEmail = (email: string): boolean => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email.trim().toLowerCase());
+  };
+
   const validateForm = () => {
     const newErrors: typeof errors = {};
 
-    if (!email) {
+    if (!email.trim()) {
       newErrors.email = 'Email is required';
-    } else if (!/\S+@\S+\.\S+/.test(email)) {
-      newErrors.email = 'Please enter a valid email address';
+    } else {
+      const trimmedEmail = email.trim().toLowerCase();
+      if (!validateEmail(trimmedEmail)) {
+        newErrors.email = 'Please enter a valid email address (e.g., name@example.com)';
+      } else if (trimmedEmail.length > 254) {
+        newErrors.email = 'Email address is too long';
+      }
     }
 
     setErrors(newErrors);
@@ -72,7 +84,17 @@ const ForgotPasswordForm: React.FC = () => {
     setErrors({});
 
     try {
-      const result = await resetPassword(email);
+      // Normalize email before sending
+      const normalizedEmail = email.trim().toLowerCase();
+      
+      // Double-check email validation before API call
+      if (!validateEmail(normalizedEmail)) {
+        setErrors({ email: 'Please enter a valid email address' });
+        showError('Invalid email address', 'Validation Error');
+        return;
+      }
+
+      const result = await resetPassword(normalizedEmail);
       
       // Check if there's an error
       if (result?.error) {
@@ -80,6 +102,9 @@ const ForgotPasswordForm: React.FC = () => {
         showError(result.error, 'Password Reset Failed');
         return;
       }
+      
+      // Update email state with normalized email
+      setEmail(normalizedEmail);
 
       // Success - Store email in sessionStorage and update step
       try {
@@ -107,7 +132,7 @@ const ForgotPasswordForm: React.FC = () => {
   };
 
   // Show OTP verification form if on OTP step
-  if (step === 'otp' && email && /\S+@\S+\.\S+/.test(email)) {
+  if (step === 'otp' && email && validateEmail(email)) {
     return (
       <OTPVerificationForm
         key={`otp-${email}`}

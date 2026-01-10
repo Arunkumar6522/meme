@@ -83,8 +83,26 @@ const OTPVerificationForm: React.FC<OTPVerificationFormProps> = ({ email, type, 
     e.preventDefault();
     
     const otpCode = otp.join('');
+    
+    // Validate OTP format
     if (otpCode.length !== 6) {
       setError('Please enter all 6 digits');
+      return;
+    }
+
+    if (!/^\d{6}$/.test(otpCode)) {
+      setError('OTP code must contain only numbers');
+      return;
+    }
+
+    // Normalize email
+    const normalizedEmail = email.trim().toLowerCase();
+    
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(normalizedEmail)) {
+      setError('Invalid email address');
+      showError('Invalid email address', 'Validation Error');
       return;
     }
 
@@ -92,7 +110,7 @@ const OTPVerificationForm: React.FC<OTPVerificationFormProps> = ({ email, type, 
     setError(null);
 
     try {
-      const { error } = await verifyOTP(email, otpCode, type);
+      const { error } = await verifyOTP(normalizedEmail, otpCode, type);
       
       if (error) {
         setError(error);
@@ -114,11 +132,12 @@ const OTPVerificationForm: React.FC<OTPVerificationFormProps> = ({ email, type, 
         showSuccess('Email verified! You can now reset your password.', 'Verification Complete');
         // Small delay to show success message before navigation
         setTimeout(() => {
-          navigate('/auth/reset-password', { state: { email } });
+          navigate('/auth/reset-password', { state: { email: normalizedEmail } });
         }, 1000);
       }
     } catch (err) {
       const errorMessage = (err as Error).message || 'An unexpected error occurred';
+      console.error('OTP verification error:', err);
       setError(errorMessage);
       showError(errorMessage, 'Verification Failed');
       setLoading(false);

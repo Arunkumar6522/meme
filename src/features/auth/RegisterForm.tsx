@@ -39,7 +39,8 @@ const RegisterForm: React.FC = () => {
       const persistedEmail = sessionStorage.getItem('register-email');
       
       // Only restore if we have both step and email, and email is valid
-      if (persistedStep === 'otp' && persistedEmail && /\S+@\S+\.\S+/.test(persistedEmail)) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (persistedStep === 'otp' && persistedEmail && emailRegex.test(persistedEmail.trim().toLowerCase())) {
         // Restore OTP step
         setStep('otp');
         stepRef.current = 'otp';
@@ -80,25 +81,44 @@ const RegisterForm: React.FC = () => {
     }
   }, [formData, step]);
 
+  // Proper email validation regex
+  const validateEmail = (email: string): boolean => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email.trim().toLowerCase());
+  };
+
   const validateForm = () => {
     const newErrors: typeof errors = {};
 
+    // Validate full name
     if (!formData.fullName.trim()) {
       newErrors.fullName = 'Full name is required';
+    } else if (formData.fullName.trim().length < 2) {
+      newErrors.fullName = 'Full name must be at least 2 characters';
     }
 
-    if (!formData.email) {
+    // Validate email with proper regex
+    if (!formData.email.trim()) {
       newErrors.email = 'Email is required';
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = 'Please enter a valid email address';
+    } else {
+      const trimmedEmail = formData.email.trim().toLowerCase();
+      if (!validateEmail(trimmedEmail)) {
+        newErrors.email = 'Please enter a valid email address (e.g., name@example.com)';
+      } else if (trimmedEmail.length > 254) {
+        newErrors.email = 'Email address is too long';
+      }
     }
 
+    // Validate password
     if (!formData.password) {
       newErrors.password = 'Password is required';
     } else if (formData.password.length < 6) {
       newErrors.password = 'Password must be at least 6 characters';
+    } else if (formData.password.length > 128) {
+      newErrors.password = 'Password is too long (maximum 128 characters)';
     }
 
+    // Validate confirm password
     if (!formData.confirmPassword) {
       newErrors.confirmPassword = 'Please confirm your password';
     } else if (formData.password !== formData.confirmPassword) {
@@ -117,17 +137,35 @@ const RegisterForm: React.FC = () => {
     setErrors({});
 
     try {
-      const { error } = await signUp(formData.email, formData.password, formData.fullName);
+      // Normalize email before sending
+      const normalizedEmail = formData.email.trim().toLowerCase();
+      
+      // Double-check email validation before API call
+      if (!validateEmail(normalizedEmail)) {
+        setErrors({ email: 'Please enter a valid email address' });
+        showError('Invalid email address', 'Validation Error');
+        return;
+      }
+
+      const { error } = await signUp(normalizedEmail, formData.password, formData.fullName.trim());
       if (error) {
+        console.error('Registration error:', error);
+        
         // Provide user-friendly error messages
         let userFriendlyError = error;
-        if (error.includes('already exists') || error.includes('duplicate')) {
+        if (error.includes('already exists') || 
+            error.includes('duplicate') || 
+            error.includes('already registered') ||
+            error.includes('User already registered')) {
           userFriendlyError = 'An account with this email already exists. Please sign in instead.';
-        } else if (error.includes('Invalid email')) {
+        } else if (error.includes('Invalid email') || error.includes('email')) {
           userFriendlyError = 'Please enter a valid email address.';
-        } else if (error.includes('Password')) {
+        } else if (error.includes('Password') || error.includes('password')) {
           userFriendlyError = 'Password must be at least 6 characters long.';
+        } else if (error.includes('session expired') || error.includes('expired')) {
+          userFriendlyError = 'Registration session expired. Please try again.';
         }
+        
         setErrors({ general: userFriendlyError });
         showError(userFriendlyError, 'Registration Failed');
         return;
@@ -182,7 +220,7 @@ const RegisterForm: React.FC = () => {
   };
 
   // Show OTP verification form if on OTP step
-  if (step === 'otp' && formData.email && /\S+@\S+\.\S+/.test(formData.email)) {
+  if (step === 'otp' && formData.email && validateEmail(formData.email)) {
     return (
       <OTPVerificationForm
         key={`otp-${formData.email}`}

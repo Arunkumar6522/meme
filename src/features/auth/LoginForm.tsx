@@ -40,13 +40,24 @@ const LoginForm: React.FC = () => {
     }
   }, [errors.general, errors.password]);
 
+  // Proper email validation regex
+  const validateEmail = (email: string): boolean => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email.trim().toLowerCase());
+  };
+
   const validateForm = () => {
     const newErrors: typeof errors = {};
 
-    if (!email) {
+    if (!email.trim()) {
       newErrors.email = 'Email is required';
-    } else if (!/\S+@\S+\.\S+/.test(email)) {
-      newErrors.email = 'Please enter a valid email address';
+    } else {
+      const trimmedEmail = email.trim().toLowerCase();
+      if (!validateEmail(trimmedEmail)) {
+        newErrors.email = 'Please enter a valid email address (e.g., name@example.com)';
+      } else if (trimmedEmail.length > 254) {
+        newErrors.email = 'Email address is too long';
+      }
     }
 
     if (!password) {
@@ -67,7 +78,17 @@ const LoginForm: React.FC = () => {
     setErrors({});
 
     try {
-      const { error } = await signIn(email, password);
+      // Normalize email before sending
+      const normalizedEmail = email.trim().toLowerCase();
+      
+      // Double-check email validation before API call
+      if (!validateEmail(normalizedEmail)) {
+        setErrors({ email: 'Please enter a valid email address' });
+        showError('Invalid email address', 'Validation Error');
+        return;
+      }
+
+      const { error } = await signIn(normalizedEmail, password);
       if (error) {
         // Keep email for better UX, only clear password for security
         setPassword('');
@@ -81,6 +102,8 @@ const LoginForm: React.FC = () => {
         setErrors({ general: userFriendlyError });
         showError(userFriendlyError, 'Sign In Failed');
       } else {
+        // Update email state with normalized email
+        setEmail(normalizedEmail);
         // Clear form and sessionStorage on success
         try {
           sessionStorage.removeItem('login-email');
