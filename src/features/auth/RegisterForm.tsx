@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { flushSync } from 'react-dom';
 import { Link } from 'react-router-dom';
 import { Button, Input } from '@/components/ui';
 import { useAuth } from '@/hooks/useAuth';
@@ -6,12 +7,30 @@ import { useToast } from '@/hooks/useToast';
 import OTPVerificationForm from './OTPVerificationForm';
 
 const RegisterForm: React.FC = () => {
-  const [step, setStep] = useState<'form' | 'otp'>('form');
-  const [formData, setFormData] = useState({
-    fullName: '',
-    email: '',
-    password: '',
-    confirmPassword: '',
+  const [step, setStep] = useState<'form' | 'otp'>(() => {
+    try {
+      return sessionStorage.getItem('register-step') === 'otp' ? 'otp' : 'form';
+    } catch {
+      return 'form';
+    }
+  });
+  const [formData, setFormData] = useState(() => {
+    try {
+      const saved = sessionStorage.getItem('register-form-data');
+      return saved ? JSON.parse(saved) : {
+        fullName: '',
+        email: '',
+        password: '',
+        confirmPassword: '',
+      };
+    } catch {
+      return {
+        fullName: '',
+        email: '',
+        password: '',
+        confirmPassword: '',
+      };
+    }
   });
   const [errors, setErrors] = useState<{
     fullName?: string;
@@ -22,6 +41,22 @@ const RegisterForm: React.FC = () => {
   }>({});
   const { signUp, signInWithGoogle, loading } = useAuth();
   const { showSuccess, showError } = useToast();
+  const stepRef = useRef(step);
+
+  useEffect(() => {
+    stepRef.current = step;
+  }, [step]);
+
+  // Persist form data to sessionStorage
+  useEffect(() => {
+    try {
+      if (step === 'form') {
+        sessionStorage.setItem('register-form-data', JSON.stringify(formData));
+      }
+    } catch (e) {
+      // Ignore sessionStorage errors
+    }
+  }, [formData, step]);
 
   const validateForm = () => {
     const newErrors: typeof errors = {};
@@ -57,13 +92,45 @@ const RegisterForm: React.FC = () => {
     
     if (!validateForm()) return;
 
-    const { error } = await signUp(formData.email, formData.password, formData.fullName);
-    if (error) {
-      setErrors({ general: error });
-      showError(error, 'Registration Failed');
-    } else {
+    setErrors({});
+
+    try {
+      const { error } = await signUp(formData.email, formData.password, formData.fullName);
+      if (error) {
+        // Provide user-friendly error messages
+        let userFriendlyError = error;
+        if (error.includes('already exists') || error.includes('duplicate')) {
+          userFriendlyError = 'An account with this email already exists. Please sign in instead.';
+        } else if (error.includes('Invalid email')) {
+          userFriendlyError = 'Please enter a valid email address.';
+        } else if (error.includes('Password')) {
+          userFriendlyError = 'Password must be at least 6 characters long.';
+        }
+        setErrors({ general: userFriendlyError });
+        showError(userFriendlyError, 'Registration Failed');
+        return;
+      }
+
+      // Success - persist email and step BEFORE state update
+      try {
+        sessionStorage.setItem('register-email', formData.email);
+        sessionStorage.setItem('register-step', 'otp');
+      } catch (e) {
+        // Ignore sessionStorage errors
+      }
+
+      // Force synchronous state update FIRST
+      flushSync(() => {
+        setStep('otp');
+        stepRef.current = 'otp';
+      });
+
+      // Show success message AFTER state update
       showSuccess('Verification code sent to your email!', 'Check Your Email');
-      setStep('otp');
+    } catch (err) {
+      const errorMessage = (err as Error).message || 'An unexpected error occurred';
+      setErrors({ general: errorMessage });
+      showError(errorMessage, 'Registration Failed');
     }
   };
 
@@ -83,15 +150,71 @@ const RegisterForm: React.FC = () => {
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: undefined }));
     }
+    if (errors.general) {
+      setErrors(prev => ({ ...prev, general: undefined }));
+    }
+    // Clear password confirmation error if password changes
+    if (field === 'password' && errors.confirmPassword) {
+      setErrors(prev => ({ ...prev, confirmPassword: undefined }));
+    }
   };
 
+  // Check sessionStorage for persisted step (similar to ForgotPasswordForm)
+  useEffect(() => {
+    if (import.meta.env.MODE === 'development') {
+      console.log('🔍 RegisterForm step changed to:', step);
+    }
+  }, [step]);
+
+  // Check sessionStorage for persisted step
+  const persistedStep = (() => {
+    try {
+      return sessionStorage.getItem('register-step') as 'form' | 'otp' | null;
+    } catch {
+      return null;
+    }
+  })();
+
+  const persistedEmail = (() => {
+    try {
+      return sessionStorage.getItem('register-email') || formData.email;
+    } catch {
+      return formData.email;
+    }
+  })();
+
+  const shouldShowOTP = step === 'otp' || stepRef.current === 'otp' || persistedStep === 'otp';
+  const emailToUse = persistedEmail || formData.email;
+
   // Show OTP verification form if on OTP step
-  if (step === 'otp') {
+  if (shouldShowOTP && emailToUse) {
+    // Sync state if it's out of sync
+    if (step !== 'otp') {
+      flushSync(() => {
+        setStep('otp');
+        stepRef.current = 'otp';
+      });
+    }
+
     return (
       <OTPVerificationForm
-        email={formData.email}
+        key={`otp-${emailToUse}`}
+        email={emailToUse}
         type="signup"
-        onBack={() => setStep('form')}
+        onBack={() => {
+          try {
+            sessionStorage.removeItem('register-step');
+            sessionStorage.removeItem('register-email');
+            sessionStorage.removeItem('register-form-data');
+          } catch (e) {
+            // Ignore
+          }
+          flushSync(() => {
+            setStep('form');
+            stepRef.current = 'form';
+          });
+          setErrors({});
+        }}
       />
     );
   }
@@ -122,6 +245,7 @@ const RegisterForm: React.FC = () => {
           error={errors.fullName}
           placeholder="Enter your full name"
           autoComplete="name"
+          autoFocus
           required
         />
 
@@ -156,6 +280,7 @@ const RegisterForm: React.FC = () => {
           error={errors.confirmPassword}
           placeholder="Confirm your password"
           autoComplete="new-password"
+          helperText={formData.password && formData.confirmPassword && formData.password !== formData.confirmPassword ? 'Passwords do not match' : undefined}
           required
         />
 

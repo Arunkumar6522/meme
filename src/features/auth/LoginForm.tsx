@@ -1,15 +1,44 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Button, Input } from '@/components/ui';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/useToast';
 
 const LoginForm: React.FC = () => {
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState(() => {
+    // Try to restore email from sessionStorage for better UX
+    try {
+      return sessionStorage.getItem('login-email') || '';
+    } catch {
+      return '';
+    }
+  });
   const [password, setPassword] = useState('');
   const [errors, setErrors] = useState<{ email?: string; password?: string; general?: string }>({});
   const { signIn, signInWithGoogle, loading } = useAuth();
   const { showSuccess, showError } = useToast();
+  const passwordInputRef = useRef<HTMLInputElement>(null);
+
+  // Save email to sessionStorage when it changes
+  useEffect(() => {
+    try {
+      if (email) {
+        sessionStorage.setItem('login-email', email);
+      }
+    } catch (e) {
+      // Ignore sessionStorage errors
+    }
+  }, [email]);
+
+  // Auto-focus password field after error (for better UX)
+  useEffect(() => {
+    if (errors.general || errors.password) {
+      // Small delay to ensure input is rendered
+      setTimeout(() => {
+        passwordInputRef.current?.focus();
+      }, 100);
+    }
+  }, [errors.general, errors.password]);
 
   const validateForm = () => {
     const newErrors: typeof errors = {};
@@ -35,12 +64,39 @@ const LoginForm: React.FC = () => {
     
     if (!validateForm()) return;
 
-    const { error } = await signIn(email, password);
-    if (error) {
-      setErrors({ general: error });
-      showError(error, 'Sign In Failed');
-    } else {
-      showSuccess('Successfully signed in! Welcome back!', 'Sign In Successful');
+    setErrors({});
+
+    try {
+      const { error } = await signIn(email, password);
+      if (error) {
+        // Keep email for better UX, only clear password for security
+        setPassword('');
+        // Provide user-friendly error messages
+        let userFriendlyError = error;
+        if (error.includes('Invalid login credentials') || error.includes('Email not confirmed')) {
+          userFriendlyError = 'Invalid email or password. Please check your credentials and try again.';
+        } else if (error.includes('Email rate limit')) {
+          userFriendlyError = 'Too many login attempts. Please wait a moment and try again.';
+        }
+        setErrors({ general: userFriendlyError });
+        showError(userFriendlyError, 'Sign In Failed');
+      } else {
+        // Clear form and sessionStorage on success
+        try {
+          sessionStorage.removeItem('login-email');
+        } catch (e) {
+          // Ignore
+        }
+        setEmail('');
+        setPassword('');
+        setErrors({});
+        showSuccess('Successfully signed in! Welcome back!', 'Sign In Successful');
+      }
+    } catch (err) {
+      const errorMessage = (err as Error).message || 'An unexpected error occurred';
+      setPassword(''); // Clear password on error, but keep email
+      setErrors({ general: errorMessage });
+      showError(errorMessage, 'Sign In Failed');
     }
   };
 
@@ -76,18 +132,38 @@ const LoginForm: React.FC = () => {
           label="Email Address"
           type="email"
           value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          onChange={(e) => {
+            setEmail(e.target.value);
+            // Clear errors when user starts typing
+            if (errors.email) {
+              setErrors(prev => ({ ...prev, email: undefined }));
+            }
+            if (errors.general) {
+              setErrors(prev => ({ ...prev, general: undefined }));
+            }
+          }}
           error={errors.email}
           placeholder="Enter your email"
           autoComplete="email"
+          autoFocus
           required
         />
 
         <Input
+          ref={passwordInputRef}
           label="Password"
           type="password"
           value={password}
-          onChange={(e) => setPassword(e.target.value)}
+          onChange={(e) => {
+            setPassword(e.target.value);
+            // Clear errors when user starts typing
+            if (errors.password) {
+              setErrors(prev => ({ ...prev, password: undefined }));
+            }
+            if (errors.general) {
+              setErrors(prev => ({ ...prev, general: undefined }));
+            }
+          }}
           error={errors.password}
           placeholder="Enter your password"
           autoComplete="current-password"
