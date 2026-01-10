@@ -2,14 +2,15 @@
 -- Run this SQL in Supabase SQL Editor to allow admin uploads and public reads
 
 -- Policy for library-audio bucket
--- Allow public read access
-CREATE POLICY IF NOT EXISTS "Public read access for library-audio"
+-- Drop existing policies if they exist, then create new ones
+DROP POLICY IF EXISTS "Public read access for library-audio" ON storage.objects;
+CREATE POLICY "Public read access for library-audio"
 ON storage.objects
 FOR SELECT
 USING (bucket_id = 'library-audio');
 
--- Allow admin uploads to library-audio
-CREATE POLICY IF NOT EXISTS "Admin upload access for library-audio"
+DROP POLICY IF EXISTS "Admin upload access for library-audio" ON storage.objects;
+CREATE POLICY "Admin upload access for library-audio"
 ON storage.objects
 FOR INSERT
 WITH CHECK (
@@ -20,8 +21,8 @@ WITH CHECK (
   )
 );
 
--- Allow admin updates/deletes to library-audio
-CREATE POLICY IF NOT EXISTS "Admin update access for library-audio"
+DROP POLICY IF EXISTS "Admin update access for library-audio" ON storage.objects;
+CREATE POLICY "Admin update access for library-audio"
 ON storage.objects
 FOR UPDATE
 USING (
@@ -32,7 +33,8 @@ USING (
   )
 );
 
-CREATE POLICY IF NOT EXISTS "Admin delete access for library-audio"
+DROP POLICY IF EXISTS "Admin delete access for library-audio" ON storage.objects;
+CREATE POLICY "Admin delete access for library-audio"
 ON storage.objects
 FOR DELETE
 USING (
@@ -44,12 +46,14 @@ USING (
 );
 
 -- Policy for library-video bucket
-CREATE POLICY IF NOT EXISTS "Public read access for library-video"
+DROP POLICY IF EXISTS "Public read access for library-video" ON storage.objects;
+CREATE POLICY "Public read access for library-video"
 ON storage.objects
 FOR SELECT
 USING (bucket_id = 'library-video');
 
-CREATE POLICY IF NOT EXISTS "Admin upload access for library-video"
+DROP POLICY IF EXISTS "Admin upload access for library-video" ON storage.objects;
+CREATE POLICY "Admin upload access for library-video"
 ON storage.objects
 FOR INSERT
 WITH CHECK (
@@ -60,7 +64,8 @@ WITH CHECK (
   )
 );
 
-CREATE POLICY IF NOT EXISTS "Admin update access for library-video"
+DROP POLICY IF EXISTS "Admin update access for library-video" ON storage.objects;
+CREATE POLICY "Admin update access for library-video"
 ON storage.objects
 FOR UPDATE
 USING (
@@ -71,7 +76,8 @@ USING (
   )
 );
 
-CREATE POLICY IF NOT EXISTS "Admin delete access for library-video"
+DROP POLICY IF EXISTS "Admin delete access for library-video" ON storage.objects;
+CREATE POLICY "Admin delete access for library-video"
 ON storage.objects
 FOR DELETE
 USING (
@@ -83,12 +89,14 @@ USING (
 );
 
 -- Policy for thumbnails bucket
-CREATE POLICY IF NOT EXISTS "Public read access for thumbnails"
+DROP POLICY IF EXISTS "Public read access for thumbnails" ON storage.objects;
+CREATE POLICY "Public read access for thumbnails"
 ON storage.objects
 FOR SELECT
 USING (bucket_id = 'thumbnails');
 
-CREATE POLICY IF NOT EXISTS "Admin upload access for thumbnails"
+DROP POLICY IF EXISTS "Admin upload access for thumbnails" ON storage.objects;
+CREATE POLICY "Admin upload access for thumbnails"
 ON storage.objects
 FOR INSERT
 WITH CHECK (
@@ -99,7 +107,8 @@ WITH CHECK (
   )
 );
 
-CREATE POLICY IF NOT EXISTS "Admin update access for thumbnails"
+DROP POLICY IF EXISTS "Admin update access for thumbnails" ON storage.objects;
+CREATE POLICY "Admin update access for thumbnails"
 ON storage.objects
 FOR UPDATE
 USING (
@@ -110,7 +119,8 @@ USING (
   )
 );
 
-CREATE POLICY IF NOT EXISTS "Admin delete access for thumbnails"
+DROP POLICY IF EXISTS "Admin delete access for thumbnails" ON storage.objects;
+CREATE POLICY "Admin delete access for thumbnails"
 ON storage.objects
 FOR DELETE
 USING (
