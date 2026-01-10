@@ -95,9 +95,18 @@ export class OTPService {
         .eq('email', email)
         .eq('code', code)
         .eq('type', type)
-        .single();
+        .maybeSingle(); // Use maybeSingle instead of single to handle RLS better
 
-      if (error || !data) {
+      if (error) {
+        console.error('OTP verification error:', error);
+        // If RLS is blocking, provide helpful error
+        if (error.code === 'PGRST116' || error.code === '42501' || error.message?.includes('permission')) {
+          return { valid: false, error: 'Unable to verify code. Please check your Supabase RLS policies for otp_codes table.' };
+        }
+        return { valid: false, error: 'Invalid or expired verification code' };
+      }
+
+      if (!data) {
         return { valid: false, error: 'Invalid or expired verification code' };
       }
 

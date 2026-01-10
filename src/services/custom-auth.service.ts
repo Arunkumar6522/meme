@@ -194,6 +194,8 @@ export class CustomAuthService {
       }
 
       // Create account with Supabase
+      // Note: If Supabase requires email confirmation, the user will be created but not confirmed
+      // We'll handle this by checking the user status after signup
       const { data, error: signupError } = await supabase.auth.signUp({
         email: signupData.email,
         password: signupData.password,
@@ -201,16 +203,68 @@ export class CustomAuthService {
           data: {
             full_name: signupData.fullName,
           },
-          emailRedirectTo: undefined, // Skip email confirmation since we already verified
+          // Try to skip email confirmation since we already verified via OTP
+          // If Supabase requires confirmation, this will still create the user
+          emailRedirectTo: window.location.origin + '/auth/callback',
         },
       });
 
       if (signupError) {
-        return { error: signupError.message };
+        console.error('Supabase signup error:', signupError);
+        
+        // Handle specific error cases
+        if (signupError.message?.includes('already registered') || 
+            signupError.message?.includes('already exists') ||
+            signupError.message?.includes('User already registered')) {
+          return { error: 'An account with this email already exists. Please sign in instead.' };
+        }
+        
+        if (signupError.message?.includes('email') || signupError.message?.includes('Email')) {
+          return { error: 'Invalid email address. Please check your email and try again.' };
+        }
+        
+        // Handle 422 Unprocessable Content error
+        if (signupError.status === 422) {
+          return { error: 'Unable to create account. Please check your email and password, then try again.' };
+        }
+        
+        // Return user-friendly error message
+        return { error: signupError.message || 'Failed to create account. Please try again.' };
+      }
+
+      // Check if user was created successfully
+      // Note: If email confirmation is required, user.email_confirmed_at will be null
+      // but the user is still created and can sign in after confirmation
+      if (!data?.user) {
+        return { error: 'Account creation failed. Please try again.' };
+      }
+      
+      // If user was created but email confirmation is required, sign them in anyway
+      // (since we already verified via OTP)
+      if (!data.user.email_confirmed_at) {
+        // Try to sign in with the credentials to confirm the account
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+          email: signupData.email,
+          password: signupData.password,
+        });
+        
+        if (signInError) {
+          console.warn('Auto sign-in after registration failed:', signInError);
+          // This is OK - user can sign in manually
+        }
       }
 
       // Clean up stored data
       localStorage.removeItem('pending_signup');
+      
+      // Also clear sessionStorage
+      try {
+        sessionStorage.removeItem('register-step');
+        sessionStorage.removeItem('register-email');
+        sessionStorage.removeItem('register-form-data');
+      } catch (e) {
+        // Ignore
+      }
 
       return { error: null };
     } catch (error) {

@@ -97,20 +97,30 @@ const OTPVerificationForm: React.FC<OTPVerificationFormProps> = ({ email, type, 
       if (error) {
         setError(error);
         showError(error, 'Verification Failed');
-      } else {
-        if (type === 'signup') {
-          showSuccess('Account verified successfully! Welcome to Meme Library!', 'Verification Complete');
+        setLoading(false);
+        return;
+      }
+      
+      // Success - clear OTP inputs
+      setOtp(['', '', '', '', '', '']);
+      
+      if (type === 'signup') {
+        showSuccess('Account verified successfully! Welcome to Meme Library!', 'Verification Complete');
+        // Small delay to show success message before navigation
+        setTimeout(() => {
           navigate('/home');
-        } else {
-          showSuccess('Email verified! You can now reset your password.', 'Verification Complete');
+        }, 1000);
+      } else {
+        showSuccess('Email verified! You can now reset your password.', 'Verification Complete');
+        // Small delay to show success message before navigation
+        setTimeout(() => {
           navigate('/auth/reset-password', { state: { email } });
-        }
+        }, 1000);
       }
     } catch (err) {
-      const errorMessage = (err as Error).message;
+      const errorMessage = (err as Error).message || 'An unexpected error occurred';
       setError(errorMessage);
       showError(errorMessage, 'Verification Failed');
-    } finally {
       setLoading(false);
     }
   };
