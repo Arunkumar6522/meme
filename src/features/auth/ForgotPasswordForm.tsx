@@ -56,21 +56,17 @@ const ForgotPasswordForm: React.FC = () => {
         return;
       }
 
-      // Success - immediately set step to OTP (synchronous update)
-      // Force re-render by updating state
+      // Success - Update step to OTP FIRST (before toast)
+      // This ensures the screen changes immediately
       setStep('otp');
       
-      // Debug log after state update
+      // Then show success message
+      showSuccess('Verification code sent to your email!', 'Check Your Email');
+      
       if (import.meta.env.MODE === 'development') {
-        console.log('🔍 Step set to otp, component should re-render');
-        // Force a re-render check
-        setTimeout(() => {
-          console.log('🔍 Step after timeout:', step);
-        }, 100);
+        console.log('🔍 Step set to otp immediately');
       }
       
-      // Show success message
-      showSuccess('Verification code sent to your email!', 'Check Your Email');
     } catch (err) {
       const errorMessage = (err as Error).message || 'An unexpected error occurred';
       setErrors({ general: errorMessage });
@@ -79,11 +75,15 @@ const ForgotPasswordForm: React.FC = () => {
   };
 
   // Show OTP verification form if on OTP step
-  // Use key prop to force re-render when step changes
+  // CRITICAL: This check must happen BEFORE the main return statement
+  // Use a unique key that includes step to force React to re-render
   if (step === 'otp') {
+    if (import.meta.env.MODE === 'development') {
+      console.log('✅ RENDERING OTP SCREEN - step:', step, 'email:', email);
+    }
     return (
       <OTPVerificationForm
-        key={`otp-${email}`}
+        key={`otp-screen-${email}-${Date.now()}`}
         email={email}
         type="reset-password"
         onBack={() => {
