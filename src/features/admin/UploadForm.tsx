@@ -5,6 +5,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { LibraryService } from '@/services/library.service';
 import type { EmotionType } from '@/types';
 import { cn } from '@/utils/cn';
+import { compressImageToThumbnail } from '@/utils/imageCompression';
 
 interface UploadFormProps {
   onSuccess?: () => void;
@@ -94,8 +95,8 @@ const UploadForm: React.FC<UploadFormProps> = ({ onSuccess, onCancel }) => {
     setErrors(prev => ({ ...prev, file: '' }));
   };
 
-  // Handle thumbnail selection
-  const handleThumbnailSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+  // Handle thumbnail selection with compression
+  const handleThumbnailSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
@@ -105,14 +106,27 @@ const UploadForm: React.FC<UploadFormProps> = ({ onSuccess, onCancel }) => {
       return;
     }
 
-    // Validate file size (5MB max for thumbnails)
-    if (file.size > 5 * 1024 * 1024) {
-      setErrors(prev => ({ ...prev, thumbnail: 'Thumbnail size must be less than 5MB' }));
-      return;
-    }
+    try {
+      // Compress image to circular thumbnail (max 200x200, ~50KB)
+      const compressedBlob = await compressImageToThumbnail(file, {
+        maxWidth: 200,
+        maxHeight: 200,
+        quality: 0.7,
+        format: 'image/jpeg',
+      });
 
-    setFormData(prev => ({ ...prev, thumbnail: file }));
-    setErrors(prev => ({ ...prev, thumbnail: '' }));
+      // Convert blob to File
+      const compressedFile = new File([compressedBlob], file.name, {
+        type: 'image/jpeg',
+        lastModified: Date.now(),
+      });
+
+      setFormData(prev => ({ ...prev, thumbnail: compressedFile }));
+      setErrors(prev => ({ ...prev, thumbnail: '' }));
+    } catch (error) {
+      console.error('Error compressing thumbnail:', error);
+      setErrors(prev => ({ ...prev, thumbnail: 'Failed to process thumbnail image' }));
+    }
   };
 
   // Handle form input changes
@@ -273,10 +287,85 @@ const UploadForm: React.FC<UploadFormProps> = ({ onSuccess, onCancel }) => {
       )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Media Type Selection First */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Media Type *
+          </label>
+          <div className="grid grid-cols-2 gap-4">
+            <button
+              type="button"
+              onClick={() => {
+                setFormData(prev => ({ ...prev, mediaType: 'audio' }));
+                setErrors(prev => ({ ...prev, mediaType: '' }));
+              }}
+              className={cn(
+                'p-4 border-2 rounded-lg transition-all',
+                formData.mediaType === 'audio'
+                  ? 'border-primary-500 bg-primary-50'
+                  : 'border-gray-300 hover:border-gray-400'
+              )}
+            >
+              <Volume2 className="h-8 w-8 mx-auto mb-2 text-gray-600" />
+              <span className="text-sm font-medium">Audio</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setFormData(prev => ({ ...prev, mediaType: 'video' }));
+                setErrors(prev => ({ ...prev, mediaType: '' }));
+              }}
+              className={cn(
+                'p-4 border-2 rounded-lg transition-all',
+                formData.mediaType === 'video'
+                  ? 'border-primary-500 bg-primary-50'
+                  : 'border-gray-300 hover:border-gray-400'
+              )}
+            >
+              <Video className="h-8 w-8 mx-auto mb-2 text-gray-600" />
+              <span className="text-sm font-medium">Video</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Emotion Selection */}
+        <Select
+          label="Emotion/Category *"
+          value={formData.emotion}
+          onChange={handleInputChange('emotion')}
+          options={emotionOptions}
+          error={errors.emotion}
+          required
+        />
+
+        {/* Title */}
+        <Input
+          label="Title *"
+          value={formData.title}
+          onChange={handleInputChange('title')}
+          error={errors.title}
+          placeholder="Enter meme title"
+          required
+        />
+
+        {/* Description */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Description
+          </label>
+          <textarea
+            value={formData.description}
+            onChange={handleInputChange('description')}
+            placeholder="Optional description of the meme"
+            rows={3}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+          />
+        </div>
+
         {/* File Upload */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Media File *
+            Upload {formData.mediaType === 'audio' ? 'Audio' : 'Video'} File *
           </label>
           
           {!formData.file ? (
@@ -358,30 +447,6 @@ const UploadForm: React.FC<UploadFormProps> = ({ onSuccess, onCancel }) => {
           )}
         </div>
 
-        {/* Title */}
-        <Input
-          label="Title"
-          value={formData.title}
-          onChange={handleInputChange('title')}
-          error={errors.title}
-          placeholder="Enter meme title"
-          required
-        />
-
-        {/* Description */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Description
-          </label>
-          <textarea
-            value={formData.description}
-            onChange={handleInputChange('description')}
-            placeholder="Optional description of the meme"
-            rows={3}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-          />
-        </div>
-
         {/* Keywords */}
         <Input
           label="Keywords"
@@ -390,16 +455,6 @@ const UploadForm: React.FC<UploadFormProps> = ({ onSuccess, onCancel }) => {
           error={errors.keywords}
           placeholder="funny, reaction, sound effect (comma-separated)"
           helperText="Add relevant keywords to help users find this meme"
-          required
-        />
-
-        {/* Emotion */}
-        <Select
-          label="Emotion"
-          value={formData.emotion}
-          onChange={handleInputChange('emotion')}
-          options={emotionOptions}
-          error={errors.emotion}
           required
         />
 

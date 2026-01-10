@@ -3,6 +3,7 @@ import LibraryFilters from '@/components/library/LibraryFilters';
 import LibraryGrid from '@/components/library/LibraryGrid';
 import Pagination from '@/components/library/Pagination';
 import { BannerAd, MobileAd } from '@/components/ads/AdBanner';
+import { Button } from '@/components/ui';
 import { useLibrary } from '@/hooks/useLibrary';
 import type { LibraryFilters as LibraryFiltersType } from '@/types';
 
@@ -32,15 +33,27 @@ const LibraryPage: React.FC = () => {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Meme Library</h1>
-          <p className="mt-2 text-gray-600">
-            Discover and download the perfect memes for your content
-          </p>
-          {count > 0 && (
-            <p className="mt-1 text-sm text-gray-500">
-              {count.toLocaleString()} memes available
-            </p>
-          )}
+          <div className="flex items-center justify-between flex-wrap gap-4">
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Meme Library</h1>
+              <p className="mt-2 text-sm sm:text-base text-gray-600">
+                Discover and download the perfect memes for your content
+              </p>
+              {count > 0 && (
+                <p className="mt-1 text-xs sm:text-sm text-gray-500">
+                  {count.toLocaleString()} memes available
+                </p>
+              )}
+            </div>
+            <Button
+              onClick={() => {
+                alert('Feature coming soon! Create Meme functionality will be available in a future update.');
+              }}
+              className="w-full sm:w-auto"
+            >
+              Create Meme
+            </Button>
+          </div>
         </div>
 
         {/* Mobile Ad */}

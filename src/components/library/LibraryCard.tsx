@@ -68,100 +68,106 @@ const LibraryCard: React.FC<LibraryCardProps> = ({ item, className }) => {
     await downloadItem();
   };
 
+  // Get thumbnail with fallback color based on emotion
+  const getThumbnailColor = () => {
+    const colors: Record<string, string> = {
+      happy: 'bg-yellow-400',
+      sad: 'bg-blue-400',
+      funny: 'bg-green-400',
+      thug: 'bg-gray-600',
+      angry: 'bg-red-500',
+      surprised: 'bg-purple-400',
+      confused: 'bg-orange-400',
+      excited: 'bg-pink-400',
+      dramatic: 'bg-indigo-500',
+      sarcastic: 'bg-teal-400',
+    };
+    return colors[item.emotion] || 'bg-primary-500';
+  };
+
   return (
     <div
       className={cn(
-        'group relative bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-200',
-        'focus-within:ring-2 focus-within:ring-primary-500 focus-within:ring-offset-2',
+        'flex flex-col items-center space-y-2 group',
         className
       )}
     >
-      {/* Thumbnail/Preview */}
-      <div className="aspect-video bg-gray-100 rounded-t-lg flex items-center justify-center relative overflow-hidden">
+      {/* Circular Button */}
+      <button
+        onClick={handlePlay}
+        className={cn(
+          'relative w-20 h-20 sm:w-24 sm:h-24 rounded-full shadow-lg hover:shadow-xl',
+          'transition-all duration-200 transform hover:scale-105 active:scale-95',
+          'focus:outline-none focus:ring-4 focus:ring-primary-300 focus:ring-offset-2',
+          'overflow-hidden border-4 border-white',
+          getThumbnailColor()
+        )}
+        aria-label={`Play ${item.title}`}
+      >
         {item.thumbnail_url ? (
           <img
             src={item.thumbnail_url}
             alt={`Thumbnail for ${item.title}`}
-            className="w-full h-full object-cover"
+            className="w-full h-full object-cover rounded-full"
           />
         ) : (
-          <div className="flex items-center justify-center w-full h-full bg-gradient-to-br from-primary-50 to-primary-100">
+          <div className="flex items-center justify-center w-full h-full">
             {item.media_type === 'audio' ? (
-              <Volume2 className="h-12 w-12 text-primary-400" aria-hidden="true" />
+              <Volume2 className="h-8 w-8 sm:h-10 sm:w-10 text-white" aria-hidden="true" />
             ) : (
-              <Video className="h-12 w-12 text-primary-400" aria-hidden="true" />
+              <Video className="h-8 w-8 sm:h-10 sm:w-10 text-white" aria-hidden="true" />
             )}
           </div>
         )}
-        
-        {/* Play button overlay */}
+        {/* Play icon overlay */}
+        <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all duration-200 rounded-full">
+          <Play className="h-6 w-6 sm:h-8 sm:w-8 text-white ml-0.5 opacity-0 group-hover:opacity-100 transition-opacity" />
+        </div>
+      </button>
+
+      {/* Title */}
+      <h3 className="text-xs sm:text-sm font-medium text-gray-900 text-center line-clamp-2 max-w-[120px] sm:max-w-[140px] leading-tight">
+        {item.title}
+      </h3>
+
+      {/* Action Icons */}
+      <div className="flex items-center justify-center gap-2 sm:gap-3">
+        {/* Like/Heart */}
         <button
-          onClick={handlePlay}
-          className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-0 hover:bg-opacity-30 transition-all duration-200 focus:outline-none focus:bg-opacity-30"
-          aria-label={`Play ${item.title}`}
+          className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-gray-100 hover:bg-red-50 flex items-center justify-center transition-colors focus:outline-none focus:ring-2 focus:ring-red-300"
+          aria-label="Like"
         >
-          <div className="bg-white bg-opacity-90 rounded-full p-3 transform scale-90 group-hover:scale-100 transition-transform duration-200">
-            <Play className="h-6 w-6 text-gray-900 ml-0.5" aria-hidden="true" />
-          </div>
+          <svg className="w-3 h-3 sm:w-4 sm:h-4 text-gray-600 hover:text-red-500" fill="currentColor" viewBox="0 0 20 20">
+            <path fillRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd" />
+          </svg>
         </button>
-      </div>
 
-      {/* Content */}
-      <div className="p-4 space-y-3">
-        {/* Title and Emotion Badge */}
-        <div className="space-y-2">
-          <h3 className="font-semibold text-gray-900 line-clamp-2 text-sm leading-tight">
-            {item.title}
-          </h3>
-          <div className="flex items-center justify-between">
-            <span
-              className={cn(
-                'inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border',
-                emotionColors[item.emotion]
-              )}
-            >
-              {item.emotion}
-            </span>
-            <span className="text-xs text-gray-500 capitalize">
-              {item.media_type}
-            </span>
-          </div>
-        </div>
-
-        {/* Description */}
-        {item.description && (
-          <p className="text-sm text-gray-600 line-clamp-2">
-            {item.description}
-          </p>
-        )}
-
-        {/* Metadata */}
-        <div className="flex items-center justify-between text-xs text-gray-500">
-          <div className="flex items-center space-x-2">
-            {item.duration && (
-              <span>{formatDuration(item.duration)}</span>
-            )}
-            {item.file_size && (
-              <span>{formatFileSize(item.file_size)}</span>
-            )}
-          </div>
-          <span>{item.download_count} downloads</span>
-        </div>
-
-        {/* Download Button */}
-        <Button
-          onClick={handleDownload}
-          variant="outline"
-          size="sm"
-          className="w-full"
-          aria-label={`Download ${item.title}`}
+        {/* Copy Link */}
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            navigator.clipboard.writeText(window.location.origin + '/library/' + item.id);
+          }}
+          className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-gray-100 hover:bg-blue-50 flex items-center justify-center transition-colors focus:outline-none focus:ring-2 focus:ring-blue-300"
+          aria-label="Copy link"
         >
-          <Download className="h-4 w-4 mr-2" aria-hidden="true" />
-          Download
-        </Button>
+          <svg className="w-3 h-3 sm:w-4 sm:h-4 text-gray-600 hover:text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+          </svg>
+        </button>
+
+        {/* Share/Download */}
+        <button
+          onClick={handleDownload}
+          className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-gray-100 hover:bg-green-50 flex items-center justify-center transition-colors focus:outline-none focus:ring-2 focus:ring-green-300"
+          aria-label="Download"
+        >
+          <Download className="w-3 h-3 sm:w-4 sm:h-4 text-gray-600 hover:text-green-500" />
+        </button>
       </div>
     </div>
   );
 };
 
+export default LibraryCard;
 export default LibraryCard;

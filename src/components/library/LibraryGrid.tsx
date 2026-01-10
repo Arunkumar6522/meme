@@ -57,17 +57,23 @@ const LibraryGrid: React.FC<LibraryGridProps> = ({ items, loading = false, class
   return (
     <div
       className={cn(
-        'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6',
+        'flex justify-center',
         className
       )}
-      role="grid"
-      aria-label={`Library grid with ${items.length} items`}
     >
-      {items.map((item) => (
-        <div key={item.id} role="gridcell">
-          <LibraryCard item={item} />
-        </div>
-      ))}
+      <div
+        className={cn(
+          'grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8 gap-4 sm:gap-6 max-w-7xl w-full',
+        )}
+        role="grid"
+        aria-label={`Library grid with ${items.length} items`}
+      >
+        {items.map((item) => (
+          <div key={item.id} role="gridcell" className="flex justify-center">
+            <LibraryCard item={item} />
+          </div>
+        ))}
+      </div>
     </div>
   );
 };
