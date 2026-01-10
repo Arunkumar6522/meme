@@ -47,38 +47,49 @@ const ForgotPasswordForm: React.FC = () => {
     setErrors({});
 
     try {
+      console.log('🚀 Starting password reset for:', email);
       const result = await resetPassword(email);
       
-      // Debug log
-      if (import.meta.env.MODE === 'development') {
-        console.log('🔍 resetPassword result:', result);
-        console.log('🔍 Current step before update:', step);
-      }
+      console.log('📦 resetPassword result:', JSON.stringify(result, null, 2));
+      console.log('📊 Current step state:', step);
+      console.log('❓ Has error?', !!result?.error);
       
       // Check if there's an error
       if (result?.error) {
+        console.error('❌ Error in resetPassword:', result.error);
         setErrors({ general: result.error });
         showError(result.error, 'Password Reset Failed');
         return;
       }
 
-      // Success - Update step to OTP IMMEDIATELY
-      // Use functional update to ensure we get the latest state
-      setStep((prevStep) => {
-        if (import.meta.env.MODE === 'development') {
-          console.log('🔍 Updating step from', prevStep, 'to otp');
+      // Success - FORCE step update to OTP
+      console.log('✅ No error, setting step to OTP...');
+      console.log('📝 Step before update:', step);
+      
+      // Use direct state update
+      setStep('otp');
+      
+      // Also update ref immediately
+      stepRef.current = 'otp';
+      
+      console.log('✅ Step set to otp, stepRef updated');
+      
+      // Force a re-render check
+      setTimeout(() => {
+        console.log('🔍 After timeout - step state:', step);
+        console.log('🔍 After timeout - stepRef:', stepRef.current);
+        // Force update if needed
+        if (step !== 'otp') {
+          console.warn('⚠️ Step not updated, forcing update...');
+          setStep('otp');
         }
-        return 'otp';
-      });
+      }, 100);
       
       // Show success message
       showSuccess('Verification code sent to your email!', 'Check Your Email');
       
-      if (import.meta.env.MODE === 'development') {
-        console.log('🔍 Step update queued, waiting for re-render...');
-      }
-      
     } catch (err) {
+      console.error('💥 Exception in handleSubmit:', err);
       const errorMessage = (err as Error).message || 'An unexpected error occurred';
       setErrors({ general: errorMessage });
       showError(errorMessage, 'Password Reset Failed');
@@ -86,11 +97,13 @@ const ForgotPasswordForm: React.FC = () => {
   };
 
   // Show OTP verification form if on OTP step
-  // CRITICAL: This check must happen BEFORE the main return statement
-  if (step === 'otp') {
-    if (import.meta.env.MODE === 'development') {
-      console.log('✅✅✅ RENDERING OTP SCREEN NOW - step:', step, 'email:', email);
-    }
+  // CRITICAL: Check both state and ref to ensure we catch the update
+  const shouldShowOTP = step === 'otp' || stepRef.current === 'otp';
+  
+  console.log('🎨 Render check - step:', step, 'stepRef:', stepRef.current, 'shouldShowOTP:', shouldShowOTP);
+  
+  if (shouldShowOTP) {
+    console.log('✅✅✅ RENDERING OTP SCREEN NOW!!!');
     return (
       <OTPVerificationForm
         key={`otp-${email}`}
@@ -98,6 +111,7 @@ const ForgotPasswordForm: React.FC = () => {
         type="reset-password"
         onBack={() => {
           setStep('form');
+          stepRef.current = 'form';
           setErrors({});
         }}
       />
