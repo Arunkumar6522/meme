@@ -42,11 +42,21 @@ const getEnvVar = (key: string, defaultValue?: string): string | undefined => {
   return import.meta.env[key] || defaultValue;
 };
 
+// Get environment variable safely (returns placeholder if missing in dev)
+const getEnvVarSafe = (key: string, defaultValue: string = ''): string => {
+  const value = import.meta.env[key];
+  if (!value && import.meta.env.MODE === 'development') {
+    console.warn(`⚠️ Missing environment variable: ${key}. Using placeholder value.`);
+    return defaultValue;
+  }
+  return value || defaultValue;
+};
+
 // Create configuration object
 export const config: AppConfig = {
   supabase: {
-    url: validateEnvVar('VITE_SUPABASE_URL', import.meta.env.VITE_SUPABASE_URL),
-    anonKey: validateEnvVar('VITE_SUPABASE_ANON_KEY', import.meta.env.VITE_SUPABASE_ANON_KEY),
+    url: getEnvVarSafe('VITE_SUPABASE_URL', 'https://placeholder.supabase.co'),
+    anonKey: getEnvVarSafe('VITE_SUPABASE_ANON_KEY', 'placeholder-anon-key'),
   },
   smtp: import.meta.env.VITE_SMTP_HOST ? {
     host: import.meta.env.VITE_SMTP_HOST,
@@ -112,7 +122,12 @@ if (isDevelopment) {
     app: config.app,
     features: config.features,
     supabaseConfigured: !!config.supabase.url,
+    supabaseUrl: config.supabase.url?.substring(0, 30) + '...',
     smtpConfigured: !!config.smtp?.host,
     googleAdsConfigured: !!config.googleAds?.clientId,
+  });
+  console.log('Environment variables check:', {
+    VITE_SUPABASE_URL: import.meta.env.VITE_SUPABASE_URL ? '✅ Set' : '❌ Missing',
+    VITE_SUPABASE_ANON_KEY: import.meta.env.VITE_SUPABASE_ANON_KEY ? '✅ Set' : '❌ Missing',
   });
 }

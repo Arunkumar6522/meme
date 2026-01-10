@@ -16,10 +16,19 @@ export class CustomAuthService {
       const otpCode = OTPService.generateOTPCode();
 
       // Send OTP email
-      const { error } = await OTPService.sendOTPEmail(email, otpCode, 'password_reset');
+      const result = await OTPService.sendOTPEmail(email, otpCode, 'password_reset');
       
-      if (error) {
-        return { error };
+      if (result.error) {
+        return { error: result.error };
+      }
+
+      // In development, store the code for testing (never expose in production)
+      if (import.meta.env.MODE === 'development' && result.devCode) {
+        try {
+          sessionStorage.setItem(`dev_otp_${email}`, result.devCode);
+        } catch (e) {
+          // Ignore if sessionStorage unavailable
+        }
       }
 
       return { error: null };

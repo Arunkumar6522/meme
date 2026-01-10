@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Button, Input } from '@/components/ui';
 import { useAuth } from '@/hooks/useAuth';
@@ -11,6 +11,13 @@ const ForgotPasswordForm: React.FC = () => {
   const [errors, setErrors] = useState<{ email?: string; general?: string }>({});
   const { resetPassword, loading } = useAuth();
   const { showSuccess, showError } = useToast();
+
+  // Debug: Log step changes
+  useEffect(() => {
+    if (import.meta.env.MODE === 'development') {
+      console.log('🔍 ForgotPasswordForm step changed to:', step);
+    }
+  }, [step]);
 
   const validateForm = () => {
     const newErrors: typeof errors = {};
@@ -30,13 +37,36 @@ const ForgotPasswordForm: React.FC = () => {
     
     if (!validateForm()) return;
 
-    const { error } = await resetPassword(email);
-    if (error) {
-      setErrors({ general: error });
-      showError(error, 'Password Reset Failed');
-    } else {
+    try {
+      const result = await resetPassword(email);
+      
+      // Debug log
+      if (import.meta.env.MODE === 'development') {
+        console.log('🔍 resetPassword result:', result);
+      }
+      
+      // Check if there's an error
+      if (result?.error) {
+        setErrors({ general: result.error });
+        showError(result.error, 'Password Reset Failed');
+        return;
+      }
+
+      // Success - immediately set step to OTP
+      // Use React's state updater function to ensure update happens
+      setStep((currentStep) => {
+        if (import.meta.env.MODE === 'development') {
+          console.log('🔍 Setting step from', currentStep, 'to otp');
+        }
+        return 'otp';
+      });
+      
+      // Show success message
       showSuccess('Verification code sent to your email!', 'Check Your Email');
-      setStep('otp');
+    } catch (err) {
+      const errorMessage = (err as Error).message || 'An unexpected error occurred';
+      setErrors({ general: errorMessage });
+      showError(errorMessage, 'Password Reset Failed');
     }
   };
 

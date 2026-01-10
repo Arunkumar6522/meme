@@ -1,0 +1,9 @@
+{
+  "name": "send-otp",
+  "version": "1.0.0",
+  "description": "Netlify function to send OTP emails securely",
+  "main": "index.js",
+  "dependencies": {
+    "nodemailer": "^6.10.1"
+  }
+}

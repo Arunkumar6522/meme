@@ -101,14 +101,11 @@ export class AuthService {
   // Reset password (using custom OTP system to avoid rate limits)
   static async resetPassword(email: string) {
     try {
-      console.log('🔄 Using CUSTOM OTP system for password reset:', email);
       // Use our custom OTP service instead of Supabase's built-in reset
       const { CustomAuthService } = await import('./custom-auth.service');
       const result = await CustomAuthService.sendPasswordResetOTP(email);
-      console.log('✅ Custom OTP result:', result);
       return result;
     } catch (error) {
-      console.error('❌ Custom OTP error:', error);
       return { error: (error as Error).message };
     }
   }
