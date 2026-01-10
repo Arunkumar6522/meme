@@ -260,10 +260,13 @@ export class CustomAuthService {
       if (signupError) {
         console.error('Supabase signup error:', signupError);
         
-        // Handle specific error cases
+        // Handle specific error cases with better messages
         if (signupError.message?.includes('already registered') || 
             signupError.message?.includes('already exists') ||
-            signupError.message?.includes('User already registered')) {
+            signupError.message?.includes('User already registered') ||
+            signupError.message?.includes('duplicate')) {
+          // Clean up on duplicate error
+          localStorage.removeItem('pending_signup');
           return { error: 'An account with this email already exists. Please sign in instead.' };
         }
         
@@ -271,9 +274,18 @@ export class CustomAuthService {
           return { error: 'Invalid email address. Please check your email and try again.' };
         }
         
-        // Handle 422 Unprocessable Content error
+        if (signupError.message?.includes('password') || signupError.message?.includes('Password')) {
+          return { error: 'Password does not meet requirements. Please try again.' };
+        }
+        
+        // Handle 422 Unprocessable Content error (common for validation failures)
         if (signupError.status === 422) {
           return { error: 'Unable to create account. Please check your email and password, then try again.' };
+        }
+        
+        // Handle network/connection errors
+        if (signupError.message?.includes('fetch') || signupError.message?.includes('network') || signupError.message?.includes('Failed to fetch')) {
+          return { error: 'Network error. Please check your connection and try again.' };
         }
         
         // Return user-friendly error message

@@ -191,12 +191,13 @@ const OTPVerificationForm: React.FC<OTPVerificationFormProps> = ({ email, type, 
           We sent a 6-digit code to:
         </p>
         <p 
-          className="mt-1 text-xs sm:text-sm font-medium text-gray-900 px-2" 
+          className="mt-1 text-xs sm:text-sm font-medium text-gray-900 break-all px-2" 
           style={{ 
-            wordBreak: 'break-word', 
+            wordBreak: 'break-all', 
             overflowWrap: 'break-word',
             maxWidth: '100%',
-            overflow: 'visible'
+            overflow: 'visible',
+            hyphens: 'auto'
           }}
           title={normalizedEmail}
         >

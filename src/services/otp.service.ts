@@ -126,25 +126,43 @@ export class OTPService {
   // Verify OTP code
   static async verifyOTP(email: string, code: string, type: 'signup' | 'password_reset'): Promise<{ valid: boolean; error: string | null }> {
     try {
+      // Normalize email
+      const normalizedEmail = email.trim().toLowerCase();
+      
+      // Validate email format
+      if (!this.validateEmail(normalizedEmail)) {
+        return { valid: false, error: 'Invalid email format' };
+      }
+      
+      // Validate OTP code format
+      if (!/^\d{6}$/.test(code)) {
+        return { valid: false, error: 'Invalid OTP format. Please enter 6 digits.' };
+      }
+
       const { data, error } = await supabase
         .from('otp_codes')
         .select('*')
-        .eq('email', email)
+        .eq('email', normalizedEmail)
         .eq('code', code)
         .eq('type', type)
         .maybeSingle(); // Use maybeSingle instead of single to handle RLS better
 
       if (error) {
         console.error('OTP verification error:', error);
-        // If RLS is blocking, provide helpful error
-        if (error.code === 'PGRST116' || error.code === '42501' || error.message?.includes('permission')) {
-          return { valid: false, error: 'Unable to verify code. Please check your Supabase RLS policies for otp_codes table.' };
+        // Handle specific error codes
+        if (error.code === 'PGRST116') {
+          // No rows found - invalid code
+          return { valid: false, error: 'Invalid verification code. Please check and try again.' };
         }
-        return { valid: false, error: 'Invalid or expired verification code' };
+        if (error.code === '42501' || error.code === '406' || error.message?.includes('permission') || error.message?.includes('row-level security')) {
+          return { valid: false, error: 'Unable to verify code due to security restrictions. Please contact support or try again later.' };
+        }
+        // Generic error
+        return { valid: false, error: 'Failed to verify code. Please try again.' };
       }
 
       if (!data) {
-        return { valid: false, error: 'Invalid or expired verification code' };
+        return { valid: false, error: 'Invalid or expired verification code. Please check your code and try again.' };
       }
 
       // Check if expired
@@ -153,23 +171,33 @@ export class OTPService {
       
       if (now > expiresAt) {
         // Delete expired OTP
+        try {
+          await supabase
+            .from('otp_codes')
+            .delete()
+            .eq('id', data.id);
+        } catch (deleteError) {
+          console.warn('Failed to delete expired OTP:', deleteError);
+        }
+        
+        return { valid: false, error: 'Verification code has expired. Please request a new code.' };
+      }
+
+      // Delete used OTP (don't fail if delete fails)
+      try {
         await supabase
           .from('otp_codes')
           .delete()
           .eq('id', data.id);
-        
-        return { valid: false, error: 'Verification code has expired' };
+      } catch (deleteError) {
+        console.warn('Failed to delete used OTP:', deleteError);
+        // Don't fail verification if delete fails
       }
-
-      // Delete used OTP
-      await supabase
-        .from('otp_codes')
-        .delete()
-        .eq('id', data.id);
 
       return { valid: true, error: null };
     } catch (error) {
-      return { valid: false, error: (error as Error).message };
+      console.error('Exception in verifyOTP:', error);
+      return { valid: false, error: (error as Error).message || 'An unexpected error occurred. Please try again.' };
     }
   }
 
