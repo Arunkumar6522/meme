@@ -142,15 +142,7 @@ export class OTPService {
       // So we'll detect if we're in development and skip the function call to avoid 404 errors
       const functionUrl = import.meta.env.VITE_NETLIFY_FUNCTIONS_URL || '/.netlify/functions';
       
-      // In development mode, check if Netlify dev server is available
-      // If running regular Vite dev server, skip function call and use fallback directly
-      if (import.meta.env.MODE === 'development') {
-        // Try to detect if netlify dev is running by checking if function endpoint exists
-        // For now, we'll use fallback directly in development to avoid 404 errors
-        // User can run 'netlify dev' if they want to test the function locally
-        return await this.sendOTPEmailDirect(email, code, type);
-      }
-      
+      // Try to send via Netlify function first (works in production and when running 'netlify dev')
       try {
         const response = await fetch(`${functionUrl}/send-otp`, {
           method: 'POST',
@@ -185,30 +177,49 @@ export class OTPService {
         }
 
         if (!response.ok) {
-          // If function is not available (e.g., in development), fall back to direct SMTP
+          // If function is not available (e.g., in development with Vite), fall back
           if (response.status === 404 || response.status === 500 || response.status === 502) {
+            console.warn('Netlify function unavailable, using fallback for development');
             const fallbackResult = await this.sendOTPEmailDirect(email, code, type);
             return fallbackResult;
           }
-          throw new Error(result.error || `Failed to send email (${response.status})`);
+          
+          // Get error message from response
+          const errorMsg = result.error || result.message || `Failed to send email (${response.status})`;
+          console.error('Netlify function error:', errorMsg);
+          throw new Error(errorMsg);
         }
 
         // Success - email sent securely from backend
         // OTP code is never exposed in client-side code
+        console.log(`✅ OTP email sent successfully to ${email} via Netlify function`);
         return { error: null, devCode: undefined };
       } catch (fetchError) {
         // Handle network errors, JSON parsing errors, and function unavailability
         const errorMessage = (fetchError as Error).message || String(fetchError);
         
+        console.warn('Error calling Netlify function:', errorMessage);
+        
         // If it's a network error, JSON parse error, or function not found, use fallback
+        // This is OK in development, but should be fixed in production
         if (
           fetchError instanceof TypeError || 
           errorMessage.includes('fetch') ||
           errorMessage.includes('JSON') ||
-          errorMessage.includes('Unexpected')
+          errorMessage.includes('Unexpected') ||
+          errorMessage.includes('Failed to fetch')
         ) {
-          const fallbackResult = await this.sendOTPEmailDirect(email, code, type);
-          return fallbackResult;
+          // Only use fallback in development mode
+          if (import.meta.env.MODE === 'development') {
+            console.warn('Using development fallback (no email sent, check sessionStorage)');
+            const fallbackResult = await this.sendOTPEmailDirect(email, code, type);
+            return fallbackResult;
+          } else {
+            // In production, this is an error
+            return { 
+              error: 'Email service temporarily unavailable. Please try again later or contact support.' 
+            };
+          }
         }
         
         // Re-throw other errors

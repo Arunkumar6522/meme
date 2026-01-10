@@ -5,6 +5,8 @@ export class CustomAuthService {
   // Send password reset OTP (checks if user exists first)
   static async sendPasswordResetOTP(email: string): Promise<{ error: string | null }> {
     try {
+      console.log(`📧 Sending password reset OTP to ${email}...`);
+      
       // Try to check if user exists (but don't fail if RLS blocks it)
       // If RLS blocks the check, we'll proceed anyway - email service will handle non-existent users
       let userExists = false;
@@ -32,13 +34,18 @@ export class CustomAuthService {
       const result = await OTPService.sendOTPEmail(email, otpCode, 'password_reset');
       
       if (result.error) {
+        console.error('❌ Failed to send password reset OTP:', result.error);
         return { error: result.error };
       }
+
+      console.log(`✅ Password reset OTP sent successfully to ${email}`);
 
       // In development, store the code for testing (never expose in production)
       if (import.meta.env.MODE === 'development' && result.devCode) {
         try {
           sessionStorage.setItem(`dev_otp_${email}`, result.devCode);
+          console.log(`💡 Development mode: OTP code stored in sessionStorage (key: dev_otp_${email})`);
+          console.log(`💡 To test email sending, run 'netlify dev' instead of 'npm run dev'`);
         } catch (e) {
           // Ignore if sessionStorage unavailable
         }
@@ -46,6 +53,7 @@ export class CustomAuthService {
 
       return { error: null };
     } catch (error) {
+      console.error('💥 Exception in sendPasswordResetOTP:', error);
       return { error: (error as Error).message };
     }
   }
@@ -124,18 +132,20 @@ export class CustomAuthService {
         return { error: 'An account with this email already exists' };
       }
 
-      // Store signup data temporarily (we'll need a temp table for this)
-      // For now, we'll use localStorage or a different approach
-      
       // Generate OTP code
       const otpCode = OTPService.generateOTPCode();
+      
+      console.log(`📧 Sending signup OTP to ${email}...`);
 
       // Send OTP email
-      const { error } = await OTPService.sendOTPEmail(email, otpCode, 'signup');
+      const result = await OTPService.sendOTPEmail(email, otpCode, 'signup');
       
-      if (error) {
-        return { error };
+      if (result.error) {
+        console.error('❌ Failed to send signup OTP:', result.error);
+        return { error: result.error };
       }
+
+      console.log(`✅ Signup OTP sent successfully to ${email}`);
 
       // Store signup data in localStorage temporarily
       const signupData = {
@@ -146,8 +156,15 @@ export class CustomAuthService {
       };
       localStorage.setItem('pending_signup', JSON.stringify(signupData));
 
+      // In development, log where to find the OTP
+      if (import.meta.env.MODE === 'development' && result.devCode) {
+        console.log(`💡 Development mode: OTP code stored in sessionStorage (key: dev_otp_${email})`);
+        console.log(`💡 To test email sending, run 'netlify dev' instead of 'npm run dev'`);
+      }
+
       return { error: null };
     } catch (error) {
+      console.error('💥 Exception in sendSignupOTP:', error);
       return { error: (error as Error).message };
     }
   }

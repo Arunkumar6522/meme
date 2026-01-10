@@ -7,8 +7,31 @@ import { useToast } from '@/hooks/useToast';
 import OTPVerificationForm from './OTPVerificationForm';
 
 const ForgotPasswordForm: React.FC = () => {
-  const [step, setStep] = useState<'form' | 'otp'>('form');
-  const [email, setEmail] = useState('');
+  const [step, setStep] = useState<'form' | 'otp'>(() => {
+    // Only restore from sessionStorage if we're coming back from OTP screen
+    // Otherwise, always start fresh
+    try {
+      const persisted = sessionStorage.getItem('forgot-password-step');
+      return persisted === 'otp' ? 'otp' : 'form';
+    } catch {
+      return 'form';
+    }
+  });
+  const [email, setEmail] = useState(() => {
+    // Only restore email if we're on OTP step
+    try {
+      const persistedStep = sessionStorage.getItem('forgot-password-step');
+      if (persistedStep === 'otp') {
+        return sessionStorage.getItem('forgot-password-email') || '';
+      }
+      // Clear sessionStorage if we're starting fresh
+      sessionStorage.removeItem('forgot-password-step');
+      sessionStorage.removeItem('forgot-password-email');
+      return '';
+    } catch {
+      return '';
+    }
+  });
   const [errors, setErrors] = useState<{ email?: string; general?: string }>({});
   const { resetPassword, loading } = useAuth();
   const { showSuccess, showError } = useToast();
@@ -25,6 +48,18 @@ const ForgotPasswordForm: React.FC = () => {
       console.log('🔍 ForgotPasswordForm step changed to:', step);
     }
   }, [step]);
+
+  // Clear sessionStorage on mount if email is empty (fresh start)
+  useEffect(() => {
+    if (!email && step === 'form') {
+      try {
+        sessionStorage.removeItem('forgot-password-step');
+        sessionStorage.removeItem('forgot-password-email');
+      } catch (e) {
+        // Ignore
+      }
+    }
+  }, []); // Only run on mount
 
   const validateForm = () => {
     const newErrors: typeof errors = {};

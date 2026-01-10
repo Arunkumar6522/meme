@@ -8,16 +8,33 @@ import OTPVerificationForm from './OTPVerificationForm';
 
 const RegisterForm: React.FC = () => {
   const [step, setStep] = useState<'form' | 'otp'>(() => {
+    // Only restore from sessionStorage if we're coming back from OTP screen
+    // Otherwise, always start fresh
     try {
-      return sessionStorage.getItem('register-step') === 'otp' ? 'otp' : 'form';
+      const persisted = sessionStorage.getItem('register-step');
+      return persisted === 'otp' ? 'otp' : 'form';
     } catch {
       return 'form';
     }
   });
   const [formData, setFormData] = useState(() => {
     try {
-      const saved = sessionStorage.getItem('register-form-data');
-      return saved ? JSON.parse(saved) : {
+      const persistedStep = sessionStorage.getItem('register-step');
+      if (persistedStep === 'otp') {
+        // If we're on OTP step, restore form data
+        const saved = sessionStorage.getItem('register-form-data');
+        return saved ? JSON.parse(saved) : {
+          fullName: '',
+          email: '',
+          password: '',
+          confirmPassword: '',
+        };
+      }
+      // Clear sessionStorage if we're starting fresh
+      sessionStorage.removeItem('register-step');
+      sessionStorage.removeItem('register-email');
+      sessionStorage.removeItem('register-form-data');
+      return {
         fullName: '',
         email: '',
         password: '',
@@ -46,6 +63,19 @@ const RegisterForm: React.FC = () => {
   useEffect(() => {
     stepRef.current = step;
   }, [step]);
+
+  // Clear sessionStorage on mount if form data is empty (fresh start)
+  useEffect(() => {
+    if (!formData.email && step === 'form') {
+      try {
+        sessionStorage.removeItem('register-step');
+        sessionStorage.removeItem('register-email');
+        sessionStorage.removeItem('register-form-data');
+      } catch (e) {
+        // Ignore
+      }
+    }
+  }, []); // Only run on mount
 
   // Persist form data to sessionStorage
   useEffect(() => {
