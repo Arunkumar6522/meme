@@ -61,36 +61,56 @@ export class CustomAuthService {
   }
 
   // Update password after OTP verification
+  // Uses Netlify function for secure password update (admin API requires service role key)
   static async updatePasswordWithEmail(email: string, newPassword: string): Promise<{ error: string | null }> {
     try {
-      // Get user by email
-      const { data: userData, error: userError } = await supabase
-        .from('users')
-        .select('id')
-        .eq('email', email)
-        .single();
-
-      if (userError || !userData) {
-        return { error: 'User not found' };
-      }
-
-      // Get current user's password hash to compare (if possible)
-      // Note: Supabase doesn't expose password hashes for security
-      // So we'll skip the "not same as old password" check for now
-      // and implement it differently
-
-      // Update password using Supabase admin API
-      const { error } = await supabase.auth.admin.updateUserById(userData.id, {
-        password: newPassword,
+      // Call Netlify function to update password securely
+      const response = await fetch('/.netlify/functions/update-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email,
+          newPassword,
+        }),
       });
 
-      if (error) {
-        return { error: error.message };
+      // Check if response is ok
+      if (!response.ok) {
+        let errorMessage = 'Failed to update password';
+        try {
+          const contentType = response.headers.get('content-type');
+          if (contentType && contentType.includes('application/json')) {
+            const errorData = await response.json();
+            errorMessage = errorData.error || errorMessage;
+          } else {
+            errorMessage = await response.text() || errorMessage;
+          }
+        } catch (parseError) {
+          // If parsing fails, use default error message
+          console.error('Error parsing error response:', parseError);
+        }
+        return { error: errorMessage };
+      }
+
+      // Parse successful response
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        const data = await response.json();
+        if (data.error) {
+          return { error: data.error };
+        }
       }
 
       return { error: null };
     } catch (error) {
-      return { error: (error as Error).message };
+      console.error('Error updating password:', error);
+      // If Netlify function is not available (local dev), provide helpful error
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        return { error: 'Unable to connect to server. Please ensure you are running "netlify dev" for local development.' };
+      }
+      return { error: (error as Error).message || 'Failed to update password' };
     }
   }
 
