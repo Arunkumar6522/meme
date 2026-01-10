@@ -37,12 +37,16 @@ const ForgotPasswordForm: React.FC = () => {
     
     if (!validateForm()) return;
 
+    // Clear any previous errors
+    setErrors({});
+
     try {
       const result = await resetPassword(email);
       
       // Debug log
       if (import.meta.env.MODE === 'development') {
         console.log('🔍 resetPassword result:', result);
+        console.log('🔍 Current step before update:', step);
       }
       
       // Check if there's an error
@@ -52,14 +56,13 @@ const ForgotPasswordForm: React.FC = () => {
         return;
       }
 
-      // Success - immediately set step to OTP
-      // Use React's state updater function to ensure update happens
-      setStep((currentStep) => {
-        if (import.meta.env.MODE === 'development') {
-          console.log('🔍 Setting step from', currentStep, 'to otp');
-        }
-        return 'otp';
-      });
+      // Success - immediately set step to OTP (synchronous update)
+      setStep('otp');
+      
+      // Debug log after state update
+      if (import.meta.env.MODE === 'development') {
+        console.log('🔍 Step set to otp, component should re-render');
+      }
       
       // Show success message
       showSuccess('Verification code sent to your email!', 'Check Your Email');
@@ -71,12 +74,17 @@ const ForgotPasswordForm: React.FC = () => {
   };
 
   // Show OTP verification form if on OTP step
+  // Use key prop to force re-render when step changes
   if (step === 'otp') {
     return (
       <OTPVerificationForm
+        key={`otp-${email}`}
         email={email}
         type="reset-password"
-        onBack={() => setStep('form')}
+        onBack={() => {
+          setStep('form');
+          setErrors({});
+        }}
       />
     );
   }
