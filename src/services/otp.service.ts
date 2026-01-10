@@ -79,30 +79,47 @@ export class OTPService {
   // Store OTP in database (we'll create an otp_codes table)
   static async storeOTP(email: string, code: string, type: 'signup' | 'password_reset'): Promise<{ error: string | null }> {
     try {
+      // Normalize email
+      const normalizedEmail = email.trim().toLowerCase();
+      
       const expiresAt = new Date();
       expiresAt.setMinutes(expiresAt.getMinutes() + 10); // 10 minutes expiry
 
       // First, delete any existing OTP for this email and type
-      await supabase
+      const { error: deleteError } = await supabase
         .from('otp_codes')
         .delete()
-        .eq('email', email)
+        .eq('email', normalizedEmail)
         .eq('type', type);
+
+      // Log delete error but don't fail (it's OK if nothing to delete)
+      if (deleteError && deleteError.code !== 'PGRST116') {
+        console.warn('Error deleting existing OTP:', deleteError);
+      }
 
       // Insert new OTP
       const { error } = await supabase
         .from('otp_codes')
         .insert({
-          email,
+          email: normalizedEmail,
           code,
           type,
           expires_at: expiresAt.toISOString(),
         });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error storing OTP:', error);
+        // Check if it's an RLS error
+        if (error.code === '42501' || error.code === '406' || error.message?.includes('row-level security')) {
+          return { error: 'Unable to store verification code. Please check your Supabase RLS policies for otp_codes table.' };
+        }
+        throw error;
+      }
+      
       return { error: null };
     } catch (error) {
-      return { error: (error as Error).message };
+      console.error('Exception storing OTP:', error);
+      return { error: (error as Error).message || 'Failed to store verification code' };
     }
   }
 

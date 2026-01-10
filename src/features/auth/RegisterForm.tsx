@@ -132,9 +132,22 @@ const RegisterForm: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!validateForm()) return;
+    // Validate form first
+    if (!validateForm()) {
+      console.log('Form validation failed');
+      return;
+    }
 
+    // Clear previous errors
     setErrors({});
+    
+    // Ensure we're on form step (prevent showing OTP if there was an error before)
+    if (step !== 'form') {
+      flushSync(() => {
+        setStep('form');
+        stepRef.current = 'form';
+      });
+    }
 
     try {
       // Normalize email before sending
@@ -147,36 +160,63 @@ const RegisterForm: React.FC = () => {
         return;
       }
 
-      const { error } = await signUp(normalizedEmail, formData.password, formData.fullName.trim());
-      if (error) {
-        console.error('Registration error:', error);
+      console.log('Calling signUp API...', { email: normalizedEmail, hasPassword: !!formData.password });
+      
+      const result = await signUp(normalizedEmail, formData.password, formData.fullName.trim());
+      
+      console.log('signUp result:', result);
+      
+      // Check for error - CRITICAL: Don't show OTP screen if there's an error
+      if (result?.error) {
+        console.error('Registration error:', result.error);
+        
+        // Ensure we stay on form step
+        flushSync(() => {
+          setStep('form');
+          stepRef.current = 'form';
+        });
+        
+        // Clear any sessionStorage that might have been set
+        try {
+          sessionStorage.removeItem('register-step');
+          sessionStorage.removeItem('register-email');
+        } catch (e) {
+          // Ignore
+        }
         
         // Provide user-friendly error messages
-        let userFriendlyError = error;
-        if (error.includes('already exists') || 
-            error.includes('duplicate') || 
-            error.includes('already registered') ||
-            error.includes('User already registered')) {
+        let userFriendlyError = result.error;
+        if (result.error.includes('already exists') || 
+            result.error.includes('duplicate') || 
+            result.error.includes('already registered') ||
+            result.error.includes('User already registered')) {
           userFriendlyError = 'An account with this email already exists. Please sign in instead.';
-        } else if (error.includes('Invalid email') || error.includes('email')) {
+        } else if (result.error.includes('Invalid email') || result.error.includes('email')) {
           userFriendlyError = 'Please enter a valid email address.';
-        } else if (error.includes('Password') || error.includes('password')) {
+        } else if (result.error.includes('Password') || result.error.includes('password')) {
           userFriendlyError = 'Password must be at least 6 characters long.';
-        } else if (error.includes('session expired') || error.includes('expired')) {
+        } else if (result.error.includes('session expired') || result.error.includes('expired')) {
           userFriendlyError = 'Registration session expired. Please try again.';
+        } else if (result.error.includes('Unable to verify') || result.error.includes('RLS')) {
+          userFriendlyError = 'Unable to verify account status. Please check your Supabase RLS policies or contact support.';
         }
         
         setErrors({ general: userFriendlyError });
         showError(userFriendlyError, 'Registration Failed');
-        return;
+        return; // CRITICAL: Return here to prevent OTP screen
       }
 
+      // Only proceed to OTP screen if there's NO error
+      console.log('Registration successful, showing OTP screen...');
+      
       // Success - persist email and step BEFORE state update
       try {
-        sessionStorage.setItem('register-email', formData.email);
+        sessionStorage.setItem('register-email', normalizedEmail);
         sessionStorage.setItem('register-step', 'otp');
+        // Also update formData email to normalized version
+        setFormData(prev => ({ ...prev, email: normalizedEmail }));
       } catch (e) {
-        // Ignore sessionStorage errors
+        console.error('Failed to save to sessionStorage:', e);
       }
 
       // Force synchronous state update FIRST
@@ -188,6 +228,22 @@ const RegisterForm: React.FC = () => {
       // Show success message AFTER state update
       showSuccess('Verification code sent to your email!', 'Check Your Email');
     } catch (err) {
+      console.error('Exception in handleSubmit:', err);
+      
+      // Ensure we stay on form step on exception
+      flushSync(() => {
+        setStep('form');
+        stepRef.current = 'form';
+      });
+      
+      // Clear sessionStorage
+      try {
+        sessionStorage.removeItem('register-step');
+        sessionStorage.removeItem('register-email');
+      } catch (e) {
+        // Ignore
+      }
+      
       const errorMessage = (err as Error).message || 'An unexpected error occurred';
       setErrors({ general: errorMessage });
       showError(errorMessage, 'Registration Failed');
