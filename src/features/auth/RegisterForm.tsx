@@ -275,12 +275,22 @@ const RegisterForm: React.FC = () => {
     }
   };
 
-  // Show OTP verification form if on OTP step
-  if (step === 'otp' && formData.email && validateEmail(formData.email)) {
+  // Show OTP verification form ONLY if:
+  // 1. Step is 'otp'
+  // 2. Email is valid
+  // 3. NO errors exist (critical - don't show OTP if there's an error)
+  // 4. We have a valid email in formData
+  const shouldShowOTP = step === 'otp' && 
+                        formData.email && 
+                        validateEmail(formData.email) && 
+                        !errors.general &&
+                        Object.keys(errors).length === 0;
+
+  if (shouldShowOTP) {
     return (
       <OTPVerificationForm
         key={`otp-${formData.email}`}
-        email={formData.email}
+        email={formData.email.trim().toLowerCase()}
         type="signup"
         onBack={() => {
           // Clear sessionStorage and reset to form
