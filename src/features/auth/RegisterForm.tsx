@@ -38,9 +38,6 @@ const RegisterForm: React.FC = () => {
       const persistedStep = sessionStorage.getItem('register-step');
       const persistedEmail = sessionStorage.getItem('register-email');
       
-      // Only restore if we have both step and email, and email is FULLY valid
-      // Must be a complete, valid email address (not partial)
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       const normalizedPersistedEmail = persistedEmail?.trim().toLowerCase() || '';
       
       // CRITICAL: Only restore OTP step if:
@@ -51,7 +48,7 @@ const RegisterForm: React.FC = () => {
       if (persistedStep === 'otp' && 
           normalizedPersistedEmail && 
           normalizedPersistedEmail.length >= 5 &&
-          emailRegex.test(normalizedPersistedEmail)) {
+          validateEmail(normalizedPersistedEmail)) {
         // Restore OTP step
         setStep('otp');
         stepRef.current = 'otp';
@@ -119,10 +116,12 @@ const RegisterForm: React.FC = () => {
     }
   }, [formData.email, step]);
 
-  // Proper email validation regex
+  // Proper email validation regex (require TLD length >= 2)
   const validateEmail = (email: string): boolean => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email.trim().toLowerCase());
+    const normalized = email.trim().toLowerCase();
+    // Allows subdomains, disallows single-char TLDs like ".c"
+    const emailRegex = /^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/i;
+    return normalized.length >= 6 && normalized.length <= 254 && emailRegex.test(normalized);
   };
 
   const validateForm = () => {
