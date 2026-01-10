@@ -138,11 +138,11 @@ const OTPVerificationForm: React.FC<OTPVerificationFormProps> = ({ email, type, 
   };
 
   return (
-    <div className="w-full max-w-md space-y-6 mobile-form">
+    <div className="w-full max-w-md space-y-4 sm:space-y-6 px-2 sm:px-0">
       <div className="text-center">
-        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-primary-100">
+        <div className="mx-auto flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-full bg-primary-100">
           <svg
-            className="h-6 w-6 text-primary-600"
+            className="h-5 w-5 sm:h-6 sm:w-6 text-primary-600"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -155,13 +155,13 @@ const OTPVerificationForm: React.FC<OTPVerificationFormProps> = ({ email, type, 
             />
           </svg>
         </div>
-        <h1 className="mt-4 text-2xl sm:text-3xl font-bold text-gray-900">
+        <h1 className="mt-3 sm:mt-4 text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">
           Enter Verification Code
         </h1>
-        <p className="mt-2 text-sm sm:text-base text-gray-600">
+        <p className="mt-2 text-xs sm:text-sm text-gray-600">
           We sent a 6-digit code to:
         </p>
-        <p className="mt-1 text-sm font-medium text-gray-900">{email}</p>
+        <p className="mt-1 text-xs sm:text-sm font-medium text-gray-900 break-all px-2">{email}</p>
       </div>
 
       {error && (
@@ -179,7 +179,7 @@ const OTPVerificationForm: React.FC<OTPVerificationFormProps> = ({ email, type, 
           <label className="block text-sm font-medium text-gray-700 mb-3">
             Verification Code
           </label>
-          <div className="flex justify-center space-x-3">
+          <div className="flex justify-center gap-2 sm:gap-3 px-2">
             {otp.map((digit, index) => (
               <input
                 key={index}
@@ -191,7 +191,7 @@ const OTPVerificationForm: React.FC<OTPVerificationFormProps> = ({ email, type, 
                 onChange={(e) => handleInputChange(index, e.target.value)}
                 onKeyDown={(e) => handleKeyDown(index, e)}
                 onPaste={handlePaste}
-                className="w-12 h-12 sm:w-14 sm:h-14 text-center text-lg sm:text-xl font-semibold border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors"
+                className="w-11 h-11 sm:w-14 sm:h-14 text-center text-lg sm:text-xl font-semibold border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors touch-manipulation"
                 aria-label={`Digit ${index + 1}`}
               />
             ))}

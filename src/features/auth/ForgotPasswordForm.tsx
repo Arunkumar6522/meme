@@ -161,12 +161,12 @@ const ForgotPasswordForm: React.FC = () => {
   }
 
   return (
-    <div className="w-full max-w-md space-y-6 mobile-form">
+    <div className="w-full max-w-md space-y-4 sm:space-y-6 px-2 sm:px-0">
       <div className="text-center">
-        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
+        <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">
           Forgot Password?
         </h1>
-        <p className="mt-2 text-sm sm:text-base text-gray-600">
+        <p className="mt-2 text-xs sm:text-sm text-gray-600 px-2">
           Enter your email address and we'll send you a link to reset your password.
         </p>
       </div>
