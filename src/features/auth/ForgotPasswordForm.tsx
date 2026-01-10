@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { flushSync } from 'react-dom';
 import { Link } from 'react-router-dom';
 import { Button, Input } from '@/components/ui';
 import { useAuth } from '@/hooks/useAuth';
@@ -62,30 +63,19 @@ const ForgotPasswordForm: React.FC = () => {
         return;
       }
 
-      // Success - FORCE step update to OTP
+      // Success - FORCE step update to OTP using flushSync for immediate render
       console.log('✅ No error, setting step to OTP...');
       console.log('📝 Step before update:', step);
       
-      // Use direct state update
-      setStep('otp');
+      // Use flushSync to force synchronous state update and re-render
+      flushSync(() => {
+        setStep('otp');
+        stepRef.current = 'otp';
+      });
       
-      // Also update ref immediately
-      stepRef.current = 'otp';
+      console.log('✅ Step set to otp (synchronously), component should re-render NOW');
       
-      console.log('✅ Step set to otp, stepRef updated');
-      
-      // Force a re-render check
-      setTimeout(() => {
-        console.log('🔍 After timeout - step state:', step);
-        console.log('🔍 After timeout - stepRef:', stepRef.current);
-        // Force update if needed
-        if (step !== 'otp') {
-          console.warn('⚠️ Step not updated, forcing update...');
-          setStep('otp');
-        }
-      }, 100);
-      
-      // Show success message
+      // Show success message after state update
       showSuccess('Verification code sent to your email!', 'Check Your Email');
       
     } catch (err) {
@@ -97,21 +87,41 @@ const ForgotPasswordForm: React.FC = () => {
   };
 
   // Show OTP verification form if on OTP step
-  // CRITICAL: Check both state and ref to ensure we catch the update
-  const shouldShowOTP = step === 'otp' || stepRef.current === 'otp';
-  
-  console.log('🎨 Render check - step:', step, 'stepRef:', stepRef.current, 'shouldShowOTP:', shouldShowOTP);
-  
-  if (shouldShowOTP) {
-    console.log('✅✅✅ RENDERING OTP SCREEN NOW!!!');
+  // Check state first, then ref as fallback
+  if (step === 'otp') {
+    console.log('✅✅✅ RENDERING OTP SCREEN - step is otp!');
     return (
       <OTPVerificationForm
         key={`otp-${email}`}
         email={email}
         type="reset-password"
         onBack={() => {
-          setStep('form');
-          stepRef.current = 'form';
+          flushSync(() => {
+            setStep('form');
+            stepRef.current = 'form';
+          });
+          setErrors({});
+        }}
+      />
+    );
+  }
+  
+  // Fallback check using ref (shouldn't be needed but just in case)
+  if (stepRef.current === 'otp' && step !== 'otp') {
+    console.warn('⚠️ Ref says otp but state says form - forcing state update');
+    flushSync(() => {
+      setStep('otp');
+    });
+    return (
+      <OTPVerificationForm
+        key={`otp-${email}`}
+        email={email}
+        type="reset-password"
+        onBack={() => {
+          flushSync(() => {
+            setStep('form');
+            stepRef.current = 'form';
+          });
           setErrors({});
         }}
       />
