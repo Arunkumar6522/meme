@@ -15,6 +15,7 @@ const LibraryPage = React.lazy(() => import('./protected/LibraryPage'));
 const CreatePage = React.lazy(() => import('./protected/CreatePage'));
 const ProfilePage = React.lazy(() => import('./protected/ProfilePage'));
 const FavoritesPage = React.lazy(() => import('./protected/FavoritesPage'));
+const UploadOnlyPage = React.lazy(() => import('./protected/UploadOnlyPage'));
 const AdminPage = React.lazy(() => import('./admin/AdminPage'));
 
 // Loading component
@@ -67,12 +68,12 @@ const AppRoutes: React.FC = () => {
           {/* Admin Upload (renamed, no /admin base) */}
           <Route path="upload" element={
             <ProtectedRoute requireAdmin>
-              <AdminPage />
+              <UploadOnlyPage />
             </ProtectedRoute>
           } />
           <Route path="library/upload" element={
             <ProtectedRoute requireAdmin>
-              <AdminPage />
+              <UploadOnlyPage />
             </ProtectedRoute>
           } />
           

@@ -183,7 +183,7 @@ const Header: React.FC = () => {
                         aria-label="Admin Upload"
                       >
                         <Shield className="h-4 w-4" />
-                        <span className="hidden md:inline">Admin</span>
+                        <span className="hidden md:inline">Upload</span>
                       </Button>
                     )}
                     <div className="relative hidden md:block">
