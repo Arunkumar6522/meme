@@ -23,6 +23,7 @@ const LibraryPage: React.FC = () => {
   const [filters, setFilters] = useState<LibraryFiltersType>({
     sort_by: 'latest',
     media_type: 'audio',
+    artist: [],
   });
   const [mediaTab, setMediaTab] = useState<'audio' | 'video'>('audio');
 

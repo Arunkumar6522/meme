@@ -14,6 +14,7 @@ const LibraryPage = React.lazy(() => import('./protected/LibraryPage'));
 // Placeholder components for future implementation
 const CreatePage = React.lazy(() => import('./protected/CreatePage'));
 const ProfilePage = React.lazy(() => import('./protected/ProfilePage'));
+const FavoritesPage = React.lazy(() => import('./protected/FavoritesPage'));
 const AdminPage = React.lazy(() => import('./admin/AdminPage'));
 
 // Loading component
@@ -55,6 +56,11 @@ const AppRoutes: React.FC = () => {
           <Route path="profile" element={
             <ProtectedRoute>
               <ProfilePage />
+            </ProtectedRoute>
+          } />
+          <Route path="favorites" element={
+            <ProtectedRoute>
+              <FavoritesPage />
             </ProtectedRoute>
           } />
           

@@ -1,15 +1,18 @@
 import React from 'react';
-import { User, Settings, Download, Heart } from 'lucide-react';
+import { User, Download, Heart } from 'lucide-react';
 import { Button } from '@/components/ui';
 import { useAuth } from '@/hooks/useAuth';
+import { useFavorites } from '@/hooks/useFavorites';
+import { useNavigate } from 'react-router-dom';
 
 const ProfilePage: React.FC = () => {
   const { user } = useAuth();
+  const { favorites } = useFavorites();
+  const navigate = useNavigate();
 
   const stats = [
-    { label: 'Downloads', value: '247', icon: Download },
-    { label: 'Favorites', value: '89', icon: Heart },
-    { label: 'Days Active', value: '23', icon: User },
+    { label: 'Downloads', value: '—', icon: Download },
+    { label: 'Favorites', value: favorites.length.toString(), icon: Heart },
   ];
 
   return (
@@ -28,7 +31,7 @@ const ProfilePage: React.FC = () => {
           <div className="lg:col-span-1">
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
               <div className="text-center">
-                <div className="mx-auto h-20 w-20 bg-primary-100 rounded-full flex items-center justify-center mb-4">
+                <div className="mx-auto h-20 w-20 bg-orange-100 rounded-full flex items-center justify-center mb-4">
                   {user?.user_metadata?.avatar_url ? (
                     <img
                       src={user.user_metadata.avatar_url}
@@ -36,17 +39,13 @@ const ProfilePage: React.FC = () => {
                       className="h-20 w-20 rounded-full"
                     />
                   ) : (
-                    <User className="h-10 w-10 text-primary-600" />
+                    <User className="h-10 w-10 text-orange-600" />
                   )}
                 </div>
                 <h2 className="text-xl font-semibold text-gray-900">
                   {user?.user_metadata?.full_name || 'User'}
                 </h2>
                 <p className="text-gray-600 mt-1">{user?.email}</p>
-                <Button variant="outline" size="sm" className="mt-4">
-                  <Settings className="h-4 w-4 mr-2" />
-                  Edit Profile
-                </Button>
               </div>
             </div>
 
@@ -73,20 +72,19 @@ const ProfilePage: React.FC = () => {
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Activity</h3>
               <div className="space-y-4">
-                {[
-                  { action: 'Downloaded', item: 'Bruh Sound Effect #2', time: '2 hours ago' },
-                  { action: 'Favorited', item: 'Dramatic Chipmunk', time: '5 hours ago' },
-                  { action: 'Downloaded', item: 'Vine Boom Sound', time: '1 day ago' },
-                  { action: 'Downloaded', item: 'Sad Violin Music', time: '2 days ago' },
-                ].map((activity, index) => (
-                  <div key={index} className="flex items-center justify-between py-2">
-                    <div>
-                      <span className="text-gray-900 font-medium">{activity.action}</span>
-                      <span className="text-gray-600 ml-1">"{activity.item}"</span>
+                {favorites.slice(-4).reverse().map((id) => (
+                  <div key={id} className="flex items-center justify-between py-2">
+                    <div className="flex items-center gap-2">
+                      <Heart className="h-4 w-4 text-orange-500" />
+                      <span className="text-gray-900 font-medium">Favorited</span>
+                      <span className="text-gray-600 ml-1">Item {id.slice(0, 6)}…</span>
                     </div>
-                    <span className="text-sm text-gray-500">{activity.time}</span>
+                    <span className="text-sm text-gray-500">recent</span>
                   </div>
                 ))}
+                {favorites.length === 0 && (
+                  <p className="text-sm text-gray-600">No recent activity yet.</p>
+                )}
               </div>
             </div>
 
@@ -94,43 +92,28 @@ const ProfilePage: React.FC = () => {
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold text-gray-900">Favorites</h3>
-                <Button variant="outline" size="sm">
+                <Button variant="outline" size="sm" onClick={() => navigate('/favorites')}>
                   View All
                 </Button>
               </div>
-              <div className="text-center py-8 text-gray-500">
-                <Heart className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                <p>No favorites yet</p>
-                <p className="text-sm mt-1">Start exploring the library to add favorites!</p>
-              </div>
-            </div>
-
-            {/* Account Settings */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Account Settings</h3>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between py-2">
-                  <div>
-                    <p className="font-medium text-gray-900">Email Notifications</p>
-                    <p className="text-sm text-gray-600">Receive updates about new memes</p>
-                  </div>
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input type="checkbox" className="sr-only peer" defaultChecked />
-                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
-                  </label>
+              {favorites.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  <Heart className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                  <p>No favorites yet</p>
+                  <p className="text-sm mt-1">Start exploring the library to add favorites!</p>
                 </div>
-                
-                <div className="flex items-center justify-between py-2">
-                  <div>
-                    <p className="font-medium text-gray-900">Download History</p>
-                    <p className="text-sm text-gray-600">Keep track of downloaded memes</p>
-                  </div>
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input type="checkbox" className="sr-only peer" defaultChecked />
-                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
-                  </label>
-                </div>
-              </div>
+              ) : (
+                <ul className="divide-y divide-gray-200">
+                  {favorites.slice(-4).reverse().map((id) => (
+                    <li key={id} className="py-3 flex items-center justify-between text-sm text-gray-700">
+                      <span>Item {id.slice(0, 6)}…</span>
+                      <Button size="sm" variant="ghost" onClick={() => navigate('/favorites')}>
+                        View
+                      </Button>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
           </div>
         </div>

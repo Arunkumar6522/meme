@@ -25,8 +25,8 @@ export class LibraryService {
         query = query.or(`title.ilike.%${filters.search}%,description.ilike.%${filters.search}%,keywords.cs.{${filters.search}}`);
       }
 
-      if (filters.artist) {
-        query = query.contains('keywords', [filters.artist]);
+      if (filters.artist && filters.artist.length > 0) {
+        query = query.contains('keywords', filters.artist);
       }
 
       if (filters.emotion) {
@@ -78,6 +78,18 @@ export class LibraryService {
         total_pages: 0,
       };
     }
+  }
+
+  // Get items by ids (for favorites)
+  static async getLibraryItemsByIds(ids: string[]): Promise<LibraryItem[]> {
+    if (!ids.length) return [];
+    const { data, error } = await supabase
+      .from('library_items')
+      .select('*')
+      .in('id', ids)
+      .eq('is_published', true);
+    if (error) throw error;
+    return data || [];
   }
 
   // Get single library item by ID

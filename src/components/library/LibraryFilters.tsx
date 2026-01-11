@@ -46,9 +46,8 @@ const LibraryFilters: React.FC<LibraryFiltersProps> = ({
     onFiltersChange({ ...filters, search: e.target.value });
   };
 
-  const handleArtistChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    onFiltersChange({ ...filters, artist: e.target.value });
-  };
+  const [artistQuery, setArtistQuery] = React.useState('');
+  const artists = filters.artist || [];
 
   const handleEmotionChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     onFiltersChange({
@@ -74,14 +73,14 @@ const LibraryFilters: React.FC<LibraryFiltersProps> = ({
   const clearFilters = () => {
     onFiltersChange({
       search: '',
-      artist: '',
+      artist: [],
       emotion: undefined,
       media_type: undefined,
       sort_by: 'latest',
     });
   };
 
-  const hasActiveFilters = filters.search || filters.artist || filters.emotion || filters.media_type;
+  const hasActiveFilters = filters.search || (filters.artist && filters.artist.length > 0) || filters.emotion || filters.media_type;
 
   return (
     <div className={className}>
@@ -100,14 +99,52 @@ const LibraryFilters: React.FC<LibraryFiltersProps> = ({
         />
       </div>
 
-      {/* Artist filter */}
+      {/* Artist filter (multi) */}
       <div className="mt-4">
-        <Input
+        <label className="block text-sm font-medium text-gray-700 mb-1">Filter by artist/character</label>
+        <div className="flex flex-wrap gap-2 mb-2">
+          {artists.map((artist) => (
+            <span
+              key={artist}
+              className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800"
+            >
+              {artist}
+              <button
+                type="button"
+                className="ml-1 text-orange-700 hover:text-orange-900"
+                onClick={() =>
+                  onFiltersChange({
+                    ...filters,
+                    artist: artists.filter((a) => a !== artist),
+                  })
+                }
+                aria-label={`Remove ${artist}`}
+              >
+                ×
+              </button>
+            </span>
+          ))}
+          {artists.length === 0 && (
+            <span className="text-xs text-gray-500">None</span>
+          )}
+        </div>
+        <input
           type="text"
-          placeholder="Filter by artist/character"
-          value={filters.artist || ''}
-          onChange={handleArtistChange}
-          aria-label="Filter by artist"
+          value={artistQuery}
+          onChange={(e) => setArtistQuery(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              const newArtist = artistQuery.trim() || 'Unknown artist';
+              if (!artists.includes(newArtist)) {
+                onFiltersChange({ ...filters, artist: [...artists, newArtist] });
+              }
+              setArtistQuery('');
+            }
+          }}
+          placeholder="Type and press Enter to add (e.g., Unknown artist)"
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+          aria-label="Add artist filter"
         />
       </div>
 
@@ -194,9 +231,9 @@ const LibraryFilters: React.FC<LibraryFiltersProps> = ({
               Search: "{filters.search}"
             </span>
           )}
-          {filters.artist && (
+          {filters.artist && filters.artist.length > 0 && (
             <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
-              Artist: "{filters.artist}"
+              Artist: "{filters.artist.join(', ')}"
             </span>
           )}
           {filters.emotion && (

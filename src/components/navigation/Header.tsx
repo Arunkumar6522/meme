@@ -65,7 +65,7 @@ const Header: React.FC = () => {
 
   const userNavigation = [
     { name: 'Profile', href: '/profile', icon: User },
-    { name: 'Settings', href: '/settings', icon: Settings },
+    { name: 'Wishlist', href: '/favorites', icon: Heart },
   ];
 
   return (
