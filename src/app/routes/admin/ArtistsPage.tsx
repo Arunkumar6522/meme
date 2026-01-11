@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Button, Input, Select } from '@/components/ui';
 import { ArtistService, type Artist } from '@/services/artist.service';
 import { useToast } from '@/hooks/useToast';
+import { cn } from '@/utils/cn';
 
 const ArtistsPage: React.FC = () => {
   const { showSuccess, showError } = useToast();
