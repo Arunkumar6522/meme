@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback, memo } from 'react';
-import { Play, Pause, Download, Share2, Heart, Volume2, Video } from 'lucide-react';
+import { Play, Pause, Download, Share2, Heart, Volume2, Video, Maximize } from 'lucide-react';
 import { Button } from '@/components/ui';
 import { LibraryService } from '@/services/library.service';
 import { useToast } from '@/hooks/useToast';
@@ -16,7 +16,9 @@ const LibraryCard: React.FC<LibraryCardProps> = memo(({ item, className }) => {
   const [isLiked, setIsLiked] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const audioElementRef = useRef<HTMLAudioElement | null>(null);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
   const { showSuccess, showError } = useToast();
+  const mediaId = item.id;
 
   const emotionColors = {
     happy: 'bg-yellow-100 text-yellow-800 border-yellow-200',
@@ -44,7 +46,7 @@ const LibraryCard: React.FC<LibraryCardProps> = memo(({ item, className }) => {
     return `${mb.toFixed(1)} MB`;
   };
 
-  // Cleanup audio element on unmount
+  // Cleanup media on unmount
   useEffect(() => {
     return () => {
       if (audioElementRef.current) {
@@ -52,8 +54,34 @@ const LibraryCard: React.FC<LibraryCardProps> = memo(({ item, className }) => {
         audioElementRef.current.src = '';
         audioElementRef.current = null;
       }
+      if (videoRef.current) {
+        videoRef.current.pause();
+      }
     };
   }, []);
+
+  // Stop playback when another media starts
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent<string>).detail;
+      if (detail !== mediaId) {
+        if (audioElementRef.current) {
+          audioElementRef.current.pause();
+          setIsPlaying(false);
+        }
+        if (videoRef.current) {
+          videoRef.current.pause();
+          setIsPlaying(false);
+        }
+      }
+    };
+    window.addEventListener('media:play', handler as EventListener);
+    return () => window.removeEventListener('media:play', handler as EventListener);
+  }, [mediaId]);
+
+  const emitPlay = () => {
+    window.dispatchEvent(new CustomEvent('media:play', { detail: mediaId }));
+  };
 
   const handlePlay = useCallback(async () => {
     if (item.media_type === 'audio') {
@@ -62,10 +90,9 @@ const LibraryCard: React.FC<LibraryCardProps> = memo(({ item, className }) => {
         setIsPlaying(false);
       } else {
         try {
-          // Reuse existing audio element or create new one
           if (!audioElementRef.current) {
             const audio = new Audio(item.file_url);
-            audio.preload = 'auto'; // Preload for faster playback
+            audio.preload = 'auto';
             audio.addEventListener('ended', () => setIsPlaying(false));
             audio.addEventListener('error', () => {
               setIsPlaying(false);
@@ -75,7 +102,7 @@ const LibraryCard: React.FC<LibraryCardProps> = memo(({ item, className }) => {
             audio.addEventListener('pause', () => setIsPlaying(false));
             audioElementRef.current = audio;
           }
-          
+          emitPlay();
           await audioElementRef.current.play();
           setIsPlaying(true);
         } catch (error) {
@@ -84,8 +111,21 @@ const LibraryCard: React.FC<LibraryCardProps> = memo(({ item, className }) => {
         }
       }
     } else {
-      // For video, open in new tab
-      window.open(item.file_url, '_blank', 'noopener,noreferrer');
+      // Inline video playback
+      if (!videoRef.current) return;
+      if (isPlaying) {
+        videoRef.current.pause();
+        setIsPlaying(false);
+      } else {
+        try {
+          emitPlay();
+          await videoRef.current.play();
+          setIsPlaying(true);
+        } catch (error) {
+          console.error('Error playing video:', error);
+          showError('Failed to play video', 'Playback Error');
+        }
+      }
     }
   }, [item.media_type, item.file_url, isPlaying, showError]);
 
@@ -192,12 +232,8 @@ const LibraryCard: React.FC<LibraryCardProps> = memo(({ item, className }) => {
       <div className={cn('w-full max-w-xs space-y-2 group', className)}>
         <div
           className="relative w-full overflow-hidden rounded-lg shadow-sm border border-gray-200 bg-gray-900 aspect-video"
-          onClick={handlePlay}
-          role="button"
-          tabIndex={0}
-          aria-label={`Play ${item.title}`}
         >
-          {item.thumbnail_url ? (
+          {item.thumbnail_url && !isPlaying ? (
             <img
               src={item.thumbnail_url}
               alt={`Thumbnail for ${item.title}`}
@@ -206,13 +242,31 @@ const LibraryCard: React.FC<LibraryCardProps> = memo(({ item, className }) => {
               decoding="async"
             />
           ) : (
-            <div className={cn('w-full h-full', getThumbnailColor())} />
+            <video
+              ref={videoRef}
+              className="w-full h-full object-cover"
+              src={item.file_url}
+              playsInline
+              controls
+              onPlay={() => {
+                emitPlay();
+                setIsPlaying(true);
+              }}
+              onPause={() => setIsPlaying(false)}
+              onEnded={() => setIsPlaying(false)}
+            />
           )}
-          <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/35 transition-colors">
-            <div className="h-12 w-12 rounded-full bg-white/90 flex items-center justify-center shadow-lg">
-              <Play className="h-6 w-6 text-primary-600 ml-0.5" />
-            </div>
-          </div>
+          {!isPlaying && (
+            <button
+              onClick={handlePlay}
+              className="absolute inset-0 flex items-center justify-center bg-black/30 hover:bg-black/40 transition-colors"
+              aria-label={`Play ${item.title}`}
+            >
+              <div className="h-12 w-12 rounded-full bg-white/90 flex items-center justify-center shadow-lg">
+                <Play className="h-6 w-6 text-orange-600 ml-0.5" />
+              </div>
+            </button>
+          )}
           {item.duration && (
             <div className="absolute bottom-2 right-2 px-2 py-1 rounded bg-black/70 text-white text-xs">
               {formatDuration(item.duration)}
@@ -240,6 +294,7 @@ const LibraryCard: React.FC<LibraryCardProps> = memo(({ item, className }) => {
             size="sm"
             className="flex-1"
             variant="default"
+            aria-label="Play video"
             onClick={(e) => {
               e.stopPropagation();
               handlePlay();
@@ -247,6 +302,22 @@ const LibraryCard: React.FC<LibraryCardProps> = memo(({ item, className }) => {
           >
             <Play className="h-4 w-4 mr-2" />
             Play
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            aria-label="Full view"
+            onClick={(e) => {
+              e.stopPropagation();
+              if (videoRef.current?.requestFullscreen) {
+                videoRef.current.requestFullscreen();
+              } else {
+                window.open(item.file_url, '_blank', 'noopener,noreferrer');
+              }
+            }}
+            className="px-2"
+          >
+            <Maximize className="h-4 w-4" />
           </Button>
           <button
             onClick={(e) => {
@@ -298,9 +369,9 @@ const LibraryCard: React.FC<LibraryCardProps> = memo(({ item, className }) => {
         className={cn(
           'relative w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-full shadow-lg hover:shadow-xl',
           'transition-all duration-200 transform hover:scale-105 active:scale-95',
-          'focus:outline-none focus:ring-4 focus:ring-primary-300 focus:ring-offset-2',
+          'focus:outline-none focus:ring-4 focus:ring-orange-300 focus:ring-offset-2',
           'overflow-hidden border-2 sm:border-4 border-white',
-          'touch-manipulation', // Better mobile touch
+          'touch-manipulation',
           getThumbnailColor()
         )}
         aria-label={`Play ${item.title}`}
@@ -318,7 +389,6 @@ const LibraryCard: React.FC<LibraryCardProps> = memo(({ item, className }) => {
             <Volume2 className="h-6 w-6 sm:h-8 sm:w-8 md:h-10 md:w-10 text-white" aria-hidden="true" />
           </div>
         )}
-        {/* Play/Pause icon overlay */}
         <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all duration-200 rounded-full">
           {isPlaying ? (
             <Pause className="h-5 w-5 sm:h-6 sm:w-6 md:h-8 md:w-8 text-white opacity-100 transition-opacity" />
@@ -334,39 +404,36 @@ const LibraryCard: React.FC<LibraryCardProps> = memo(({ item, className }) => {
       </h3>
 
       {/* Action Icons */}
-      <div className="flex items-center justify-center gap-1.5 sm:gap-2 md:gap-3">
-        {/* Like/Heart */}
+      <div className="flex items-center justify-center gap-2 sm:gap-3">
         <button
           onClick={(e) => {
             e.stopPropagation();
             handleLike();
           }}
           className={cn(
-            'w-7 h-7 sm:w-8 sm:h-8 md:w-9 md:h-9 rounded-full flex items-center justify-center transition-all',
-            'focus:outline-none focus:ring-2 focus:ring-red-300 active:scale-90',
-            'touch-manipulation', // Better mobile touch
+            'w-10 h-10 sm:w-10 sm:h-10 rounded-full flex items-center justify-center transition-all',
+            'focus:outline-none focus:ring-2 focus:ring-orange-300 active:scale-95',
+            'touch-manipulation',
             isLiked 
-              ? 'bg-red-100 text-red-500 shadow-sm' 
-              : 'bg-white hover:bg-red-50 text-gray-600 hover:text-red-500 shadow-sm hover:shadow'
+              ? 'bg-orange-100 text-orange-600 shadow-sm' 
+              : 'bg-white hover:bg-orange-50 text-gray-600 hover:text-orange-600 shadow-sm hover:shadow'
           )}
-          aria-label="Like"
+          aria-label="Save to wishlist"
         >
-          <Heart className={cn('w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5', isLiked && 'fill-current')} />
+          <Heart className={cn('w-4 h-4', isLiked && 'fill-current')} />
         </button>
 
-        {/* Share */}
         <button
           onClick={(e) => {
             e.stopPropagation();
             handleShare();
           }}
-          className="w-7 h-7 sm:w-8 sm:h-8 md:w-9 md:h-9 rounded-full bg-white hover:bg-blue-50 flex items-center justify-center transition-all focus:outline-none focus:ring-2 focus:ring-blue-300 active:scale-90 shadow-sm hover:shadow touch-manipulation"
+          className="w-10 h-10 rounded-full bg-white hover:bg-orange-50 flex items-center justify-center transition-all focus:outline-none focus:ring-2 focus:ring-orange-300 active:scale-95 shadow-sm hover:shadow touch-manipulation"
           aria-label="Share"
         >
-          <Share2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5 text-gray-600 hover:text-blue-500" />
+          <Share2 className="w-4 h-4 text-gray-600 hover:text-orange-600" />
         </button>
 
-        {/* Download */}
         <button
           onClick={(e) => {
             e.stopPropagation();
@@ -374,19 +441,19 @@ const LibraryCard: React.FC<LibraryCardProps> = memo(({ item, className }) => {
           }}
           disabled={downloading}
           className={cn(
-            'w-7 h-7 sm:w-8 sm:h-8 md:w-9 md:h-9 rounded-full bg-white hover:bg-green-50 flex items-center justify-center transition-all',
-            'focus:outline-none focus:ring-2 focus:ring-green-300 active:scale-90 shadow-sm hover:shadow touch-manipulation',
+            'w-10 h-10 rounded-full bg-white hover:bg-green-50 flex items-center justify-center transition-all',
+            'focus:outline-none focus:ring-2 focus:ring-green-300 active:scale-95 shadow-sm hover:shadow touch-manipulation',
             downloading && 'opacity-50 cursor-not-allowed'
           )}
           aria-label="Download"
         >
           {downloading ? (
-            <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5 text-gray-400 animate-spin" fill="none" viewBox="0 0 24 24">
+            <svg className="w-4 h-4 text-gray-400 animate-spin" fill="none" viewBox="0 0 24 24">
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
           ) : (
-            <Download className="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5 text-gray-600 hover:text-green-500" />
+            <Download className="w-4 h-4 text-gray-600 hover:text-green-500" />
           )}
         </button>
       </div>
