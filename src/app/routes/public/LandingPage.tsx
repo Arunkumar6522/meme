@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Play, Download, Search, Lock } from 'lucide-react';
 import { Button, SkeletonCard, Input } from '@/components/ui';
-import { BannerAd } from '@/components/ads/AdBanner';
+import { BannerAd, SidebarAd } from '@/components/ads/AdBanner';
 import { useLibrary } from '@/hooks/useLibrary';
 import { useAuth } from '@/hooks/useAuth';
 import LibraryCard from '@/components/library/LibraryCard';
@@ -27,11 +27,11 @@ const LandingPage: React.FC = () => {
     <div className="bg-white">
       {/* Side Ads (desktop only) */}
       <div className="hidden lg:block">
-        <div className="fixed left-4 top-32 z-20">
-          <BannerAd className="w-48" />
+        <div className="fixed left-4 top-24 z-20">
+          <SidebarAd className="w-40" />
         </div>
-        <div className="fixed right-4 top-32 z-20">
-          <BannerAd className="w-48" />
+        <div className="fixed right-4 top-24 z-20">
+          <SidebarAd className="w-40" />
         </div>
       </div>
 
