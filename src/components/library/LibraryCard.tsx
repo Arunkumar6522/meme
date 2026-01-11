@@ -328,8 +328,6 @@ const LibraryCard: React.FC<LibraryCardProps> = memo(({ item, className }) => {
     </div>
   );
 
-  const [menuOpen, setMenuOpen] = useState(false);
-
   const renderVideo = () => (
     <div className="relative w-full overflow-hidden rounded-lg shadow-sm border border-gray-200 bg-gray-900 aspect-video">
       {item.thumbnail_url && !isPlaying ? (
