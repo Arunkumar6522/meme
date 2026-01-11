@@ -2,6 +2,12 @@ import { supabase, STORAGE_BUCKETS } from './supabase';
 import type { LibraryItem, LibraryFilters, PaginatedResponse } from '@/types';
 
 export class LibraryService {
+  private static sanitizeFileName(name: string): string {
+    const trimmed = name.trim();
+    const replaced = trimmed.replace(/[^\w.-]+/g, '-');
+    return replaced.toLowerCase();
+  }
+
   // Get library items with filters and pagination
   static async getLibraryItems(
     filters: LibraryFilters = {},
@@ -177,12 +183,14 @@ export class LibraryService {
   // Admin: Upload file to storage
   static async uploadFile(file: File, bucket: string, fileName: string): Promise<string | null> {
     try {
+      const safeName = this.sanitizeFileName(fileName);
+
       // Try to upload directly - if bucket doesn't exist, Supabase will return an error
       // This is more reliable than checking buckets first (which might fail due to permissions)
 
       const { data, error } = await supabase.storage
         .from(bucket)
-        .upload(fileName, file, {
+        .upload(safeName, file, {
           cacheControl: '3600',
           upsert: false,
         });

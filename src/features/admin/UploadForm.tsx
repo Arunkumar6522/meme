@@ -3,6 +3,7 @@ import { Upload, X, Play, Pause, Volume2, Video } from 'lucide-react';
 import { Button, Input, Select } from '@/components/ui';
 import { useAuth } from '@/hooks/useAuth';
 import { LibraryService } from '@/services/library.service';
+import { STORAGE_BUCKETS } from '@/services/supabase';
 import type { EmotionType } from '@/types';
 import { cn } from '@/utils/cn';
 import { compressImageToThumbnail } from '@/utils/imageCompression';
@@ -56,6 +57,16 @@ const UploadForm: React.FC<UploadFormProps> = ({ onSuccess, onCancel }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const thumbnailInputRef = useRef<HTMLInputElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
+
+  // Reset thumbnail when switching to video (not needed)
+  const setMediaType = (type: 'audio' | 'video') => {
+    setFormData(prev => ({
+      ...prev,
+      mediaType: type,
+      thumbnail: type === 'video' ? null : prev.thumbnail,
+    }));
+    setErrors(prev => ({ ...prev, mediaType: '' }));
+  };
 
   // Handle file selection
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -172,7 +183,7 @@ const UploadForm: React.FC<UploadFormProps> = ({ onSuccess, onCancel }) => {
 
     try {
       // Upload main file
-      const bucket = formData.mediaType === 'audio' ? 'library-audio' : 'library-video';
+      const bucket = formData.mediaType === 'audio' ? STORAGE_BUCKETS.LIBRARY_AUDIO : STORAGE_BUCKETS.LIBRARY_VIDEO;
       const fileName = `${Date.now()}-${formData.file.name}`;
       
       setUploadProgress(25);
@@ -193,7 +204,7 @@ const UploadForm: React.FC<UploadFormProps> = ({ onSuccess, onCancel }) => {
       let thumbnailUrl: string | undefined;
       if (formData.thumbnail) {
         const thumbnailFileName = `thumb-${Date.now()}-${formData.thumbnail.name}`;
-        thumbnailUrl = await LibraryService.uploadFile(formData.thumbnail, 'thumbnails', thumbnailFileName);
+        thumbnailUrl = await LibraryService.uploadFile(formData.thumbnail, STORAGE_BUCKETS.THUMBNAILS, thumbnailFileName);
       }
 
       setUploadProgress(75);
@@ -301,8 +312,7 @@ const UploadForm: React.FC<UploadFormProps> = ({ onSuccess, onCancel }) => {
             <button
               type="button"
               onClick={() => {
-                setFormData(prev => ({ ...prev, mediaType: 'audio' }));
-                setErrors(prev => ({ ...prev, mediaType: '' }));
+                setMediaType('audio');
               }}
               className={cn(
                 'p-4 border-2 rounded-lg transition-all',
@@ -317,8 +327,7 @@ const UploadForm: React.FC<UploadFormProps> = ({ onSuccess, onCancel }) => {
             <button
               type="button"
               onClick={() => {
-                setFormData(prev => ({ ...prev, mediaType: 'video' }));
-                setErrors(prev => ({ ...prev, mediaType: '' }));
+                setMediaType('video');
               }}
               className={cn(
                 'p-4 border-2 rounded-lg transition-all',
@@ -463,36 +472,38 @@ const UploadForm: React.FC<UploadFormProps> = ({ onSuccess, onCancel }) => {
           required
         />
 
-        {/* Thumbnail Upload */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Thumbnail (Optional)
-          </label>
-          <div className="flex items-center space-x-4">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => thumbnailInputRef.current?.click()}
-            >
-              <Upload className="h-4 w-4 mr-2" />
-              {formData.thumbnail ? 'Change Thumbnail' : 'Add Thumbnail'}
-            </Button>
-            {formData.thumbnail && (
-              <span className="text-sm text-gray-600">{formData.thumbnail.name}</span>
+        {/* Thumbnail Upload - audio only */}
+        {formData.mediaType === 'audio' && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Thumbnail (Optional for audio)
+            </label>
+            <div className="flex items-center space-x-4">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => thumbnailInputRef.current?.click()}
+              >
+                <Upload className="h-4 w-4 mr-2" />
+                {formData.thumbnail ? 'Change Thumbnail' : 'Add Thumbnail'}
+              </Button>
+              {formData.thumbnail && (
+                <span className="text-sm text-gray-600">{formData.thumbnail.name}</span>
+              )}
+            </div>
+            <input
+              ref={thumbnailInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleThumbnailSelect}
+              className="hidden"
+            />
+            {errors.thumbnail && (
+              <p className="mt-1 text-sm text-red-600">{errors.thumbnail}</p>
             )}
           </div>
-          <input
-            ref={thumbnailInputRef}
-            type="file"
-            accept="image/*"
-            onChange={handleThumbnailSelect}
-            className="hidden"
-          />
-          {errors.thumbnail && (
-            <p className="mt-1 text-sm text-red-600">{errors.thumbnail}</p>
-          )}
-        </div>
+        )}
 
         {/* Upload Progress */}
         {uploading && (
