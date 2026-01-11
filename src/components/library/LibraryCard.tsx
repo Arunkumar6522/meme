@@ -8,7 +8,7 @@ import type { LibraryItem } from '@/types';
 import { cn } from '@/utils/cn';
 import { useNavigate } from 'react-router-dom';
 import { Input } from '@/components/ui';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui';
+import Modal from '@/components/ui/Modal';
 
 interface LibraryCardProps {
   item: LibraryItem;
@@ -470,58 +470,53 @@ const LibraryCard: React.FC<LibraryCardProps> = memo(({ item, className, isAdmin
         {renderActionsMenu()}
       </div>
 
-      {isAdmin && (
-        <Dialog open={editOpen} onOpenChange={setEditOpen}>
-          <DialogContent className="max-w-lg">
-            <DialogHeader>
-              <DialogTitle>Edit item</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-3">
-              <Input
-                label="Title"
-                value={editTitle}
-                onChange={(e) => setEditTitle(e.target.value)}
-              />
-              <Input
-                label="Description"
-                value={editDescription}
-                onChange={(e) => setEditDescription(e.target.value)}
-              />
-              <Input
-                label="Keywords (comma separated)"
-                value={editKeywords}
-                onChange={(e) => setEditKeywords(e.target.value)}
-              />
-            </div>
-            <DialogFooter className="mt-4 flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setEditOpen(false)}>
-                Cancel
-              </Button>
-              <Button
-                onClick={async () => {
-                  try {
-                    const keywordsArray = editKeywords
-                      .split(',')
-                      .map((k) => k.trim())
-                      .filter(Boolean);
-                    const updates: Partial<LibraryItem> = {
-                      title: editTitle.trim(),
-                      description: editDescription.trim() || null,
-                      keywords: keywordsArray,
-                    };
-                    await LibraryService.updateLibraryItem(item.id, updates);
-                    showSuccess('Updated', 'Library');
-                    setEditOpen(false);
-                  } catch (e: any) {
-                    showError(e.message || 'Failed to update', 'Error');
-                  }
-                }}
-              >
-                Save
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+      {isAdmin && editOpen && (
+        <Modal open onClose={() => setEditOpen(false)} title="Edit item">
+          <div className="space-y-3">
+            <Input
+              label="Title"
+              value={editTitle}
+              onChange={(e) => setEditTitle(e.target.value)}
+            />
+            <Input
+              label="Description"
+              value={editDescription}
+              onChange={(e) => setEditDescription(e.target.value)}
+            />
+            <Input
+              label="Keywords (comma separated)"
+              value={editKeywords}
+              onChange={(e) => setEditKeywords(e.target.value)}
+            />
+          </div>
+          <div className="mt-4 flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setEditOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={async () => {
+                try {
+                  const keywordsArray = editKeywords
+                    .split(',')
+                    .map((k) => k.trim())
+                    .filter(Boolean);
+                  const updates: Partial<LibraryItem> = {
+                    title: editTitle.trim(),
+                    description: editDescription.trim() || null,
+                    keywords: keywordsArray,
+                  };
+                  await LibraryService.updateLibraryItem(item.id, updates);
+                  showSuccess('Updated', 'Library');
+                  setEditOpen(false);
+                } catch (e: any) {
+                  showError(e.message || 'Failed to update', 'Error');
+                }
+              }}
+            >
+              Save
+            </Button>
+          </div>
+        </Modal>
       )}
     </div>
   );
