@@ -226,236 +226,191 @@ const LibraryCard: React.FC<LibraryCardProps> = memo(({ item, className }) => {
     return colors[item.emotion] || 'bg-primary-500';
   };
 
-  // Video layout
-  if (item.media_type === 'video') {
-    return (
-      <div className={cn('w-full max-w-xs space-y-2 group', className)}>
+  const renderActionsMenu = () => (
+    <div className="relative inline-block text-left">
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          setMenuOpen((prev) => !prev);
+        }}
+        className="w-10 h-10 rounded-full bg-white hover:bg-orange-50 flex items-center justify-center transition-all focus:outline-none focus:ring-2 focus:ring-orange-300 active:scale-95 shadow-sm hover:shadow touch-manipulation"
+        aria-label="More actions"
+      >
+        <span className="sr-only">More actions</span>
+        <svg className="w-5 h-5 text-gray-600" fill="currentColor" viewBox="0 0 20 20">
+          <path d="M6 10a2 2 0 11-4 0 2 2 0 014 0zm6 0a2 2 0 11-4 0 2 2 0 014 0zm4 2a2 2 0 100-4 2 2 0 000 4z" />
+        </svg>
+      </button>
+      {menuOpen && (
         <div
-          className="relative w-full overflow-hidden rounded-lg shadow-sm border border-gray-200 bg-gray-900 aspect-video"
+          className="absolute right-0 mt-2 w-44 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-20"
+          role="menu"
         >
-          {item.thumbnail_url && !isPlaying ? (
-            <img
-              src={item.thumbnail_url}
-              alt={`Thumbnail for ${item.title}`}
-              className="w-full h-full object-cover"
-              loading="lazy"
-              decoding="async"
-            />
-          ) : (
-            <video
-              ref={videoRef}
-              className="w-full h-full object-cover"
-              src={item.file_url}
-              playsInline
-              controls
-              onPlay={() => {
-                emitPlay();
-                setIsPlaying(true);
-              }}
-              onPause={() => setIsPlaying(false)}
-              onEnded={() => setIsPlaying(false)}
-            />
-          )}
-          {!isPlaying && (
-            <button
-              onClick={handlePlay}
-              className="absolute inset-0 flex items-center justify-center bg-black/30 hover:bg-black/40 transition-colors"
-              aria-label={`Play ${item.title}`}
-            >
-              <div className="h-12 w-12 rounded-full bg-white/90 flex items-center justify-center shadow-lg">
-                <Play className="h-6 w-6 text-orange-600 ml-0.5" />
-              </div>
-            </button>
-          )}
-          {item.duration && (
-            <div className="absolute bottom-2 right-2 px-2 py-1 rounded bg-black/70 text-white text-xs">
-              {formatDuration(item.duration)}
-            </div>
-          )}
-        </div>
-
-        <div className="space-y-1">
-          <h3 className="text-sm font-semibold text-gray-900 line-clamp-2">{item.title}</h3>
-          {item.description && (
-            <p className="text-xs text-gray-600 line-clamp-2">{item.description}</p>
-          )}
-          <div className="flex items-center gap-2">
-            <span className={cn('text-[11px] px-2 py-1 rounded-full border', emotionColors[item.emotion] || 'bg-gray-100 text-gray-700 border-gray-200')}>
-              {item.emotion}
-            </span>
-            {item.file_size && (
-              <span className="text-[11px] text-gray-500">{formatFileSize(item.file_size)}</span>
-            )}
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <Button
-            size="sm"
-            className="flex-1"
-            variant="default"
-            aria-label="Play video"
-            onClick={(e) => {
-              e.stopPropagation();
-              handlePlay();
-            }}
-          >
-            <Play className="h-4 w-4 mr-2" />
-            Play
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            aria-label="Full view"
-            onClick={(e) => {
-              e.stopPropagation();
-              if (videoRef.current?.requestFullscreen) {
-                videoRef.current.requestFullscreen();
-              } else {
-                window.open(item.file_url, '_blank', 'noopener,noreferrer');
-              }
-            }}
-            className="px-2"
-          >
-            <Maximize className="h-4 w-4" />
-          </Button>
           <button
+            className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleLike();
+              setMenuOpen(false);
+            }}
+            role="menuitem"
+          >
+            <Heart className="w-4 h-4" />
+            {isLiked ? 'Remove from wishlist' : 'Add to wishlist'}
+          </button>
+          <button
+            className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
             onClick={(e) => {
               e.stopPropagation();
               handleShare();
+              setMenuOpen(false);
             }}
-            className="w-9 h-9 rounded-full bg-white hover:bg-blue-50 flex items-center justify-center transition-all focus:outline-none focus:ring-2 focus:ring-blue-300 active:scale-95 shadow-sm border border-gray-200"
-            aria-label="Share"
+            role="menuitem"
           >
-            <Share2 className="w-4 h-4 text-gray-600 hover:text-blue-500" />
+            <Share2 className="w-4 h-4" />
+            Share
           </button>
           <button
+            className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-50"
             onClick={(e) => {
               e.stopPropagation();
               handleDownload();
+              setMenuOpen(false);
             }}
+            role="menuitem"
             disabled={downloading}
-            className={cn(
-              'w-9 h-9 rounded-full bg-white hover:bg-green-50 flex items-center justify-center transition-all focus:outline-none focus:ring-2 focus:ring-green-300 active:scale-95 shadow-sm border border-gray-200',
-              downloading && 'opacity-50 cursor-not-allowed'
-            )}
-            aria-label="Download"
           >
-            {downloading ? (
-              <svg className="w-4 h-4 text-gray-400 animate-spin" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
-            ) : (
-              <Download className="w-4 h-4 text-gray-600 hover:text-green-500" />
-            )}
+            <Download className="w-4 h-4" />
+            {downloading ? 'Downloading…' : 'Download'}
           </button>
+          {item.media_type === 'video' && (
+            <button
+              className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+              onClick={(e) => {
+                e.stopPropagation();
+                if (videoRef.current?.requestFullscreen) {
+                  videoRef.current.requestFullscreen();
+                } else {
+                  window.open(item.file_url, '_blank', 'noopener,noreferrer');
+                }
+                setMenuOpen(false);
+              }}
+              role="menuitem"
+            >
+              <Maximize className="w-4 h-4" />
+              Full view
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  const renderVideo = () => (
+    <div className="relative w-full overflow-hidden rounded-lg shadow-sm border border-gray-200 bg-gray-900 aspect-video">
+      {item.thumbnail_url && !isPlaying ? (
+        <img
+          src={item.thumbnail_url}
+          alt={`Thumbnail for ${item.title}`}
+          className="w-full h-full object-cover"
+          loading="lazy"
+          decoding="async"
+        />
+      ) : (
+        <video
+          ref={videoRef}
+          className="w-full h-full object-cover"
+          src={item.file_url}
+          playsInline
+          controls
+          onPlay={() => {
+            emitPlay();
+            setIsPlaying(true);
+          }}
+          onPause={() => setIsPlaying(false)}
+          onEnded={() => setIsPlaying(false)}
+        />
+      )}
+      {!isPlaying && (
+        <button
+          onClick={handlePlay}
+          className="absolute inset-0 flex items-center justify-center bg-black/30 hover:bg-black/40 transition-colors"
+          aria-label={`Play ${item.title}`}
+        >
+          <div className="h-12 w-12 rounded-full bg-white/90 flex items-center justify-center shadow-lg">
+            <Play className="h-6 w-6 text-orange-600 ml-0.5" />
+          </div>
+        </button>
+      )}
+      {item.duration && (
+        <div className="absolute bottom-2 right-2 px-2 py-1 rounded bg-black/70 text-white text-xs">
+          {formatDuration(item.duration)}
+        </div>
+      )}
+    </div>
+  );
+
+  const renderAudio = () => (
+    <button
+      onClick={handlePlay}
+      className={cn(
+        'relative w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-full shadow-lg hover:shadow-xl',
+        'transition-all duration-200 transform hover:scale-105 active:scale-95',
+        'focus:outline-none focus:ring-4 focus:ring-orange-300 focus:ring-offset-2',
+        'overflow-hidden border-2 sm:border-4 border-white',
+        'touch-manipulation',
+        getThumbnailColor()
+      )}
+      aria-label={`Play ${item.title}`}
+    >
+      {item.thumbnail_url ? (
+        <img
+          src={item.thumbnail_url}
+          alt={`Thumbnail for ${item.title}`}
+          className="w-full h-full object-cover rounded-full"
+          loading="lazy"
+          decoding="async"
+        />
+      ) : (
+        <div className="flex items-center justify-center w-full h-full">
+          <Volume2 className="h-6 w-6 sm:h-8 sm:w-8 md:h-10 md:w-10 text-white" aria-hidden="true" />
+        </div>
+      )}
+      <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all duration-200 rounded-full">
+        {isPlaying ? (
+          <Pause className="h-5 w-5 sm:h-6 sm:w-6 md:h-8 md:w-8 text-white opacity-100 transition-opacity" />
+        ) : (
+          <Play className="h-5 w-5 sm:h-6 sm:w-6 md:h-8 md:w-8 text-white ml-0.5 opacity-0 group-hover:opacity-100 transition-opacity" />
+        )}
+      </div>
+    </button>
+  );
+
+  return (
+    <div className={cn('w-full max-w-xs space-y-2 group', className)}>
+      {item.media_type === 'video' ? renderVideo() : renderAudio()}
+
+      <div className="space-y-1">
+        <h3 className="text-sm font-semibold text-gray-900 line-clamp-2 text-center">
+          {item.title}
+        </h3>
+        {item.description && (
+          <p className="text-xs text-gray-600 line-clamp-2 text-center">{item.description}</p>
+        )}
+        <div className="flex items-center justify-center gap-2">
+          <span className={cn('text-[11px] px-2 py-1 rounded-full border', emotionColors[item.emotion] || 'bg-gray-100 text-gray-700 border-gray-200')}>
+            {item.emotion}
+          </span>
+          {item.file_size && (
+            <span className="text-[11px] text-gray-500">{formatFileSize(item.file_size)}</span>
+          )}
         </div>
       </div>
-    );
-  }
 
-  // Audio layout
-  return (
-    <div
-      className={cn(
-        'flex flex-col items-center space-y-2 group',
-        className
-      )}
-    >
-      {/* Circular Button */}
-      <button
-        onClick={handlePlay}
-        className={cn(
-          'relative w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-full shadow-lg hover:shadow-xl',
-          'transition-all duration-200 transform hover:scale-105 active:scale-95',
-          'focus:outline-none focus:ring-4 focus:ring-orange-300 focus:ring-offset-2',
-          'overflow-hidden border-2 sm:border-4 border-white',
-          'touch-manipulation',
-          getThumbnailColor()
-        )}
-        aria-label={`Play ${item.title}`}
-      >
-        {item.thumbnail_url ? (
-          <img
-            src={item.thumbnail_url}
-            alt={`Thumbnail for ${item.title}`}
-            className="w-full h-full object-cover rounded-full"
-            loading="lazy"
-            decoding="async"
-          />
-        ) : (
-          <div className="flex items-center justify-center w-full h-full">
-            <Volume2 className="h-6 w-6 sm:h-8 sm:w-8 md:h-10 md:w-10 text-white" aria-hidden="true" />
-          </div>
-        )}
-        <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all duration-200 rounded-full">
-          {isPlaying ? (
-            <Pause className="h-5 w-5 sm:h-6 sm:w-6 md:h-8 md:w-8 text-white opacity-100 transition-opacity" />
-          ) : (
-            <Play className="h-5 w-5 sm:h-6 sm:w-6 md:h-8 md:w-8 text-white ml-0.5 opacity-0 group-hover:opacity-100 transition-opacity" />
-          )}
-        </div>
-      </button>
-
-      {/* Title */}
-      <h3 className="text-xs sm:text-sm font-medium text-gray-900 text-center line-clamp-2 max-w-[100px] sm:max-w-[120px] md:max-w-[140px] leading-tight px-1">
-        {item.title}
-      </h3>
-
-      {/* Action Icons */}
-      <div className="flex items-center justify-center gap-2 sm:gap-3">
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            handleLike();
-          }}
-          className={cn(
-            'w-10 h-10 sm:w-10 sm:h-10 rounded-full flex items-center justify-center transition-all',
-            'focus:outline-none focus:ring-2 focus:ring-orange-300 active:scale-95',
-            'touch-manipulation',
-            isLiked 
-              ? 'bg-orange-100 text-orange-600 shadow-sm' 
-              : 'bg-white hover:bg-orange-50 text-gray-600 hover:text-orange-600 shadow-sm hover:shadow'
-          )}
-          aria-label="Save to wishlist"
-        >
-          <Heart className={cn('w-4 h-4', isLiked && 'fill-current')} />
-        </button>
-
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            handleShare();
-          }}
-          className="w-10 h-10 rounded-full bg-white hover:bg-orange-50 flex items-center justify-center transition-all focus:outline-none focus:ring-2 focus:ring-orange-300 active:scale-95 shadow-sm hover:shadow touch-manipulation"
-          aria-label="Share"
-        >
-          <Share2 className="w-4 h-4 text-gray-600 hover:text-orange-600" />
-        </button>
-
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            handleDownload();
-          }}
-          disabled={downloading}
-          className={cn(
-            'w-10 h-10 rounded-full bg-white hover:bg-green-50 flex items-center justify-center transition-all',
-            'focus:outline-none focus:ring-2 focus:ring-green-300 active:scale-95 shadow-sm hover:shadow touch-manipulation',
-            downloading && 'opacity-50 cursor-not-allowed'
-          )}
-          aria-label="Download"
-        >
-          {downloading ? (
-            <svg className="w-4 h-4 text-gray-400 animate-spin" fill="none" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-          ) : (
-            <Download className="w-4 h-4 text-gray-600 hover:text-green-500" />
-          )}
-        </button>
+      <div className="flex items-center justify-center">
+        {renderActionsMenu()}
       </div>
     </div>
   );
