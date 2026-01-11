@@ -360,6 +360,9 @@ const UploadForm: React.FC<UploadFormProps> = ({ onSuccess, onCancel }) => {
       <div className="mb-6">
         <h2 className="text-2xl font-bold text-gray-900">Upload New Meme</h2>
         <p className="text-gray-600 mt-1">Add a new audio or video meme to the library</p>
+        {user?.email && (
+          <p className="text-xs text-gray-500 mt-2">You are uploading as {user.email}</p>
+        )}
       </div>
 
       {errors.general && (

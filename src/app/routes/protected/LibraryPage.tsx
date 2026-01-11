@@ -22,6 +22,7 @@ const LibraryPage: React.FC = () => {
   const [filters, setFilters] = useState<LibraryFiltersType>({
     sort_by: 'latest',
   });
+  const [mediaTab, setMediaTab] = useState<'all' | 'audio' | 'video'>('all');
 
   const {
     data: items,
@@ -66,6 +67,27 @@ const LibraryPage: React.FC = () => {
     updateFilters(newFilters);
   }, [updateFilters]);
 
+  // Sync tab with filters
+  useEffect(() => {
+    if (!filters.media_type) {
+      setMediaTab('all');
+    } else if (filters.media_type === 'audio') {
+      setMediaTab('audio');
+    } else if (filters.media_type === 'video') {
+      setMediaTab('video');
+    }
+  }, [filters.media_type]);
+
+  const handleTabChange = (tab: 'all' | 'audio' | 'video') => {
+    setMediaTab(tab);
+    const nextFilters = {
+      ...filters,
+      media_type: tab === 'all' ? undefined : tab,
+    };
+    setFilters(nextFilters);
+    updateFilters(nextFilters);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
@@ -109,6 +131,28 @@ const LibraryPage: React.FC = () => {
 
         {/* Mobile Ad */}
         <MobileAd className="mb-6" />
+
+        {/* Media Tabs */}
+        <div className="mb-4 flex gap-2">
+          {[
+            { key: 'all', label: 'All' },
+            { key: 'audio', label: 'Audio' },
+            { key: 'video', label: 'Video' },
+          ].map((tab) => (
+            <button
+              key={tab.key}
+              onClick={() => handleTabChange(tab.key as any)}
+              className={cn(
+                'px-4 py-2 rounded-full text-sm font-medium border transition-colors',
+                mediaTab === tab.key
+                  ? 'bg-primary-600 text-white border-primary-600 shadow-sm'
+                  : 'bg-white text-gray-700 border-gray-200 hover:border-gray-300'
+              )}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
 
         {/* Filters */}
         <div className="mb-8">

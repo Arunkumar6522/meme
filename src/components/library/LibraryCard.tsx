@@ -185,6 +185,105 @@ const LibraryCard: React.FC<LibraryCardProps> = memo(({ item, className }) => {
     return colors[item.emotion] || 'bg-primary-500';
   };
 
+  // Video layout
+  if (item.media_type === 'video') {
+    return (
+      <div className={cn('w-full max-w-xs space-y-2 group', className)}>
+        <div
+          className="relative w-full overflow-hidden rounded-lg shadow-sm border border-gray-200 bg-gray-900 aspect-video"
+          onClick={handlePlay}
+          role="button"
+          tabIndex={0}
+          aria-label={`Play ${item.title}`}
+        >
+          {item.thumbnail_url ? (
+            <img
+              src={item.thumbnail_url}
+              alt={`Thumbnail for ${item.title}`}
+              className="w-full h-full object-cover"
+              loading="lazy"
+              decoding="async"
+            />
+          ) : (
+            <div className={cn('w-full h-full', getThumbnailColor())} />
+          )}
+          <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/35 transition-colors">
+            <div className="h-12 w-12 rounded-full bg-white/90 flex items-center justify-center shadow-lg">
+              <Play className="h-6 w-6 text-primary-600 ml-0.5" />
+            </div>
+          </div>
+          {item.duration && (
+            <div className="absolute bottom-2 right-2 px-2 py-1 rounded bg-black/70 text-white text-xs">
+              {formatDuration(item.duration)}
+            </div>
+          )}
+        </div>
+
+        <div className="space-y-1">
+          <h3 className="text-sm font-semibold text-gray-900 line-clamp-2">{item.title}</h3>
+          {item.description && (
+            <p className="text-xs text-gray-600 line-clamp-2">{item.description}</p>
+          )}
+          <div className="flex items-center gap-2">
+            <span className={cn('text-[11px] px-2 py-1 rounded-full border', emotionColors[item.emotion] || 'bg-gray-100 text-gray-700 border-gray-200')}>
+              {item.emotion}
+            </span>
+            {item.file_size && (
+              <span className="text-[11px] text-gray-500">{formatFileSize(item.file_size)}</span>
+            )}
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <Button
+            size="sm"
+            className="flex-1"
+            variant="default"
+            onClick={(e) => {
+              e.stopPropagation();
+              handlePlay();
+            }}
+          >
+            <Play className="h-4 w-4 mr-2" />
+            Play
+          </Button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              handleShare();
+            }}
+            className="w-9 h-9 rounded-full bg-white hover:bg-blue-50 flex items-center justify-center transition-all focus:outline-none focus:ring-2 focus:ring-blue-300 active:scale-95 shadow-sm border border-gray-200"
+            aria-label="Share"
+          >
+            <Share2 className="w-4 h-4 text-gray-600 hover:text-blue-500" />
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              handleDownload();
+            }}
+            disabled={downloading}
+            className={cn(
+              'w-9 h-9 rounded-full bg-white hover:bg-green-50 flex items-center justify-center transition-all focus:outline-none focus:ring-2 focus:ring-green-300 active:scale-95 shadow-sm border border-gray-200',
+              downloading && 'opacity-50 cursor-not-allowed'
+            )}
+            aria-label="Download"
+          >
+            {downloading ? (
+              <svg className="w-4 h-4 text-gray-400 animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+            ) : (
+              <Download className="w-4 h-4 text-gray-600 hover:text-green-500" />
+            )}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Audio layout
   return (
     <div
       className={cn(
@@ -192,110 +291,6 @@ const LibraryCard: React.FC<LibraryCardProps> = memo(({ item, className }) => {
         className
       )}
     >
-      {/* Circular Button */}
-      <button
-        onClick={handlePlay}
-        className={cn(
-          'relative w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-full shadow-lg hover:shadow-xl',
-          'transition-all duration-200 transform hover:scale-105 active:scale-95',
-          'focus:outline-none focus:ring-4 focus:ring-primary-300 focus:ring-offset-2',
-          'overflow-hidden border-2 sm:border-4 border-white',
-          'touch-manipulation', // Better mobile touch
-          getThumbnailColor()
-        )}
-        aria-label={`Play ${item.title}`}
-      >
-        {item.thumbnail_url ? (
-          <img
-            src={item.thumbnail_url}
-            alt={`Thumbnail for ${item.title}`}
-            className="w-full h-full object-cover rounded-full"
-            loading="lazy"
-            decoding="async"
-          />
-        ) : (
-          <div className="flex items-center justify-center w-full h-full">
-            {item.media_type === 'audio' ? (
-              <Volume2 className="h-6 w-6 sm:h-8 sm:w-8 md:h-10 md:w-10 text-white" aria-hidden="true" />
-            ) : (
-              <Video className="h-6 w-6 sm:h-8 sm:w-8 md:h-10 md:w-10 text-white" aria-hidden="true" />
-            )}
-          </div>
-        )}
-        {/* Play/Pause icon overlay */}
-        <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all duration-200 rounded-full">
-          {isPlaying ? (
-            <Pause className="h-5 w-5 sm:h-6 sm:w-6 md:h-8 md:w-8 text-white opacity-100 transition-opacity" />
-          ) : (
-            <Play className="h-5 w-5 sm:h-6 sm:w-6 md:h-8 md:w-8 text-white ml-0.5 opacity-0 group-hover:opacity-100 transition-opacity" />
-          )}
-        </div>
-      </button>
-
-      {/* Title */}
-      <h3 className="text-xs sm:text-sm font-medium text-gray-900 text-center line-clamp-2 max-w-[100px] sm:max-w-[120px] md:max-w-[140px] leading-tight px-1">
-        {item.title}
-      </h3>
-
-      {/* Action Icons */}
-      <div className="flex items-center justify-center gap-1.5 sm:gap-2 md:gap-3">
-        {/* Like/Heart */}
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            handleLike();
-          }}
-          className={cn(
-            'w-7 h-7 sm:w-8 sm:h-8 md:w-9 md:h-9 rounded-full flex items-center justify-center transition-all',
-            'focus:outline-none focus:ring-2 focus:ring-red-300 active:scale-90',
-            'touch-manipulation', // Better mobile touch
-            isLiked 
-              ? 'bg-red-100 text-red-500 shadow-sm' 
-              : 'bg-white hover:bg-red-50 text-gray-600 hover:text-red-500 shadow-sm hover:shadow'
-          )}
-          aria-label="Like"
-        >
-          <Heart className={cn('w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5', isLiked && 'fill-current')} />
-        </button>
-
-        {/* Share */}
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            handleShare();
-          }}
-          className="w-7 h-7 sm:w-8 sm:h-8 md:w-9 md:h-9 rounded-full bg-white hover:bg-blue-50 flex items-center justify-center transition-all focus:outline-none focus:ring-2 focus:ring-blue-300 active:scale-90 shadow-sm hover:shadow touch-manipulation"
-          aria-label="Share"
-        >
-          <Share2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5 text-gray-600 hover:text-blue-500" />
-        </button>
-
-        {/* Download */}
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            handleDownload();
-          }}
-          disabled={downloading}
-          className={cn(
-            'w-7 h-7 sm:w-8 sm:h-8 md:w-9 md:h-9 rounded-full bg-white hover:bg-green-50 flex items-center justify-center transition-all',
-            'focus:outline-none focus:ring-2 focus:ring-green-300 active:scale-90 shadow-sm hover:shadow touch-manipulation',
-            downloading && 'opacity-50 cursor-not-allowed'
-          )}
-          aria-label="Download"
-        >
-          {downloading ? (
-            <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5 text-gray-400 animate-spin" fill="none" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-          ) : (
-            <Download className="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5 text-gray-600 hover:text-green-500" />
-          )}
-        </button>
-      </div>
-    </div>
-  );
 }, (prevProps, nextProps) => {
   // Custom comparison function for React.memo
   return (
