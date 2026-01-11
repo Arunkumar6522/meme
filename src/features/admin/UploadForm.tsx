@@ -15,6 +15,7 @@ interface UploadFormProps {
 
 interface UploadData {
   title: string;
+  artist: string;
   description: string;
   keywords: string;
   emotion: EmotionType;
@@ -41,6 +42,7 @@ const UploadForm: React.FC<UploadFormProps> = ({ onSuccess, onCancel }) => {
   const { user } = useAuth();
   const [formData, setFormData] = useState<UploadData>({
     title: '',
+    artist: '',
     description: '',
     keywords: '',
     emotion: '' as EmotionType,
@@ -276,10 +278,16 @@ const UploadForm: React.FC<UploadFormProps> = ({ onSuccess, onCancel }) => {
       setUploadProgress(75);
 
       // Create library item
-      const keywordsArray = formData.keywords
-        .split(',')
-        .map(k => k.trim())
-        .filter(k => k.length > 0);
+      const artistTags = formData.artist.trim() ? [formData.artist.trim()] : [];
+      const keywordsArray = Array.from(
+        new Set([
+          ...artistTags,
+          ...formData.keywords
+            .split(',')
+            .map(k => k.trim())
+            .filter(k => k.length > 0),
+        ])
+      );
 
       const libraryItem = await LibraryService.createLibraryItem({
         title: formData.title.trim(),
@@ -429,6 +437,14 @@ const UploadForm: React.FC<UploadFormProps> = ({ onSuccess, onCancel }) => {
           error={errors.title}
           placeholder="Enter meme title"
           required
+        />
+
+        {/* Artist / Character */}
+        <Input
+          label="Artist / Character (Optional)"
+          value={formData.artist}
+          onChange={handleInputChange('artist')}
+          placeholder="Who is in this clip? (e.g., actor/creator)"
         />
 
         {/* Description */}
