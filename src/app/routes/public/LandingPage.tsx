@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Play, Download, Search, Zap, Lock } from 'lucide-react';
-import { Button, SkeletonCard } from '@/components/ui';
+import { Play, Download, Search, Zap, Lock, Film } from 'lucide-react';
+import { Button, SkeletonCard, Input } from '@/components/ui';
 import { BannerAd } from '@/components/ads/AdBanner';
 import { useLibrary } from '@/hooks/useLibrary';
 import { useAuth } from '@/hooks/useAuth';
@@ -10,6 +10,7 @@ import LibraryCard from '@/components/library/LibraryCard';
 const LandingPage: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const [searchTerm, setSearchTerm] = useState('');
 
   // Fetch top 10 audio memes for public preview
   const {
@@ -19,32 +20,35 @@ const LandingPage: React.FC = () => {
   const features = [
     {
       icon: Search,
-      title: 'Discover Memes',
-      description: 'Search through thousands of audio and video memes by emotion, keyword, or type.',
+      title: 'Find it fast',
+      description: 'Search by keyword, emotion, or character to get the exact clip you need.',
     },
     {
       icon: Download,
-      title: 'Easy Downloads',
-      description: 'One-click downloads in high quality for your content creation needs.',
+      title: 'Ready to drop in',
+      description: 'One-click downloads in the right formats for shorts and reels.',
     },
     {
       icon: Play,
-      title: 'Preview First',
-      description: 'Listen or watch before downloading to find the perfect meme.',
+      title: 'Preview first',
+      description: 'Listen/watch before saving so you never pick the wrong clip.',
     },
     {
       icon: Zap,
-      title: 'Always Fresh',
-      description: 'New memes added regularly to keep your content trending.',
+      title: 'Tamil-first & growing',
+      description: 'Built for Tamil creators now, expanding to Telugu/Kannada/Malayalam/Hindi later.',
     },
   ];
 
   const stats = [
-    { label: 'Memes Available', value: '10,000+' },
-    { label: 'Downloads', value: '1M+' },
-    { label: 'Content Creators', value: '50K+' },
-    { label: 'New Daily', value: '100+' },
   ];
+
+  const handleSearch = (event: React.FormEvent) => {
+    event.preventDefault();
+    const value = searchTerm.trim();
+    if (!value) return;
+    navigate(`/library?search=${encodeURIComponent(value)}`);
+  };
 
   return (
     <div className="bg-white">
@@ -63,12 +67,11 @@ const LandingPage: React.FC = () => {
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16 sm:py-24 lg:py-32">
           <div className="text-center">
             <h1 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl lg:text-6xl">
-              The Ultimate
-              <span className="text-primary-600 block sm:inline"> Meme Library</span>
+              Clips & Audio for Tamil Creators
+              <span className="text-primary-600 block sm:inline"> Ready to Drop In</span>
             </h1>
             <p className="mt-4 sm:mt-6 text-base sm:text-lg leading-7 sm:leading-8 text-gray-600 max-w-2xl mx-auto px-4 sm:px-0">
-              Download high-quality audio and video memes for your content creation. 
-              Perfect for TikTok, YouTube, Instagram, and more.
+              Stop hunting. Get the exact meme audio, green-screen templates, and short-ready video clips with proper keywords. Built for shorts/reels editors, PR teams, and digital marketers.
             </p>
             <div className="mt-8 sm:mt-10 flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-x-6 px-4 sm:px-0">
               <Button size="lg" className="w-full sm:w-auto min-w-[200px]" asChild>
@@ -82,6 +85,21 @@ const LandingPage: React.FC = () => {
                 </Link>
               </Button>
             </div>
+            <form
+              onSubmit={handleSearch}
+              className="mt-6 sm:mt-8 flex flex-col sm:flex-row items-center gap-3 max-w-2xl mx-auto px-4 sm:px-0"
+            >
+              <Input
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Search by keyword, emotion, or character (e.g., rage, funny, hero)"
+                className="w-full"
+              />
+              <Button type="submit" className="w-full sm:w-auto" disabled={!searchTerm.trim()}>
+                <Search className="h-4 w-4 mr-2" />
+                Search
+              </Button>
+            </form>
           </div>
         </div>
 
@@ -98,7 +116,7 @@ const LandingPage: React.FC = () => {
             <div>
               <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">Top 10 Audio Memes</h2>
               <p className="mt-2 text-sm sm:text-base text-gray-600">
-                Preview the hottest audio memes. Sign in to unlock the full library.
+                Preview what’s trending. Sign in to unlock everything (audio & video).
               </p>
             </div>
             <div className="flex gap-3">
@@ -155,33 +173,15 @@ const LandingPage: React.FC = () => {
       </div>
 
       {/* Stats Section */}
-      <div className="bg-primary-600 py-12 sm:py-16 lg:py-20">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 gap-6 sm:gap-8 md:grid-cols-4">
-            {stats.map((stat) => (
-              <div key={stat.label} className="text-center">
-                <div className="text-2xl font-bold text-white sm:text-3xl lg:text-4xl">
-                  {stat.value}
-                </div>
-                <div className="mt-1 sm:mt-2 text-xs sm:text-sm text-primary-100">
-                  {stat.label}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
       {/* Features Section */}
       <div className="py-16 sm:py-24 lg:py-32">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-2xl text-center">
             <h2 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl lg:text-4xl">
-              Everything you need for viral content
+              Built to solve the Tamil creator clip hunt
             </h2>
             <p className="mt-4 sm:mt-6 text-base sm:text-lg leading-7 sm:leading-8 text-gray-600">
-              Our platform provides content creators with the tools and resources 
-              needed to create engaging, shareable content.
+              No more searching YouTube for scraps. Get curated, searchable audio/video templates with the right tags.
             </p>
           </div>
           <div className="mx-auto mt-12 sm:mt-16 lg:mt-24 max-w-2xl lg:max-w-none">
@@ -200,11 +200,6 @@ const LandingPage: React.FC = () => {
             </dl>
           </div>
         </div>
-      </div>
-
-      {/* Ad Banner */}
-      <div className="py-8">
-        <BannerAd className="mx-auto" />
       </div>
 
       {/* CTA Section */}
