@@ -54,7 +54,11 @@ const LandingPage: React.FC = () => {
                 placeholder="Search audio/video by keyword, emotion, or character"
                 className="w-full"
               />
-              <Button type="submit" className="w-full sm:w-auto" disabled={!searchTerm.trim()}>
+              <Button
+                type="submit"
+                className="w-full sm:w-auto bg-orange-600 hover:bg-orange-700 text-white border-orange-600"
+                disabled={!searchTerm.trim()}
+              >
                 <Search className="h-4 w-4 mr-2" />
                 Search
               </Button>
@@ -75,12 +79,17 @@ const LandingPage: React.FC = () => {
               </div>
               <div className="flex gap-3">
                 {!user && (
-                  <Button variant="outline" onClick={() => navigate('/auth/login')}>
+                  <Button variant="outline" className="border-orange-500 text-orange-600 hover:bg-orange-50" onClick={() => navigate('/auth/login')}>
                     <Lock className="h-4 w-4 mr-2" />
                     Unlock All
                   </Button>
                 )}
-                <Button onClick={() => navigate('/library?media_type=audio')}>See all audios</Button>
+                <Button
+                  className="bg-orange-600 hover:bg-orange-700 text-white border-orange-600"
+                  onClick={() => user ? navigate('/library?media_type=audio') : navigate('/auth/login')}
+                >
+                  {user ? 'See all audios' : 'Login to see all'}
+                </Button>
               </div>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
@@ -104,12 +113,17 @@ const LandingPage: React.FC = () => {
               </div>
               <div className="flex gap-3">
                 {!user && (
-                  <Button variant="outline" onClick={() => navigate('/auth/login')}>
+                  <Button variant="outline" className="border-orange-500 text-orange-600 hover:bg-orange-50" onClick={() => navigate('/auth/login')}>
                     <Lock className="h-4 w-4 mr-2" />
                     Unlock All
                   </Button>
                 )}
-                <Button onClick={() => navigate('/library?media_type=video')}>See all videos</Button>
+                <Button
+                  className="bg-orange-600 hover:bg-orange-700 text-white border-orange-600"
+                  onClick={() => user ? navigate('/library?media_type=video') : navigate('/auth/login')}
+                >
+                  {user ? 'See all videos' : 'Login to see all'}
+                </Button>
               </div>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -136,8 +150,8 @@ const LandingPage: React.FC = () => {
                 </div>
               </div>
               <div className="flex gap-3">
-                <Button variant="outline" onClick={() => navigate('/auth/login')}>Sign In</Button>
-                <Button onClick={() => navigate('/auth/register')}>Create Account</Button>
+                <Button variant="outline" className="border-orange-500 text-orange-600 hover:bg-orange-50" onClick={() => navigate('/auth/login')}>Sign In</Button>
+                <Button className="bg-orange-600 hover:bg-orange-700 text-white border-orange-600" onClick={() => navigate('/auth/register')}>Create Account</Button>
               </div>
             </div>
           )}
