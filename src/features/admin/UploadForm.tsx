@@ -57,7 +57,7 @@ const UploadForm: React.FC<UploadFormProps> = ({ onSuccess, onCancel }) => {
   const { user } = useAuth();
   const [formData, setFormData] = useState<UploadData>({
     title: '',
-    artists: ['Unknown artist'],
+    artists: [],
     languages: ['English', 'Tamil'],
     description: '',
     keywords: '',
@@ -71,7 +71,7 @@ const UploadForm: React.FC<UploadFormProps> = ({ onSuccess, onCancel }) => {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [artists, setArtists] = useState<string[]>(['Unknown artist']);
+  const [artists, setArtists] = useState<string[]>([]);
   const [artistQuery, setArtistQuery] = useState('');
   const languages = ['English', 'Tamil', 'Malayalam', 'Kannada', 'Hindi', 'Telugu'];
   
@@ -511,21 +511,19 @@ const UploadForm: React.FC<UploadFormProps> = ({ onSuccess, onCancel }) => {
                   className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800"
                 >
                   {artist}
-                  {artist !== 'Unknown artist' && (
-                    <button
-                      type="button"
-                      className="text-orange-700 hover:text-orange-900"
-                      onClick={() => {
-                        setFormData(prev => ({
-                          ...prev,
-                          artists: prev.artists.filter(a => a !== artist),
-                        }));
-                      }}
-                      aria-label={`Remove ${artist}`}
-                    >
-                      ×
-                    </button>
-                  )}
+                  <button
+                    type="button"
+                    className="text-orange-700 hover:text-orange-900"
+                    onClick={() => {
+                      setFormData(prev => ({
+                        ...prev,
+                        artists: prev.artists.filter(a => a !== artist),
+                      }));
+                    }}
+                    aria-label={`Remove ${artist}`}
+                  >
+                    ×
+                  </button>
                 </span>
               ))}
             </div>
@@ -534,53 +532,45 @@ const UploadForm: React.FC<UploadFormProps> = ({ onSuccess, onCancel }) => {
                 type="text"
                 value={artistQuery}
                 onChange={(e) => setArtistQuery(e.target.value)}
-                placeholder="Type to add (press Enter)"
+                placeholder="Type to add or select"
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
                     e.preventDefault();
-                    const newArtist = artistQuery.trim() || 'Unknown artist';
-                    if (!formData.artists.includes(newArtist)) {
+                    const newArtist = artistQuery.trim();
+                    if (newArtist && !formData.artists.includes(newArtist)) {
                       setFormData(prev => ({ ...prev, artists: [...prev.artists, newArtist] }));
-                    }
-                    if (!artists.includes(newArtist)) {
-                      setArtists(prev => [...prev, newArtist]);
+                      if (!artists.includes(newArtist)) setArtists(prev => [...prev, newArtist]);
                     }
                     setArtistQuery('');
                   }
                 }}
               />
-              <div className="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg max-h-48 overflow-auto">
-                {artists
-                  .filter((name) => name.toLowerCase().includes(artistQuery.toLowerCase()))
-                  .slice(0, 6)
-                  .map((name) => (
-                    <button
-                      type="button"
-                      key={name}
-                      className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50"
-                      onClick={() => {
-                        if (!formData.artists.includes(name)) {
-                          setFormData(prev => ({ ...prev, artists: [...prev.artists, name] }));
-                        }
-                        setArtistQuery('');
-                      }}
-                    >
-                      {name}
-                    </button>
-                  ))}
-                {!artistQuery && !formData.artists.includes('Unknown artist') && (
-                  <button
-                    type="button"
-                    className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50"
-                    onClick={() => {
-                      setFormData(prev => ({ ...prev, artists: [...prev.artists, 'Unknown artist'] }));
-                    }}
-                  >
-                    Unknown artist
-                  </button>
-                )}
-              </div>
+              {artistQuery && (
+                <div className="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg max-h-48 overflow-auto">
+                  {artists
+                    .filter((name) => name.toLowerCase().includes(artistQuery.toLowerCase()))
+                    .slice(0, 6)
+                    .map((name) => (
+                      <button
+                        type="button"
+                        key={name}
+                        className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50"
+                        onClick={() => {
+                          if (!formData.artists.includes(name)) {
+                            setFormData(prev => ({ ...prev, artists: [...prev.artists, name] }));
+                          }
+                          setArtistQuery('');
+                        }}
+                      >
+                        {name}
+                      </button>
+                    ))}
+                  {!artists.length && (
+                    <div className="px-3 py-2 text-sm text-gray-500">No suggestions</div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>

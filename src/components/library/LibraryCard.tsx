@@ -364,6 +364,20 @@ const LibraryCard: React.FC<LibraryCardProps> = memo(({ item, className }) => {
           </div>
         </button>
       )}
+      {isPlaying && (
+        <button
+          onClick={() => {
+            if (videoRef.current) {
+              videoRef.current.pause();
+            }
+            setIsPlaying(false);
+          }}
+          className="absolute bottom-2 left-2 px-3 py-1 rounded-full bg-black/70 text-white text-xs"
+          aria-label="Stop video"
+        >
+          Stop
+        </button>
+      )}
       {item.duration && (
         <div className="absolute bottom-2 right-2 px-2 py-1 rounded bg-black/70 text-white text-xs">
           {formatDuration(item.duration)}

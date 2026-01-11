@@ -158,18 +158,20 @@ const Header: React.FC = () => {
           {/* User Menu / Auth Buttons */}
               <div className="flex items-center space-x-2 sm:space-x-3">
                 {/* Mobile menu button (only icon; remove inline avatar) */}
-                <button
-                  onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                  className="inline-flex items-center justify-center p-2 rounded-md text-gray-500 hover:text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2"
-                  aria-expanded={isMobileMenuOpen}
-                  aria-label="Toggle mobile menu"
-                >
-                  {isMobileMenuOpen ? (
-                    <X className="h-6 w-6" aria-hidden="true" />
-                  ) : (
-                    <Menu className="h-6 w-6" aria-hidden="true" />
-                  )}
-                </button>
+                <div className="md:hidden">
+                  <button
+                    onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                    className="inline-flex items-center justify-center p-2 rounded-md text-gray-500 hover:text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2"
+                    aria-expanded={isMobileMenuOpen}
+                    aria-label="Toggle mobile menu"
+                  >
+                    {isMobileMenuOpen ? (
+                      <X className="h-6 w-6" aria-hidden="true" />
+                    ) : (
+                      <Menu className="h-6 w-6" aria-hidden="true" />
+                    )}
+                  </button>
+                </div>
 
                 {/* Desktop user actions */}
                 {user ? (
