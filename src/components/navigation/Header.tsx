@@ -5,6 +5,7 @@ import { Button } from '@/components/ui';
 import { useAuth } from '@/hooks/useAuth';
 import { DatabaseService } from '@/services/database.service';
 import { cn } from '@/utils/cn';
+import { supabase } from '@/services/supabase';
 
 // Cache admin status to avoid repeated API calls
 const adminStatusCache = new Map<string, { status: boolean; timestamp: number }>();
