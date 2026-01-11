@@ -5,3 +5,4 @@ export { LoadingSpinner } from './LoadingSpinner';
 export { SkeletonLoader, SkeletonCard, SkeletonText } from './SkeletonLoader';
 export { default as Toast } from './Toast';
 export { default as ToastContainer } from './ToastContainer';
+export { default as Modal } from './Modal';
