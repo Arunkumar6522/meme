@@ -8,9 +8,10 @@ interface LibraryGridProps {
   items: LibraryItem[];
   loading?: boolean;
   className?: string;
+  isAdmin?: boolean;
 }
 
-const LibraryGrid: React.FC<LibraryGridProps> = memo(({ items, loading = false, className }) => {
+const LibraryGrid: React.FC<LibraryGridProps> = memo(({ items, loading = false, className, isAdmin = false }) => {
   if (loading) {
     return (
       <div
@@ -70,7 +71,7 @@ const LibraryGrid: React.FC<LibraryGridProps> = memo(({ items, loading = false, 
       >
         {items.map((item) => (
           <div key={item.id} role="gridcell" className="flex justify-center">
-            <LibraryCard item={item} />
+            <LibraryCard item={item} isAdmin={isAdmin} />
           </div>
         ))}
       </div>

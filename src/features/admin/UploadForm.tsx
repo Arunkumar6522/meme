@@ -4,6 +4,7 @@ import { Button, Input, Select } from '@/components/ui';
 import { useAuth } from '@/hooks/useAuth';
 import { LibraryService } from '@/services/library.service';
 import { STORAGE_BUCKETS } from '@/services/supabase';
+import { ArtistService } from '@/services/artist.service';
 import type { EmotionType } from '@/types';
 import { cn } from '@/utils/cn';
 import { compressImageToThumbnail } from '@/utils/imageCompression';
@@ -380,6 +381,16 @@ const UploadForm: React.FC<UploadFormProps> = ({ onSuccess, onCancel }) => {
 
   // Clean up preview URL
   React.useEffect(() => {
+    const loadArtists = async () => {
+      try {
+        const list = await ArtistService.list();
+        setArtists(list.map(a => a.name));
+      } catch {
+        // ignore
+      }
+    };
+    loadArtists();
+
     return () => {
       if (previewUrl) {
         URL.revokeObjectURL(previewUrl);

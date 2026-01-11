@@ -6,13 +6,17 @@ import { useToast } from '@/hooks/useToast';
 import { useFavorites } from '@/hooks/useFavorites';
 import type { LibraryItem } from '@/types';
 import { cn } from '@/utils/cn';
+import { useNavigate } from 'react-router-dom';
+import { Input } from '@/components/ui';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui';
 
 interface LibraryCardProps {
   item: LibraryItem;
   className?: string;
+  isAdmin?: boolean;
 }
 
-const LibraryCard: React.FC<LibraryCardProps> = memo(({ item, className }) => {
+const LibraryCard: React.FC<LibraryCardProps> = memo(({ item, className, isAdmin = false }) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const audioElementRef = useRef<HTMLAudioElement | null>(null);
@@ -21,6 +25,11 @@ const LibraryCard: React.FC<LibraryCardProps> = memo(({ item, className }) => {
   const mediaId = item.id;
   const { isFavorite, toggleFavorite } = useFavorites();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [editTitle, setEditTitle] = useState(item.title);
+  const [editDescription, setEditDescription] = useState(item.description || '');
+  const [editKeywords, setEditKeywords] = useState(item.keywords?.join(', ') || '');
+  const navigate = useNavigate();
 
   const emotionColors = {
     happy: 'bg-yellow-100 text-yellow-800 border-yellow-200',
@@ -305,6 +314,20 @@ const LibraryCard: React.FC<LibraryCardProps> = memo(({ item, className }) => {
             <Download className="w-4 h-4" />
             {downloading ? 'Downloading…' : 'Download'}
           </button>
+          {isAdmin && (
+            <button
+              className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+              onClick={(e) => {
+                e.stopPropagation();
+                setEditOpen(true);
+                setMenuOpen(false);
+              }}
+              role="menuitem"
+            >
+              <Share2 className="w-4 h-4" />
+              Edit
+            </button>
+          )}
           {item.media_type === 'video' && (
             <button
               className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
@@ -446,6 +469,60 @@ const LibraryCard: React.FC<LibraryCardProps> = memo(({ item, className }) => {
       <div className="flex items-center justify-center">
         {renderActionsMenu()}
       </div>
+
+      {isAdmin && (
+        <Dialog open={editOpen} onOpenChange={setEditOpen}>
+          <DialogContent className="max-w-lg">
+            <DialogHeader>
+              <DialogTitle>Edit item</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-3">
+              <Input
+                label="Title"
+                value={editTitle}
+                onChange={(e) => setEditTitle(e.target.value)}
+              />
+              <Input
+                label="Description"
+                value={editDescription}
+                onChange={(e) => setEditDescription(e.target.value)}
+              />
+              <Input
+                label="Keywords (comma separated)"
+                value={editKeywords}
+                onChange={(e) => setEditKeywords(e.target.value)}
+              />
+            </div>
+            <DialogFooter className="mt-4 flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setEditOpen(false)}>
+                Cancel
+              </Button>
+              <Button
+                onClick={async () => {
+                  try {
+                    const keywordsArray = editKeywords
+                      .split(',')
+                      .map((k) => k.trim())
+                      .filter(Boolean);
+                    const updates: Partial<LibraryItem> = {
+                      title: editTitle.trim(),
+                      description: editDescription.trim() || null,
+                      keywords: keywordsArray,
+                    };
+                    await LibraryService.updateLibraryItem(item.id, updates);
+                    showSuccess('Updated', 'Library');
+                    setEditOpen(false);
+                  } catch (e: any) {
+                    showError(e.message || 'Failed to update', 'Error');
+                  }
+                }}
+              >
+                Save
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }, (prevProps, nextProps) => {

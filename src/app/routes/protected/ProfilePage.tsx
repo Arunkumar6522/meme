@@ -6,6 +6,7 @@ import { useFavorites } from '@/hooks/useFavorites';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/services/supabase';
 import { useToast } from '@/hooks/useToast';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui';
 
 const ProfilePage: React.FC = () => {
   const { user } = useAuth();
@@ -21,6 +22,8 @@ const ProfilePage: React.FC = () => {
   const [deleteReason, setDeleteReason] = useState('');
   const [deletePwd, setDeletePwd] = useState('');
   const [deleting, setDeleting] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [pwdOpen, setPwdOpen] = useState(false);
 
   const stats = [
     { label: 'Downloads', value: '—', icon: Download },

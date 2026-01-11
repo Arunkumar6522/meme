@@ -89,6 +89,7 @@ const Header: React.FC = () => {
     if (isAdmin) {
       base.push({ name: 'Library', href: '/library' });
       base.push({ name: 'Upload', href: '/upload' });
+      base.push({ name: 'Artists', href: '/admin/artists' });
       base.push({ name: 'Create (beta)', href: '/create' });
     }
     return base;
@@ -177,18 +178,6 @@ const Header: React.FC = () => {
                 {/* Desktop user actions */}
                 {user ? (
                   <>
-                    {isAdmin && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => navigate('/upload')}
-                        className="hidden sm:flex items-center gap-2"
-                        aria-label="Admin Upload"
-                      >
-                        <Shield className="h-4 w-4" />
-                        <span className="hidden md:inline">Upload</span>
-                      </Button>
-                    )}
                     <div className="relative hidden md:block">
                       <button
                         onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
