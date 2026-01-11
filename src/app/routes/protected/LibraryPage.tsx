@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Upload, Plus } from 'lucide-react';
+import { Upload } from 'lucide-react';
 import LibraryFilters from '@/components/library/LibraryFilters';
 import LibraryGrid from '@/components/library/LibraryGrid';
 import Pagination from '@/components/library/Pagination';
@@ -22,8 +22,9 @@ const LibraryPage: React.FC = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [filters, setFilters] = useState<LibraryFiltersType>({
     sort_by: 'latest',
+    media_type: 'audio',
   });
-  const [mediaTab, setMediaTab] = useState<'all' | 'audio' | 'video'>('all');
+  const [mediaTab, setMediaTab] = useState<'audio' | 'video'>('audio');
 
   const {
     data: items,
@@ -70,20 +71,18 @@ const LibraryPage: React.FC = () => {
 
   // Sync tab with filters
   useEffect(() => {
-    if (!filters.media_type) {
-      setMediaTab('all');
-    } else if (filters.media_type === 'audio') {
-      setMediaTab('audio');
-    } else if (filters.media_type === 'video') {
+    if (filters.media_type === 'video') {
       setMediaTab('video');
+    } else {
+      setMediaTab('audio');
     }
   }, [filters.media_type]);
 
-  const handleTabChange = (tab: 'all' | 'audio' | 'video') => {
+  const handleTabChange = (tab: 'audio' | 'video') => {
     setMediaTab(tab);
     const nextFilters = {
       ...filters,
-      media_type: tab === 'all' ? undefined : tab,
+      media_type: tab,
     };
     setFilters(nextFilters);
     updateFilters(nextFilters);
@@ -126,7 +125,6 @@ const LibraryPage: React.FC = () => {
         {/* Media Tabs */}
         <div className="mb-4 flex gap-2">
           {[
-            { key: 'all', label: 'All' },
             { key: 'audio', label: 'Audio' },
             { key: 'video', label: 'Video' },
           ].map((tab) => (

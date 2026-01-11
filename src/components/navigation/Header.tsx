@@ -54,11 +54,14 @@ const Header: React.FC = () => {
     navigate('/');
   };
 
-  const navigation = [
-    { name: 'Home', href: '/' },
-    { name: 'Library', href: '/library' },
-    { name: 'Create', href: '/create' },
-  ];
+  const navigation = useMemo(() => {
+    const base = [{ name: 'Home', href: '/' }];
+    if (isAdmin) {
+      base.push({ name: 'Library', href: '/library' });
+      base.push({ name: 'Create (beta)', href: '/create' });
+    }
+    return base;
+  }, [isAdmin]);
 
   const userNavigation = [
     { name: 'Profile', href: '/profile', icon: User },
