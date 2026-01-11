@@ -10,6 +10,7 @@ import { useLibrary } from '@/hooks/useLibrary';
 import { useAuth } from '@/hooks/useAuth';
 import { DatabaseService } from '@/services/database.service';
 import type { LibraryFilters as LibraryFiltersType } from '@/types';
+import { cn } from '@/utils/cn';
 
 // Cache admin status to avoid repeated API calls
 const adminStatusCache = new Map<string, { status: boolean; timestamp: number }>();
