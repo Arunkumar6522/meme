@@ -16,6 +16,7 @@ interface UploadFormProps {
 interface UploadData {
   title: string;
   artists: string[];
+  languages: string[];
   description: string;
   keywords: string;
   emotion: EmotionType;
@@ -57,6 +58,7 @@ const UploadForm: React.FC<UploadFormProps> = ({ onSuccess, onCancel }) => {
   const [formData, setFormData] = useState<UploadData>({
     title: '',
     artists: ['Unknown artist'],
+    languages: ['English', 'Tamil'],
     description: '',
     keywords: '',
     emotion: '' as EmotionType,
@@ -71,6 +73,7 @@ const UploadForm: React.FC<UploadFormProps> = ({ onSuccess, onCancel }) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [artists, setArtists] = useState<string[]>(['Unknown artist']);
   const [artistQuery, setArtistQuery] = useState('');
+  const languages = ['English', 'Tamil', 'Malayalam', 'Kannada', 'Hindi', 'Telugu'];
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const thumbnailInputRef = useRef<HTMLInputElement>(null);
@@ -321,6 +324,7 @@ const UploadForm: React.FC<UploadFormProps> = ({ onSuccess, onCancel }) => {
         file_size: formData.file.size,
         is_published: true, // Auto-publish for now
         created_by: user.id,
+        languages: formData.languages,
       });
 
       if (!libraryItem) {
@@ -458,6 +462,41 @@ const UploadForm: React.FC<UploadFormProps> = ({ onSuccess, onCancel }) => {
           placeholder="Enter meme title"
           required
         />
+
+        {/* Languages */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Languages *
+          </label>
+          <div className="flex flex-wrap gap-2">
+            {languages.map((lang) => {
+              const active = formData.languages.includes(lang);
+              return (
+                <button
+                  type="button"
+                  key={lang}
+                  onClick={() => {
+                    setFormData((prev) => ({
+                      ...prev,
+                      languages: active
+                        ? prev.languages.filter((l) => l !== lang)
+                        : [...prev.languages, lang],
+                    }));
+                  }}
+                  className={cn(
+                    'px-3 py-1 rounded-full text-sm border transition-colors',
+                    active
+                      ? 'bg-orange-100 text-orange-700 border-orange-200'
+                      : 'bg-white text-gray-700 border-gray-200 hover:border-gray-300'
+                  )}
+                  aria-pressed={active}
+                >
+                  {lang}
+                </button>
+              );
+            })}
+          </div>
+        </div>
 
         {/* Artist / Character (multi-select tags) */}
         <div>

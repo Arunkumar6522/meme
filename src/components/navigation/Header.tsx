@@ -9,6 +9,8 @@ import { cn } from '@/utils/cn';
 // Cache admin status to avoid repeated API calls
 const adminStatusCache = new Map<string, { status: boolean; timestamp: number }>();
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+const LANG_STORAGE_KEY = 'preferred_languages';
+const ALL_LANGUAGES = ['English', 'Tamil', 'Malayalam', 'Kannada', 'Hindi', 'Telugu'];
 
 // Export function to clear admin cache (used on logout)
 export const clearAdminCache = () => {
@@ -19,6 +21,17 @@ const Header: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [langOpen, setLangOpen] = useState(false);
+  const [selectedLangs, setSelectedLangs] = useState<string[]>(() => {
+    const stored = localStorage.getItem(LANG_STORAGE_KEY);
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed) && parsed.length) return parsed;
+      } catch {}
+    }
+    return ['English', 'Tamil'];
+  });
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
 
@@ -53,6 +66,10 @@ const Header: React.FC = () => {
     await signOut();
     navigate('/');
   };
+
+  useEffect(() => {
+    localStorage.setItem(LANG_STORAGE_KEY, JSON.stringify(selectedLangs));
+  }, [selectedLangs]);
 
   const navigation = useMemo(() => {
     const base = [{ name: 'Home', href: '/' }];
@@ -97,6 +114,33 @@ const Header: React.FC = () => {
                 {item.name}
               </Link>
             ))}
+            {/* Language selector (desktop) */}
+            <div className="relative">
+              <button
+                onClick={() => setLangOpen((prev) => !prev)}
+                className="text-sm px-3 py-2 rounded border border-gray-200 text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2"
+              >
+                Languages
+              </button>
+              {langOpen && (
+                <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-md shadow-lg p-3 space-y-2 z-20">
+                  {ALL_LANGUAGES.map((lang) => (
+                    <label key={lang} className="flex items-center gap-2 text-sm text-gray-700">
+                      <input
+                        type="checkbox"
+                        checked={selectedLangs.includes(lang)}
+                        onChange={() => {
+                          setSelectedLangs((prev) =>
+                            prev.includes(lang) ? prev.filter((l) => l !== lang) : [...prev, lang]
+                          );
+                        }}
+                      />
+                      {lang}
+                    </label>
+                  ))}
+                </div>
+              )}
+            </div>
           </nav>
 
           {/* User Menu / Auth Buttons */}
@@ -198,6 +242,27 @@ const Header: React.FC = () => {
                   {item.name}
                 </Link>
               ))}
+              
+              {/* Languages mobile */}
+              <div className="px-3 py-2">
+                <p className="text-sm font-medium text-gray-700 mb-2">Languages</p>
+                <div className="grid grid-cols-2 gap-2">
+                  {ALL_LANGUAGES.map((lang) => (
+                    <label key={lang} className="flex items-center gap-2 text-sm text-gray-700">
+                      <input
+                        type="checkbox"
+                        checked={selectedLangs.includes(lang)}
+                        onChange={() => {
+                          setSelectedLangs((prev) =>
+                            prev.includes(lang) ? prev.filter((l) => l !== lang) : [...prev, lang]
+                          );
+                        }}
+                      />
+                      {lang}
+                    </label>
+                  ))}
+                </div>
+              </div>
               
               {user && isAdmin && (
                 <Link

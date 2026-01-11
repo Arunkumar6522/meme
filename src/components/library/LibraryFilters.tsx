@@ -25,8 +25,6 @@ const emotionOptions = [
 
 const mediaTypeOptions = [
   { value: '', label: 'All Types' },
-  { value: 'audio', label: 'Audio' },
-  { value: 'video', label: 'Video' },
 ];
 
 const sortOptions = [
@@ -56,13 +54,6 @@ const LibraryFilters: React.FC<LibraryFiltersProps> = ({
     });
   };
 
-  const handleMediaTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    onFiltersChange({
-      ...filters,
-      media_type: e.target.value as 'audio' | 'video' | undefined,
-    });
-  };
-
   const handleSortChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     onFiltersChange({
       ...filters,
@@ -75,12 +66,11 @@ const LibraryFilters: React.FC<LibraryFiltersProps> = ({
       search: '',
       artist: [],
       emotion: undefined,
-      media_type: undefined,
       sort_by: 'latest',
     });
   };
 
-  const hasActiveFilters = filters.search || (filters.artist && filters.artist.length > 0) || filters.emotion || filters.media_type;
+  const hasActiveFilters = filters.search || (filters.artist && filters.artist.length > 0) || filters.emotion;
 
   return (
     <div className={className}>
@@ -191,14 +181,6 @@ const LibraryFilters: React.FC<LibraryFiltersProps> = ({
           onChange={handleEmotionChange}
           options={emotionOptions}
           aria-label="Filter by emotion"
-        />
-
-        <Select
-          label="Media Type"
-          value={filters.media_type || ''}
-          onChange={handleMediaTypeChange}
-          options={mediaTypeOptions}
-          aria-label="Filter by media type"
         />
 
         <Select
