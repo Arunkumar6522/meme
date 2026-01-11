@@ -38,6 +38,20 @@ const emotionOptions = [
   { value: 'sarcastic', label: 'Sarcastic 🙄' },
 ];
 
+const presetArtists = [
+  'Unknown artist',
+  'Vijay',
+  'Ajith',
+  'Rajini',
+  'Kamal',
+  'Suriya',
+  'Dhanush',
+  'Vikram',
+  'Samantha',
+  'Nayanthara',
+  'Yogi Babu',
+];
+
 const UploadForm: React.FC<UploadFormProps> = ({ onSuccess, onCancel }) => {
   const { user } = useAuth();
   const [formData, setFormData] = useState<UploadData>({
@@ -55,6 +69,8 @@ const UploadForm: React.FC<UploadFormProps> = ({ onSuccess, onCancel }) => {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [artists, setArtists] = useState<string[]>(presetArtists);
+  const [artistQuery, setArtistQuery] = useState('');
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const thumbnailInputRef = useRef<HTMLInputElement>(null);
@@ -207,6 +223,10 @@ const UploadForm: React.FC<UploadFormProps> = ({ onSuccess, onCancel }) => {
   ) => {
     setFormData(prev => ({ ...prev, [field]: event.target.value }));
     setErrors(prev => ({ ...prev, [field]: '' }));
+
+    if (field === 'artist') {
+      setArtistQuery(event.target.value);
+    }
   };
 
   // Validate form
@@ -439,13 +459,72 @@ const UploadForm: React.FC<UploadFormProps> = ({ onSuccess, onCancel }) => {
           required
         />
 
-        {/* Artist / Character */}
-        <Input
-          label="Artist / Character (Optional)"
-          value={formData.artist}
-          onChange={handleInputChange('artist')}
-          placeholder="Who is in this clip? (e.g., actor/creator)"
-        />
+        {/* Artist / Character (searchable with add) */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Artist / Character
+          </label>
+          <div className="relative">
+            <input
+              type="text"
+              value={artistQuery}
+              onChange={(e) => {
+                setArtistQuery(e.target.value);
+                setFormData(prev => ({ ...prev, artist: e.target.value }));
+              }}
+              placeholder="Type to search or add (e.g., Vijay, Ajith, Rajini)"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+            />
+            {/* Suggestions */}
+            {artistQuery.length >= 0 && (
+              <div className="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg max-h-48 overflow-auto">
+                {artists
+                  .filter((name) => name.toLowerCase().includes(artistQuery.toLowerCase()))
+                  .slice(0, 8)
+                  .map((name) => (
+                    <button
+                      type="button"
+                      key={name}
+                      className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50"
+                      onClick={() => {
+                        setFormData(prev => ({ ...prev, artist: name }));
+                        setArtistQuery(name);
+                      }}
+                    >
+                      {name}
+                    </button>
+                  ))}
+
+                {/* Add new option */}
+                {!artists.some(a => a.toLowerCase() === artistQuery.trim().toLowerCase()) && artistQuery.trim() && (
+                  <button
+                    type="button"
+                    className="w-full text-left px-3 py-2 text-sm text-primary-600 hover:bg-primary-50 border-t border-gray-100"
+                    onClick={() => {
+                      const newArtist = artistQuery.trim();
+                      setArtists(prev => [...prev, newArtist]);
+                      setFormData(prev => ({ ...prev, artist: newArtist }));
+                    }}
+                  >
+                    Add “{artistQuery.trim()}”
+                  </button>
+                )}
+
+                {/* Unknown artist option */}
+                <button
+                  type="button"
+                  className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 border-t border-gray-100"
+                  onClick={() => {
+                    setFormData(prev => ({ ...prev, artist: 'Unknown artist' }));
+                    setArtistQuery('Unknown artist');
+                  }}
+                >
+                  Unknown artist
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
 
         {/* Description */}
         <div>
