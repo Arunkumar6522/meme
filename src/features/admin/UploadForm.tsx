@@ -68,6 +68,65 @@ const UploadForm: React.FC<UploadFormProps> = ({ onSuccess, onCancel }) => {
     setErrors(prev => ({ ...prev, mediaType: '' }));
   };
 
+  // Capture a frame from a video file to use as thumbnail
+  const captureVideoThumbnail = (file: File): Promise<File | null> => {
+    return new Promise((resolve) => {
+      const video = document.createElement('video');
+      const url = URL.createObjectURL(file);
+
+      const cleanup = () => {
+        URL.revokeObjectURL(url);
+      };
+
+      video.preload = 'metadata';
+      video.src = url;
+      video.muted = true;
+      video.playsInline = true;
+
+      video.onloadedmetadata = () => {
+        const targetTime = Math.min(1, Math.max(0.1, video.duration ? video.duration * 0.1 : 0.1));
+        video.currentTime = targetTime;
+      };
+
+      video.onerror = () => {
+        cleanup();
+        resolve(null);
+      };
+
+      video.onseeked = () => {
+        try {
+          const canvas = document.createElement('canvas');
+          const width = video.videoWidth || 640;
+          const height = video.videoHeight || 360;
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx?.drawImage(video, 0, 0, width, height);
+          canvas.toBlob(
+            (blob) => {
+              cleanup();
+              if (!blob) {
+                resolve(null);
+                return;
+              }
+              const thumbFile = new File([blob], `thumb-${Date.now()}.jpg`, {
+                type: 'image/jpeg',
+                lastModified: Date.now(),
+              });
+              resolve(thumbFile);
+            },
+            'image/jpeg',
+            0.8
+          );
+        } catch (err) {
+          console.error('Failed to capture video thumbnail', err);
+          cleanup();
+          resolve(null);
+        }
+      };
+    });
+  };
+
   // Handle file selection
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -200,11 +259,18 @@ const UploadForm: React.FC<UploadFormProps> = ({ onSuccess, onCancel }) => {
 
       setUploadProgress(50);
 
-      // Upload thumbnail if provided
+      // Upload thumbnail if provided or auto-generate for video
       let thumbnailUrl: string | undefined;
       if (formData.thumbnail) {
         const thumbnailFileName = `thumb-${Date.now()}-${formData.thumbnail.name}`;
         thumbnailUrl = await LibraryService.uploadFile(formData.thumbnail, STORAGE_BUCKETS.THUMBNAILS, thumbnailFileName);
+      } else if (formData.mediaType === 'video') {
+        setUploadProgress(60);
+        const generatedThumb = await captureVideoThumbnail(formData.file);
+        if (generatedThumb) {
+          const thumbnailFileName = `thumb-${Date.now()}-${generatedThumb.name}`;
+          thumbnailUrl = await LibraryService.uploadFile(generatedThumb, STORAGE_BUCKETS.THUMBNAILS, thumbnailFileName);
+        }
       }
 
       setUploadProgress(75);
