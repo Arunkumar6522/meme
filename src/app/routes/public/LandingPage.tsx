@@ -39,7 +39,7 @@ const LandingPage: React.FC = () => {
         <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
           <div className="text-center">
             <h1 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
-              Tamil clips and audios, ready to drop in.
+              ilovememe.in — clips and audios, ready to drop in.
             </h1>
             <p className="mt-3 text-base sm:text-lg text-gray-700 max-w-2xl mx-auto">
               Search, preview, and download trending meme audios and short-ready videos. Sign in to unlock everything.
@@ -52,14 +52,14 @@ const LandingPage: React.FC = () => {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Search audio/video by keyword, emotion, or character"
-                className="w-full"
+                className="w-full h-12 text-base"
               />
               <Button
                 type="submit"
-                className="w-full sm:w-auto bg-orange-600 hover:bg-orange-700 text-white border-orange-600"
+                className="w-full sm:w-auto bg-orange-600 hover:bg-orange-700 text-white border-orange-600 h-12 text-base"
                 disabled={!searchTerm.trim()}
               >
-                <Search className="h-4 w-4 mr-2" />
+                <Search className="h-5 w-5 mr-2" />
                 Search
               </Button>
             </form>

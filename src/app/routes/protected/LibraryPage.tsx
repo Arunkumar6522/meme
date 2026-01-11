@@ -24,6 +24,16 @@ const LibraryPage: React.FC = () => {
     sort_by: 'latest',
     media_type: 'audio',
     artist: [],
+    languages: (() => {
+      const stored = localStorage.getItem('preferred_languages');
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed) && parsed.length) return parsed;
+        } catch {}
+      }
+      return undefined;
+    })(),
   });
   const [mediaTab, setMediaTab] = useState<'audio' | 'video'>('audio');
 

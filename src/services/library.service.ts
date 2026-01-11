@@ -28,6 +28,9 @@ export class LibraryService {
       if (filters.artist && filters.artist.length > 0) {
         query = query.contains('keywords', filters.artist);
       }
+      if (filters.languages && filters.languages.length > 0) {
+        query = query.contains('languages', filters.languages);
+      }
 
       if (filters.emotion) {
         query = query.eq('emotion', filters.emotion);

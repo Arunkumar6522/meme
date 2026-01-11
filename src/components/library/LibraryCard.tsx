@@ -411,7 +411,7 @@ const LibraryCard: React.FC<LibraryCardProps> = memo(({ item, className }) => {
   );
 
   return (
-    <div className={cn('w-full max-w-xs space-y-2 group', className)}>
+    <div className={cn('w-full max-w-sm space-y-2 group', className)}>
       {item.media_type === 'video' ? renderVideo() : renderAudio()}
 
       <div className="space-y-1">

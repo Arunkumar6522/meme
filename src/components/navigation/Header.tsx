@@ -69,6 +69,18 @@ const Header: React.FC = () => {
 
   useEffect(() => {
     localStorage.setItem(LANG_STORAGE_KEY, JSON.stringify(selectedLangs));
+    if (user?.id) {
+      supabase
+        .from('users')
+        .update({ preferred_languages: selectedLangs })
+        .eq('id', user.id)
+        .then(() => {
+          // ignore
+        })
+        .catch(() => {
+          // ignore
+        });
+    }
   }, [selectedLangs]);
 
   const navigation = useMemo(() => {
@@ -99,7 +111,7 @@ const Header: React.FC = () => {
                   <div className="h-8 w-8 bg-orange-600 rounded-lg flex items-center justify-center">
                     <span className="text-white font-bold text-lg">M</span>
                   </div>
-                  <span className="text-xl font-bold text-gray-900">Meme Library</span>
+                  <span className="text-xl font-bold text-gray-900">ilovememe.in</span>
                 </Link>
               </div>
 
