@@ -3,6 +3,7 @@ import { Play, Pause, Download, Share2, Heart, Volume2, Video, Maximize } from '
 import { Button } from '@/components/ui';
 import { LibraryService } from '@/services/library.service';
 import { useToast } from '@/hooks/useToast';
+import { useFavorites } from '@/hooks/useFavorites';
 import type { LibraryItem } from '@/types';
 import { cn } from '@/utils/cn';
 
@@ -13,12 +14,13 @@ interface LibraryCardProps {
 
 const LibraryCard: React.FC<LibraryCardProps> = memo(({ item, className }) => {
   const [isPlaying, setIsPlaying] = useState(false);
-  const [isLiked, setIsLiked] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const audioElementRef = useRef<HTMLAudioElement | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const { showSuccess, showError } = useToast();
   const mediaId = item.id;
+  const { isFavorite, toggleFavorite } = useFavorites();
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const emotionColors = {
     happy: 'bg-yellow-100 text-yellow-800 border-yellow-200',
@@ -60,7 +62,7 @@ const LibraryCard: React.FC<LibraryCardProps> = memo(({ item, className }) => {
     };
   }, []);
 
-  // Stop playback when another media starts
+  // Stop playback when another media starts or menu opens
   useEffect(() => {
     const handler = (e: Event) => {
       const detail = (e as CustomEvent<string>).detail;
@@ -78,6 +80,21 @@ const LibraryCard: React.FC<LibraryCardProps> = memo(({ item, className }) => {
     window.addEventListener('media:play', handler as EventListener);
     return () => window.removeEventListener('media:play', handler as EventListener);
   }, [mediaId]);
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent<string>).detail;
+      if (detail !== mediaId) {
+        setMenuOpen(false);
+      }
+    };
+    window.addEventListener('menu:open', handler as EventListener);
+    return () => window.removeEventListener('menu:open', handler as EventListener);
+  }, [mediaId]);
+
+  const emitMenuOpen = () => {
+    window.dispatchEvent(new CustomEvent('menu:open', { detail: mediaId }));
+  };
+
 
   const emitPlay = () => {
     window.dispatchEvent(new CustomEvent('media:play', { detail: mediaId }));
@@ -178,10 +195,14 @@ const LibraryCard: React.FC<LibraryCardProps> = memo(({ item, className }) => {
     }
   }, [item.id, item.file_url, item.title, item.media_type, downloading, showSuccess, showError]);
 
-  const handleLike = useCallback(() => {
-    setIsLiked(prev => !prev);
-    // TODO: Implement like functionality with backend
-  }, []);
+  const handleLike = useCallback(async () => {
+    try {
+      await toggleFavorite(item.id);
+      showSuccess(isFavorite(item.id) ? 'Removed from wishlist' : 'Added to wishlist', 'Wishlist');
+    } catch (e: any) {
+      showError('Failed to update wishlist', 'Error');
+    }
+  }, [item.id, toggleFavorite, showError, showSuccess, isFavorite]);
 
   const handleShare = useCallback(async () => {
     const shareUrl = `${window.location.origin}/library/${item.id}`;
@@ -231,6 +252,7 @@ const LibraryCard: React.FC<LibraryCardProps> = memo(({ item, className }) => {
       <button
         onClick={(e) => {
           e.stopPropagation();
+          emitMenuOpen();
           setMenuOpen((prev) => !prev);
         }}
         className="w-10 h-10 rounded-full bg-white hover:bg-orange-50 flex items-center justify-center transition-all focus:outline-none focus:ring-2 focus:ring-orange-300 active:scale-95 shadow-sm hover:shadow touch-manipulation"
@@ -256,7 +278,7 @@ const LibraryCard: React.FC<LibraryCardProps> = memo(({ item, className }) => {
             role="menuitem"
           >
             <Heart className="w-4 h-4" />
-            {isLiked ? 'Remove from wishlist' : 'Add to wishlist'}
+            {isFavorite(item.id) ? 'Remove from wishlist' : 'Add to wishlist'}
           </button>
           <button
             className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
