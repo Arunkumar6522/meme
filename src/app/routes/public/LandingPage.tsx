@@ -52,11 +52,11 @@ const LandingPage: React.FC = () => {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Search audio/video by keyword, emotion, or character"
-                className="w-full h-12 text-base"
+                className="w-full h-12 sm:h-14 text-base sm:text-lg"
               />
               <Button
                 type="submit"
-                className="w-full sm:w-auto bg-orange-600 hover:bg-orange-700 text-white border-orange-600 h-12 text-base"
+                className="w-full sm:w-auto bg-orange-600 hover:bg-orange-700 text-white border-orange-600 h-12 sm:h-14 text-base sm:text-lg"
                 disabled={!searchTerm.trim()}
               >
                 <Search className="h-5 w-5 mr-2" />
@@ -88,7 +88,7 @@ const LandingPage: React.FC = () => {
                   className="bg-orange-600 hover:bg-orange-700 text-white border-orange-600"
                   onClick={() => user ? navigate('/library?media_type=audio') : navigate('/auth/login')}
                 >
-                  {user ? 'See all audios' : 'Login to see all'}
+                  {user ? 'See all' : 'Login to see all'}
                 </Button>
               </div>
             </div>
@@ -122,7 +122,7 @@ const LandingPage: React.FC = () => {
                   className="bg-orange-600 hover:bg-orange-700 text-white border-orange-600"
                   onClick={() => user ? navigate('/library?media_type=video') : navigate('/auth/login')}
                 >
-                  {user ? 'See all videos' : 'Login to see all'}
+                  {user ? 'See all' : 'Login to see all'}
                 </Button>
               </div>
             </div>

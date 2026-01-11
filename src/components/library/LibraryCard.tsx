@@ -352,7 +352,7 @@ const LibraryCard: React.FC<LibraryCardProps> = memo(({ item, className, isAdmin
   );
 
   const renderVideo = () => (
-    <div className="relative w-full overflow-hidden rounded-lg shadow-sm border border-gray-200 bg-gray-900 aspect-video">
+    <div className="relative w-full overflow-hidden rounded-lg shadow-sm border border-gray-200 bg-gray-900 aspect-[4/5] sm:aspect-video">
       {item.thumbnail_url && !isPlaying ? (
         <img
           src={item.thumbnail_url}
@@ -446,7 +446,7 @@ const LibraryCard: React.FC<LibraryCardProps> = memo(({ item, className, isAdmin
   );
 
   return (
-    <div className={cn('w-full max-w-sm space-y-2 group', className)}>
+    <div className={cn('w-full max-w-[240px] sm:max-w-sm space-y-2 group', className)}>
       {item.media_type === 'video' ? renderVideo() : renderAudio()}
 
       <div className="space-y-1">
@@ -462,6 +462,9 @@ const LibraryCard: React.FC<LibraryCardProps> = memo(({ item, className, isAdmin
           </span>
           {item.file_size && (
             <span className="text-[11px] text-gray-500">{formatFileSize(item.file_size)}</span>
+          )}
+          {typeof item.download_count === 'number' && (
+            <span className="text-[11px] text-gray-500">{item.download_count} dl</span>
           )}
         </div>
       </div>

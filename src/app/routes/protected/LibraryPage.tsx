@@ -99,6 +99,25 @@ const LibraryPage: React.FC = () => {
     updateFilters(nextFilters);
   };
 
+  // Listen for language changes in localStorage (from header selector)
+  useEffect(() => {
+    const handler = () => {
+      const stored = localStorage.getItem('preferred_languages');
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed) && parsed.length) {
+            const nextFilters = { ...filters, languages: parsed };
+            setFilters(nextFilters);
+            updateFilters(nextFilters);
+          }
+        } catch {}
+      }
+    };
+    window.addEventListener('storage', handler);
+    return () => window.removeEventListener('storage', handler);
+  }, [filters, updateFilters]);
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
