@@ -64,8 +64,8 @@ const AppRoutes: React.FC = () => {
             </ProtectedRoute>
           } />
           
-          {/* Admin Routes */}
-          <Route path="admin/*" element={
+          {/* Admin Upload (renamed, no /admin base) */}
+          <Route path="upload" element={
             <ProtectedRoute requireAdmin>
               <AdminPage />
             </ProtectedRoute>

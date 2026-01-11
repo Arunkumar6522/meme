@@ -98,18 +98,18 @@ const LibraryPage: React.FC = () => {
             <div>
               <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Meme Library</h1>
               <p className="mt-2 text-sm sm:text-base text-gray-600">
-                Discover and download the perfect memes for your content
-              </p>
-              {count > 0 && (
+            Discover and download the perfect memes for your content
+          </p>
+          {count > 0 && (
                 <p className="mt-1 text-xs sm:text-sm text-gray-500">
-                  {count.toLocaleString()} memes available
-                </p>
-              )}
+              {count.toLocaleString()} memes available
+            </p>
+          )}
             </div>
             <div className="flex items-center gap-3">
               {isAdmin && (
                 <Button
-                  onClick={() => navigate('/admin/upload')}
+                  onClick={() => navigate('/upload')}
                   className="w-full sm:w-auto flex items-center gap-2"
                 >
                   <Upload className="h-4 w-4" />
@@ -170,18 +170,18 @@ const LibraryPage: React.FC = () => {
 
         {/* Main Content */}
         <div>
-          <LibraryGrid items={items} loading={loading} />
-          
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="mt-8">
-              <Pagination
-                currentPage={page}
-                totalPages={totalPages}
-                onPageChange={goToPage}
-              />
-            </div>
-          )}
+            <LibraryGrid items={items} loading={loading} />
+            
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="mt-8">
+                <Pagination
+                  currentPage={page}
+                  totalPages={totalPages}
+                  onPageChange={goToPage}
+                />
+              </div>
+            )}
         </div>
 
         {/* Bottom Banner Ad */}

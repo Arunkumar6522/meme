@@ -58,6 +58,7 @@ const Header: React.FC = () => {
     const base = [{ name: 'Home', href: '/' }];
     if (isAdmin) {
       base.push({ name: 'Library', href: '/library' });
+      base.push({ name: 'Upload', href: '/upload' });
       base.push({ name: 'Create (beta)', href: '/create' });
     }
     return base;
@@ -121,7 +122,7 @@ const Header: React.FC = () => {
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => navigate('/admin/upload')}
+                        onClick={() => navigate('/upload')}
                         className="hidden sm:flex items-center gap-2"
                         aria-label="Admin Upload"
                       >
