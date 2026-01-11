@@ -70,6 +70,11 @@ const AppRoutes: React.FC = () => {
               <AdminPage />
             </ProtectedRoute>
           } />
+          <Route path="library/upload" element={
+            <ProtectedRoute requireAdmin>
+              <AdminPage />
+            </ProtectedRoute>
+          } />
           
           {/* 404 Page */}
           <Route path="*" element={<NotFoundPage />} />
