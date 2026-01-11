@@ -123,7 +123,7 @@ const LibraryFilters: React.FC<LibraryFiltersProps> = ({
           <Filter className="h-4 w-4 mr-2" aria-hidden="true" />
           Filters
           {hasActiveFilters && (
-            <span className="ml-2 bg-primary-100 text-primary-800 text-xs px-2 py-0.5 rounded-full">
+            <span className="ml-2 bg-orange-100 text-orange-800 text-xs px-2 py-0.5 rounded-full">
               Active
             </span>
           )}
@@ -190,22 +190,22 @@ const LibraryFilters: React.FC<LibraryFiltersProps> = ({
         <div className="mt-4 flex flex-wrap gap-2" role="status" aria-live="polite">
           <span className="text-sm text-gray-600">Active filters:</span>
           {filters.search && (
-            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-primary-100 text-primary-800">
+            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
               Search: "{filters.search}"
             </span>
           )}
           {filters.artist && (
-            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-primary-100 text-primary-800">
+            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
               Artist: "{filters.artist}"
             </span>
           )}
           {filters.emotion && (
-            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-primary-100 text-primary-800">
+            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
               Emotion: {filters.emotion}
             </span>
           )}
           {filters.media_type && (
-            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-primary-100 text-primary-800">
+            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
               Type: {filters.media_type}
             </span>
           )}

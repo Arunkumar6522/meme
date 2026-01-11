@@ -134,7 +134,7 @@ const LibraryPage: React.FC = () => {
               className={cn(
                 'px-4 py-2 rounded-full text-sm font-medium border transition-colors',
                 mediaTab === tab.key
-                  ? 'bg-primary-600 text-white border-primary-600 shadow-sm'
+                  ? 'bg-orange-600 text-white border-orange-600 shadow-sm'
                   : 'bg-white text-gray-700 border-gray-200 hover:border-gray-300'
               )}
             >
