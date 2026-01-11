@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Button, Input } from '@/components/ui';
+import { Button, Input, Select } from '@/components/ui';
 import { ArtistService, type Artist } from '@/services/artist.service';
 import { useToast } from '@/hooks/useToast';
 
@@ -7,17 +7,22 @@ const ArtistsPage: React.FC = () => {
   const { showSuccess, showError } = useToast();
   const [artists, setArtists] = useState<Artist[]>([]);
   const [search, setSearch] = useState('');
+  const [filterLang, setFilterLang] = useState('');
   const [loading, setLoading] = useState(false);
   const [editing, setEditing] = useState<Artist | null>(null);
   const [name, setName] = useState('');
-  const [langs, setLangs] = useState<string>('English,Tamil');
+  const allLanguages = ['English', 'Tamil', 'Malayalam', 'Kannada', 'Hindi', 'Telugu'];
+  const [langs, setLangs] = useState<string[]>(['English']);
   const [saving, setSaving] = useState(false);
 
   const load = async () => {
     setLoading(true);
     try {
       const data = await ArtistService.list(search.trim() || undefined);
-      setArtists(data);
+      const filtered = filterLang
+        ? data.filter((a) => (a.languages || []).includes(filterLang))
+        : data;
+      setArtists(filtered);
     } catch (e: any) {
       showError(e.message || 'Failed to load artists');
     } finally {
@@ -33,7 +38,7 @@ const ArtistsPage: React.FC = () => {
   const startEdit = (artist?: Artist) => {
     setEditing(artist || null);
     setName(artist?.name || '');
-    setLangs((artist?.languages || ['English']).join(','));
+    setLangs(artist?.languages || ['English']);
   };
 
   const save = async () => {
@@ -42,10 +47,7 @@ const ArtistsPage: React.FC = () => {
       return;
     }
     setSaving(true);
-    const languages = langs
-      .split(',')
-      .map((l) => l.trim())
-      .filter(Boolean);
+    const languages = langs.length ? langs : ['English'];
     try {
       if (editing) {
         await ArtistService.update(editing.id, { name: name.trim(), languages });
@@ -84,12 +86,18 @@ const ArtistsPage: React.FC = () => {
             <h1 className="text-2xl font-bold text-gray-900">Artists</h1>
             <p className="text-sm text-gray-600">Manage artists for upload selection.</p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2 items-center">
             <Input
               placeholder="Search artists"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="w-48"
+            />
+            <Select
+              value={filterLang}
+              onChange={(e) => setFilterLang(e.target.value)}
+              options={[{ value: '', label: 'All languages' }, ...allLanguages.map(l => ({ value: l, label: l }))]}
+              className="w-40"
             />
             <Button onClick={load} loading={loading}>Search</Button>
             <Button onClick={() => startEdit()} variant="outline">New</Button>
@@ -100,12 +108,34 @@ const ArtistsPage: React.FC = () => {
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 space-y-3">
           <h3 className="text-lg font-semibold text-gray-900">{editing ? 'Edit Artist' : 'Add Artist'}</h3>
           <Input label="Name" value={name} onChange={(e) => setName(e.target.value)} />
-          <Input
-            label="Languages (comma-separated)"
-            value={langs}
-            onChange={(e) => setLangs(e.target.value)}
-            placeholder="English, Tamil"
-          />
+          <div>
+            <p className="text-sm font-medium text-gray-700 mb-1">Languages (multi-select)</p>
+            <div className="flex flex-wrap gap-2">
+              {allLanguages.map((lang) => {
+                const active = langs.includes(lang);
+                return (
+                  <button
+                    key={lang}
+                    type="button"
+                    onClick={() => {
+                      setLangs((prev) =>
+                        prev.includes(lang) ? prev.filter((l) => l !== lang) : [...prev, lang]
+                      );
+                    }}
+                    className={cn(
+                      'px-3 py-1 rounded-full text-sm border transition-colors',
+                      active
+                        ? 'bg-orange-100 text-orange-700 border-orange-200'
+                        : 'bg-white text-gray-700 border-gray-200 hover:border-gray-300'
+                    )}
+                    aria-pressed={active}
+                  >
+                    {lang}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
           <div className="flex gap-2">
             <Button onClick={save} loading={saving}>{editing ? 'Update' : 'Create'}</Button>
             {editing && (
