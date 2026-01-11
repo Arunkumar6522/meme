@@ -45,6 +45,7 @@ export interface LibraryFilters {
   search?: string;
   emotion?: EmotionType;
   media_type?: 'audio' | 'video';
+  artist?: string;
   sort_by?: 'trending' | 'latest' | 'title';
 }
 

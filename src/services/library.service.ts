@@ -25,6 +25,10 @@ export class LibraryService {
         query = query.or(`title.ilike.%${filters.search}%,description.ilike.%${filters.search}%,keywords.cs.{${filters.search}}`);
       }
 
+      if (filters.artist) {
+        query = query.contains('keywords', [filters.artist]);
+      }
+
       if (filters.emotion) {
         query = query.eq('emotion', filters.emotion);
       }

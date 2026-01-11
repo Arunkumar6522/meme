@@ -46,6 +46,10 @@ const LibraryFilters: React.FC<LibraryFiltersProps> = ({
     onFiltersChange({ ...filters, search: e.target.value });
   };
 
+  const handleArtistChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    onFiltersChange({ ...filters, artist: e.target.value });
+  };
+
   const handleEmotionChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     onFiltersChange({
       ...filters,
@@ -70,13 +74,14 @@ const LibraryFilters: React.FC<LibraryFiltersProps> = ({
   const clearFilters = () => {
     onFiltersChange({
       search: '',
+      artist: '',
       emotion: undefined,
       media_type: undefined,
       sort_by: 'latest',
     });
   };
 
-  const hasActiveFilters = filters.search || filters.emotion || filters.media_type;
+  const hasActiveFilters = filters.search || filters.artist || filters.emotion || filters.media_type;
 
   return (
     <div className={className}>
@@ -92,6 +97,17 @@ const LibraryFilters: React.FC<LibraryFiltersProps> = ({
           onChange={handleSearchChange}
           className="pl-10 pr-4"
           aria-label="Search memes"
+        />
+      </div>
+
+      {/* Artist filter */}
+      <div className="mt-4">
+        <Input
+          type="text"
+          placeholder="Filter by artist/character"
+          value={filters.artist || ''}
+          onChange={handleArtistChange}
+          aria-label="Filter by artist"
         />
       </div>
 
@@ -176,6 +192,11 @@ const LibraryFilters: React.FC<LibraryFiltersProps> = ({
           {filters.search && (
             <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-primary-100 text-primary-800">
               Search: "{filters.search}"
+            </span>
+          )}
+          {filters.artist && (
+            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-primary-100 text-primary-800">
+              Artist: "{filters.artist}"
             </span>
           )}
           {filters.emotion && (
