@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback, memo } from 'react';
 import { Play, Pause, Download, Share2, Heart, Volume2, Video } from 'lucide-react';
+import { Button } from '@/components/ui';
 import { LibraryService } from '@/services/library.service';
 import { useToast } from '@/hooks/useToast';
 import type { LibraryItem } from '@/types';
