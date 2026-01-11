@@ -14,6 +14,7 @@ export const useLibrary = (initialFilters: LibraryFilters = {}, initialPage = 1,
   const [error, setError] = useState<string | null>(null);
   const [filters, setFilters] = useState<LibraryFilters>(initialFilters);
   const [page, setPage] = useState(initialPage);
+  const filtersKey = JSON.stringify(filters);
   
   // Use ref to always have latest filters without causing re-renders
   const filtersRef = useRef(filters);
@@ -38,7 +39,7 @@ export const useLibrary = (initialFilters: LibraryFilters = {}, initialPage = 1,
 
   useEffect(() => {
     fetchLibraryItems();
-  }, [fetchLibraryItems]);
+  }, [fetchLibraryItems, filtersKey]);
 
   const updateFilters = useCallback((newFilters: LibraryFilters) => {
     setFilters(newFilters);
