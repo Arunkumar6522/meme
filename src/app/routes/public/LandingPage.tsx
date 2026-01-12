@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Play, Download, Search, Lock } from 'lucide-react';
 import { Button, SkeletonCard, Input } from '@/components/ui';
@@ -15,8 +15,15 @@ const LandingPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
 
   // Fetch top 6 audio + 6 video for public preview
-  const { data: topAudios, loading: topAudiosLoading } = useLibrary({ media_type: 'audio', sort_by: 'trending', languages: selectedLanguages }, 1, 6);
-  const { data: topVideos, loading: topVideosLoading } = useLibrary({ media_type: 'video', sort_by: 'trending', languages: selectedLanguages }, 1, 6);
+  const topAudiosQuery = useLibrary({ media_type: 'audio', sort_by: 'trending' }, 1, 6);
+  const topVideosQuery = useLibrary({ media_type: 'video', sort_by: 'trending' }, 1, 6);
+
+  // Language change should trigger a refetch immediately (same tab)
+  useEffect(() => {
+    topAudiosQuery.updateFilters({ media_type: 'audio', sort_by: 'trending', languages: selectedLanguages });
+    topVideosQuery.updateFilters({ media_type: 'video', sort_by: 'trending', languages: selectedLanguages });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedLanguages]);
 
   const handleSearch = (event: React.FormEvent) => {
     event.preventDefault();
@@ -95,12 +102,12 @@ const LandingPage: React.FC = () => {
               </div>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-              {topAudiosLoading &&
+              {topAudiosQuery.loading &&
                 Array.from({ length: 6 }).map((_, idx) => <SkeletonCard key={idx} />)}
-              {!topAudiosLoading && topAudios && topAudios.map((item) => (
+              {!topAudiosQuery.loading && topAudiosQuery.data && topAudiosQuery.data.map((item) => (
                 <LibraryCard key={item.id} item={item} />
               ))}
-              {!topAudiosLoading && (!topAudios || topAudios.length === 0) && (
+              {!topAudiosQuery.loading && (!topAudiosQuery.data || topAudiosQuery.data.length === 0) && (
                 <div className="col-span-full text-sm text-gray-600">No audios yet.</div>
               )}
             </div>
@@ -129,12 +136,12 @@ const LandingPage: React.FC = () => {
               </div>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {topVideosLoading &&
+              {topVideosQuery.loading &&
                 Array.from({ length: 6 }).map((_, idx) => <SkeletonCard key={idx} />)}
-              {!topVideosLoading && topVideos && topVideos.map((item) => (
+              {!topVideosQuery.loading && topVideosQuery.data && topVideosQuery.data.map((item) => (
                 <LibraryCard key={item.id} item={item} />
               ))}
-              {!topVideosLoading && (!topVideos || topVideos.length === 0) && (
+              {!topVideosQuery.loading && (!topVideosQuery.data || topVideosQuery.data.length === 0) && (
                 <div className="col-span-full text-sm text-gray-600">No videos yet.</div>
               )}
             </div>

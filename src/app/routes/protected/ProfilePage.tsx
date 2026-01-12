@@ -6,10 +6,10 @@ import { useFavorites } from '@/hooks/useFavorites';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/services/supabase';
 import { useToast } from '@/hooks/useToast';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui';
+import Modal from '@/components/ui/Modal';
 
 const ProfilePage: React.FC = () => {
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const { favorites } = useFavorites();
   const navigate = useNavigate();
   const { showSuccess, showError } = useToast();
@@ -21,9 +21,9 @@ const ProfilePage: React.FC = () => {
   const [changingPwd, setChangingPwd] = useState(false);
   const [deleteReason, setDeleteReason] = useState('');
   const [deletePwd, setDeletePwd] = useState('');
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [deleteErrors, setDeleteErrors] = useState<{ password?: string; reason?: string; general?: string }>({});
   const [deleting, setDeleting] = useState(false);
-  const [deleteOpen, setDeleteOpen] = useState(false);
-  const [pwdOpen, setPwdOpen] = useState(false);
 
   const stats = [
     { label: 'Downloads', value: '—', icon: Download },
@@ -204,54 +204,17 @@ const ProfilePage: React.FC = () => {
                 <h3 className="text-lg font-semibold text-gray-900">Delete account</h3>
               </div>
               <p className="text-sm text-gray-600">
-                Tell us why and confirm with your password. Your data will be removed.
+                This will open a confirmation popup. You'll enter your current password and (optional) reason.
               </p>
-              <Input
-                label="Reason (optional)"
-                value={deleteReason}
-                onChange={(e) => setDeleteReason(e.target.value)}
-                placeholder="Why are you closing the account?"
-              />
-              <Input
-                label="Password"
-                type="password"
-                value={deletePwd}
-                onChange={(e) => setDeletePwd(e.target.value)}
-              />
               <Button
                 size="sm"
                 variant="outline"
                 className="border-red-500 text-red-600 hover:bg-red-50"
-                loading={deleting}
-                onClick={async () => {
-                  if (!user?.email) return;
-                  if (!deletePwd) return showError('Please enter your password to confirm.', 'Validation');
-                  setDeleting(true);
-                  try {
-                    const { error: signErr } = await supabase.auth.signInWithPassword({
-                      email: user.email,
-                      password: deletePwd,
-                    });
-                    if (signErr) throw signErr;
-                    await supabase.from('create_interest').insert({
-                      email: user.email,
-                      name: deleteReason ? `Account delete: ${deleteReason}` : 'Account delete request',
-                      message: null,
-                    });
-                    // Admin-side deletion required (service role). Signing out now.
-                    await supabase.auth.signOut();
-                    showSuccess('Account deletion requested. You have been signed out.', 'Account');
-                    navigate('/');
-                  } catch (e: any) {
-                    const msg = String(e?.message || 'Failed to delete account');
-                    const pretty =
-                      msg.includes('Invalid login credentials')
-                        ? 'Password is incorrect.'
-                        : msg;
-                    showError(pretty, 'Error');
-                  } finally {
-                    setDeleting(false);
-                  }
+                onClick={() => {
+                  setDeleteErrors({});
+                  setDeletePwd('');
+                  setDeleteReason('');
+                  setDeleteModalOpen(true);
                 }}
               >
                 Delete account
@@ -288,6 +251,108 @@ const ProfilePage: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Delete account modal (validated, no unwanted API calls) */}
+      <Modal
+        open={deleteModalOpen}
+        onClose={() => {
+          if (deleting) return;
+          setDeleteModalOpen(false);
+        }}
+        title="Delete account"
+      >
+        <div className="space-y-3">
+          <p className="text-sm text-gray-600">
+            This will submit a deletion request and sign you out. Enter your current password to confirm.
+          </p>
+
+          {deleteErrors.general && (
+            <div className="rounded-md bg-red-50 p-3 border border-red-200">
+              <p className="text-sm text-red-800">{deleteErrors.general}</p>
+            </div>
+          )}
+
+          <Input
+            label="Reason (optional)"
+            value={deleteReason}
+            onChange={(e) => {
+              setDeleteReason(e.target.value);
+              if (deleteErrors.reason) setDeleteErrors((p) => ({ ...p, reason: undefined }));
+            }}
+            placeholder="Why are you closing the account?"
+          />
+
+          <Input
+            label="Current password *"
+            type="password"
+            value={deletePwd}
+            onChange={(e) => {
+              setDeletePwd(e.target.value);
+              if (deleteErrors.password) setDeleteErrors((p) => ({ ...p, password: undefined }));
+            }}
+            error={deleteErrors.password}
+            placeholder="Enter your password"
+            autoComplete="current-password"
+            required
+          />
+
+          <div className="pt-2 flex justify-end gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setDeleteModalOpen(false)}
+              disabled={deleting}
+            >
+              Cancel
+            </Button>
+            <Button
+              className="bg-red-600 hover:bg-red-700"
+              loading={deleting}
+              onClick={async () => {
+                if (!user?.email) {
+                  setDeleteErrors({ general: 'Not signed in.' });
+                  return;
+                }
+
+                if (!deletePwd) {
+                  setDeleteErrors({ password: 'Password is required.' });
+                  return;
+                }
+
+                setDeleting(true);
+                setDeleteErrors({});
+                try {
+                  // Only call re-auth when user confirms and password is present
+                  const { error: signErr } = await supabase.auth.signInWithPassword({
+                    email: user.email,
+                    password: deletePwd,
+                  });
+                  if (signErr) throw signErr;
+
+                  // Record request (server-side deletion should be implemented later)
+                  await supabase.from('create_interest').insert({
+                    email: user.email,
+                    name: user.user_metadata?.full_name || user.email,
+                    message: `Account deletion request. Reason: ${deleteReason?.trim() || 'No reason provided.'}`,
+                  });
+
+                  await signOut();
+                  showSuccess('Deletion request submitted. You have been signed out.', 'Account');
+                  setDeleteModalOpen(false);
+                  navigate('/');
+                } catch (e: any) {
+                  const msg = String(e?.message || 'Failed to submit deletion request');
+                  const pretty = msg.includes('Invalid login credentials') ? 'Password is incorrect.' : msg;
+                  setDeleteErrors({ general: pretty });
+                } finally {
+                  setDeleting(false);
+                }
+              }}
+            >
+              Confirm delete
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };
