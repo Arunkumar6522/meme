@@ -110,7 +110,6 @@ const RegisterForm: React.FC = () => {
     
     // If we're on OTP step but email is invalid or incomplete, go back to form
     if (step === 'otp' && (!isEmailValid || !normalizedEmail)) {
-      console.log('Email invalid or incomplete, resetting to form step');
       flushSync(() => {
         setStep('form');
         stepRef.current = 'form';
@@ -180,7 +179,6 @@ const RegisterForm: React.FC = () => {
     
     // Validate form first
     if (!validateForm()) {
-      console.log('Form validation failed');
       return;
     }
 
@@ -206,11 +204,7 @@ const RegisterForm: React.FC = () => {
         return;
       }
 
-      console.log('Calling signUp API...', { email: normalizedEmail, hasPassword: !!formData.password });
-      
       const result = await signUp(normalizedEmail, formData.password, formData.fullName.trim());
-      
-      console.log('signUp result:', result);
       
       // Check for error - CRITICAL: Don't show OTP screen if there's an error
       if (result?.error) {
@@ -253,8 +247,6 @@ const RegisterForm: React.FC = () => {
       }
 
       // Only proceed to OTP screen if there's NO error
-      console.log('Registration successful, showing OTP screen...');
-      
       // Success - persist email and step BEFORE state update
       try {
         sessionStorage.setItem('register-email', normalizedEmail);

@@ -3,7 +3,7 @@ import AppProviders from '@/app/providers/AppProviders';
 import AppRoutes from '@/app/routes/AppRoutes';
 import DatabaseSetupNotice from '@/components/DatabaseSetupNotice';
 import { DatabaseService } from '@/services/database.service';
-import { validateConfig, isDevelopment } from '@/config';
+import { validateConfig, enableDebugLogs } from '@/config';
 import '@/styles/globals.css';
 
 function App() {
@@ -20,9 +20,7 @@ function App() {
         // Check database tables (and show helpful messages if missing)
         await DatabaseService.initializeDatabase();
 
-        if (isDevelopment) {
-          console.log('Application initialized successfully');
-        }
+        if (enableDebugLogs) console.debug('Application initialized successfully');
       } catch (error) {
         console.error('Application initialization failed:', error);
       }

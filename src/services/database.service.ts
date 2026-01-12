@@ -1,21 +1,22 @@
 import { supabase } from './supabase';
 import { TableCreatorService } from './table-creator.service';
 import type { EmotionType } from '@/types';
+import { enableDebugLogs } from '@/config';
 
 // Database schema definitions - code-level table creation
 export class DatabaseService {
   // Check if tables exist and create them if they don't
   static async initializeDatabase(): Promise<boolean> {
     try {
-      console.log('🔄 Initializing database...');
+      if (enableDebugLogs) console.debug('🔄 Initializing database...');
       
       // Since tables are created during build or manually, skip the check
       // and assume they exist. This avoids RLS permission issues.
-      console.log('✅ Database assumed to be initialized (tables created during build)');
+      if (enableDebugLogs) console.debug('✅ Database assumed to be initialized (tables created during build)');
       return true;
       
     } catch (error) {
-      console.error('❌ Database initialization failed:', error);
+      if (enableDebugLogs) console.error('❌ Database initialization failed:', error);
       // Always return true since tables should exist
       return true;
     }

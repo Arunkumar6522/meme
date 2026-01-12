@@ -56,7 +56,8 @@ export const config: AppConfig = {
   app: {
     name: getEnvVar('VITE_APP_NAME', 'Meme Library') || 'Meme Library',
     version: getEnvVar('VITE_APP_VERSION', '1.1.0') || '1.1.0',
-    environment: (getEnvVar('NODE_ENV', 'development') as any) || 'development',
+    // Use Vite's build mode; NODE_ENV isn't reliable in the browser bundle
+    environment: (import.meta.env.MODE as any) || 'development',
   },
   features: {
     enableGoogleAds: !!import.meta.env.VITE_GOOGLE_ADS_CLIENT_ID,
@@ -74,6 +75,9 @@ export const featureFlags = config.features;
 // Development helpers
 export const isDevelopment = config.app.environment === 'development';
 export const isProduction = config.app.environment === 'production';
+
+// Optional debug flag to allow controlled logging in production when needed
+export const enableDebugLogs = isDevelopment || getEnvVar('VITE_ENABLE_DEBUG_LOGS', 'false') === 'true';
 
 // Validation function to check if all required configs are present
 export const validateConfig = (): boolean => {
@@ -100,15 +104,15 @@ export const validateConfig = (): boolean => {
 };
 
 // Log configuration status (without sensitive data)
-if (isDevelopment) {
-  console.log('App Configuration:', {
+if (enableDebugLogs) {
+  console.debug('App Configuration:', {
     app: config.app,
     features: config.features,
     supabaseConfigured: !!config.supabase.url,
     supabaseUrl: config.supabase.url?.substring(0, 30) + '...',
     googleAdsConfigured: !!config.googleAds?.clientId,
   });
-  console.log('Environment variables check:', {
+  console.debug('Environment variables check:', {
     VITE_SUPABASE_URL: import.meta.env.VITE_SUPABASE_URL ? '✅ Set' : '❌ Missing',
     VITE_SUPABASE_ANON_KEY: import.meta.env.VITE_SUPABASE_ANON_KEY ? '✅ Set' : '❌ Missing',
   });
