@@ -167,6 +167,7 @@ const ProfilePage: React.FC = () => {
                 onClick={async () => {
                   if (!user?.email) return showError('No email found', 'Error');
                   if (newPwd !== confirmPwd) return showError('Passwords do not match', 'Validation');
+                  if (!currentPwd) return showError('Please enter your current password.', 'Validation');
                   setChangingPwd(true);
                   try {
                     const { error: signErr } = await supabase.auth.signInWithPassword({
@@ -181,7 +182,12 @@ const ProfilePage: React.FC = () => {
                     setNewPwd('');
                     setConfirmPwd('');
                   } catch (e: any) {
-                    showError(e.message || 'Failed to change password', 'Error');
+                    const msg = String(e?.message || 'Failed to change password');
+                    const pretty =
+                      msg.includes('Invalid login credentials')
+                        ? 'Current password is incorrect.'
+                        : msg;
+                    showError(pretty, 'Error');
                   } finally {
                     setChangingPwd(false);
                   }
@@ -219,6 +225,7 @@ const ProfilePage: React.FC = () => {
                 loading={deleting}
                 onClick={async () => {
                   if (!user?.email) return;
+                  if (!deletePwd) return showError('Please enter your password to confirm.', 'Validation');
                   setDeleting(true);
                   try {
                     const { error: signErr } = await supabase.auth.signInWithPassword({
@@ -236,7 +243,12 @@ const ProfilePage: React.FC = () => {
                     showSuccess('Account deletion requested. You have been signed out.', 'Account');
                     navigate('/');
                   } catch (e: any) {
-                    showError(e.message || 'Failed to delete account', 'Error');
+                    const msg = String(e?.message || 'Failed to delete account');
+                    const pretty =
+                      msg.includes('Invalid login credentials')
+                        ? 'Password is incorrect.'
+                        : msg;
+                    showError(pretty, 'Error');
                   } finally {
                     setDeleting(false);
                   }
