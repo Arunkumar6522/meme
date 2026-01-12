@@ -54,7 +54,7 @@ export const config: AppConfig = {
     clientId: import.meta.env.VITE_GOOGLE_ADS_CLIENT_ID,
   } : undefined,
   app: {
-    name: getEnvVar('VITE_APP_NAME', 'Meme Library') || 'Meme Library',
+    name: getEnvVar('VITE_APP_NAME', 'ilovememe.in') || 'ilovememe.in',
     version: getEnvVar('VITE_APP_VERSION', '1.1.0') || '1.1.0',
     // Use Vite's build mode; NODE_ENV isn't reliable in the browser bundle
     environment: (import.meta.env.MODE as any) || 'development',

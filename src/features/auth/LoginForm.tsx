@@ -137,7 +137,7 @@ const LoginForm: React.FC = () => {
     <div className="w-full max-w-md space-y-4 sm:space-y-6 px-2 sm:px-0">
       <div className="text-center">
         <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">Sign In</h1>
-        <p className="mt-2 text-xs sm:text-sm text-gray-600">Welcome back to Meme Library</p>
+        <p className="mt-2 text-xs sm:text-sm text-gray-600">Welcome back to ilovememe.in</p>
       </div>
 
       {errors.general && (

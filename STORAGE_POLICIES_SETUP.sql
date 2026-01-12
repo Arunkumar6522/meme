@@ -1,4 +1,4 @@
--- Storage Policies Setup for Meme Library
+-- Storage Policies Setup for ilovememe.in
 -- Run this SQL in Supabase SQL Editor to allow admin uploads and public reads
 
 -- Policy for library-audio bucket

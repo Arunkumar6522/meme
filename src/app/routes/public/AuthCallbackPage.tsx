@@ -33,7 +33,7 @@ const AuthCallbackPage: React.FC = () => {
 
           // Handle different callback types
           if (type === 'signup') {
-            showSuccess('Email confirmed successfully! Welcome to Meme Library!', 'Account Verified');
+            showSuccess('Email confirmed successfully! Welcome to ilovememe.in!', 'Account Verified');
             navigate('/home');
           } else if (type === 'recovery') {
             showSuccess('Email verified! You can now reset your password.', 'Email Verified');

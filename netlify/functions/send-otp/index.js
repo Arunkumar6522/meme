@@ -205,9 +205,9 @@ exports.handler = async (event, context) => {
 
     // Email templates
     const getEmailSubject = () => {
-      return type === 'signup' 
-        ? 'Welcome to Meme Library - Verification Code'
-        : 'Meme Library - Password Reset Code';
+      return type === 'signup'
+        ? 'ilovememe.in - Verification Code'
+        : 'ilovememe.in - Password Reset Code';
     };
 
     const getEmailHtml = () => {
@@ -221,10 +221,10 @@ exports.handler = async (event, context) => {
         </head>
         <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
           <div style="text-align: center; margin-bottom: 30px;">
-            <h1 style="color: #4F46E5;">Meme Library</h1>
+            <h1 style="color: #F97316;">ilovememe.in</h1>
           </div>
           
-          <h2>${isSignup ? 'Welcome to Meme Library!' : 'Password Reset Request'}</h2>
+          <h2>${isSignup ? 'Welcome to ilovememe.in!' : 'Password Reset Request'}</h2>
           <p>${isSignup 
             ? 'Thank you for signing up. Please use the verification code below to complete your registration:'
             : 'You requested to reset your password. Please use the verification code below:'}</p>
@@ -236,13 +236,13 @@ exports.handler = async (event, context) => {
           </div>
           
           <p><strong>This code expires in 10 minutes.</strong></p>
-          <p>${isSignup 
-            ? 'If you didn\'t create an account with Meme Library, please ignore this email.'
+          <p>${isSignup
+            ? 'If you didn\'t create an account with ilovememe.in, please ignore this email.'
             : 'If you didn\'t request a password reset, please ignore this email or contact support if you\'re concerned about your account security.'}</p>
           
           <hr style="margin: 30px 0; border: none; border-top: 1px solid #E5E7EB;">
           <p style="color: #6B7280; font-size: 14px;">
-            This email was sent by Meme Library. If you have any questions, please contact our support team.
+            This email was sent by ilovememe.in. If you have any questions, please contact support.
           </p>
         </body>
         </html>

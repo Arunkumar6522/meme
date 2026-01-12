@@ -109,7 +109,7 @@ const LibraryPage: React.FC = () => {
         <div className="mb-8">
           <div className="flex items-center justify-between flex-wrap gap-4">
             <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Meme Library</h1>
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">ilovememe.in Library</h1>
               <p className="mt-2 text-sm sm:text-base text-gray-600">
             Discover and download the perfect memes for your content
           </p>
