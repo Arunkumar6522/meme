@@ -3,7 +3,6 @@ import { Upload, X, Play, Pause, Volume2, Video } from 'lucide-react';
 import { Button, Input, Select } from '@/components/ui';
 import { useAuth } from '@/hooks/useAuth';
 import { LibraryService } from '@/services/library.service';
-import { STORAGE_BUCKETS } from '@/services/supabase';
 import { ArtistService } from '@/services/artist.service';
 import type { EmotionType } from '@/types';
 import { cn } from '@/utils/cn';
@@ -267,35 +266,24 @@ const UploadForm: React.FC<UploadFormProps> = ({ onSuccess, onCancel }) => {
     setUploadProgress(0);
 
     try {
-      // Upload main file
-      const bucket = formData.mediaType === 'audio' ? STORAGE_BUCKETS.LIBRARY_AUDIO : STORAGE_BUCKETS.LIBRARY_VIDEO;
-      const fileName = `${Date.now()}-${formData.file.name}`;
-      
+      // Upload main file (secure: backend-minted signed upload URL)
       setUploadProgress(25);
-      let fileUrl: string | null;
-      try {
-        fileUrl = await LibraryService.uploadFile(formData.file, bucket, fileName);
-      } catch (uploadError: any) {
-        throw new Error(uploadError.message || 'Failed to upload file. Please ensure storage buckets are created in Supabase.');
-      }
-      
-      if (!fileUrl) {
-        throw new Error('Failed to upload file');
-      }
+      const fileUpload = await LibraryService.uploadFileSigned(
+        formData.file,
+        formData.mediaType === 'audio' ? 'audio' : 'video'
+      );
 
       setUploadProgress(50);
 
       // Upload thumbnail if provided or auto-generate for video
-      let thumbnailUrl: string | undefined;
+      let thumbnailUpload: { bucket: string; path: string } | null = null;
       if (formData.thumbnail) {
-        const thumbnailFileName = `thumb-${Date.now()}-${formData.thumbnail.name}`;
-        thumbnailUrl = await LibraryService.uploadFile(formData.thumbnail, STORAGE_BUCKETS.THUMBNAILS, thumbnailFileName);
+        thumbnailUpload = await LibraryService.uploadFileSigned(formData.thumbnail, 'thumbnail');
       } else if (formData.mediaType === 'video') {
         setUploadProgress(60);
         const generatedThumb = await captureVideoThumbnail(formData.file);
         if (generatedThumb) {
-          const thumbnailFileName = `thumb-${Date.now()}-${generatedThumb.name}`;
-          thumbnailUrl = await LibraryService.uploadFile(generatedThumb, STORAGE_BUCKETS.THUMBNAILS, thumbnailFileName);
+          thumbnailUpload = await LibraryService.uploadFileSigned(generatedThumb, 'thumbnail');
         }
       }
 
@@ -319,8 +307,13 @@ const UploadForm: React.FC<UploadFormProps> = ({ onSuccess, onCancel }) => {
         keywords: keywordsArray,
         emotion: formData.emotion,
         media_type: formData.mediaType,
-        file_url: fileUrl,
-        thumbnail_url: thumbnailUrl,
+        // Buckets can be private; we store bucket/path and (optionally) keep legacy url empty
+        file_url: '',
+        file_bucket: fileUpload.bucket,
+        file_path: fileUpload.path,
+        thumbnail_url: undefined,
+        thumbnail_bucket: thumbnailUpload?.bucket,
+        thumbnail_path: thumbnailUpload?.path,
         duration: formData.mediaType === 'audio' ? await getAudioDuration(formData.file) : undefined,
         file_size: formData.file.size,
         is_published: true, // Auto-publish for now

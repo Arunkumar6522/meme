@@ -6,14 +6,6 @@ interface AppConfig {
     url: string;
     anonKey: string;
   };
-  smtp?: {
-    host: string;
-    port: number;
-    user: string;
-    password: string;
-    fromEmail: string;
-    fromName: string;
-  };
   googleAds?: {
     clientId: string;
   };
@@ -58,14 +50,6 @@ export const config: AppConfig = {
     url: getEnvVarSafe('VITE_SUPABASE_URL', 'https://placeholder.supabase.co'),
     anonKey: getEnvVarSafe('VITE_SUPABASE_ANON_KEY', 'placeholder-anon-key'),
   },
-  smtp: import.meta.env.VITE_SMTP_HOST ? {
-    host: import.meta.env.VITE_SMTP_HOST,
-    port: parseInt(import.meta.env.VITE_SMTP_PORT || '587'),
-    user: import.meta.env.VITE_SMTP_USER,
-    password: import.meta.env.VITE_SMTP_PASSWORD,
-    fromEmail: import.meta.env.VITE_SMTP_FROM_EMAIL,
-    fromName: import.meta.env.VITE_SMTP_FROM_NAME || 'Meme Library',
-  } : undefined,
   googleAds: import.meta.env.VITE_GOOGLE_ADS_CLIENT_ID ? {
     clientId: import.meta.env.VITE_GOOGLE_ADS_CLIENT_ID,
   } : undefined,
@@ -83,7 +67,6 @@ export const config: AppConfig = {
 
 // Export individual config sections for convenience
 export const supabaseConfig = config.supabase;
-export const smtpConfig = config.smtp;
 export const googleAdsConfig = config.googleAds;
 export const appConfig = config.app;
 export const featureFlags = config.features;
@@ -123,7 +106,6 @@ if (isDevelopment) {
     features: config.features,
     supabaseConfigured: !!config.supabase.url,
     supabaseUrl: config.supabase.url?.substring(0, 30) + '...',
-    smtpConfigured: !!config.smtp?.host,
     googleAdsConfigured: !!config.googleAds?.clientId,
   });
   console.log('Environment variables check:', {

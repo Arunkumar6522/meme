@@ -3,40 +3,30 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/useToast';
+import { CustomAuthService } from '@/services/custom-auth.service';
 
 interface OTPVerificationFormProps {
   email: string;
   type: 'signup' | 'reset-password';
   onBack: () => void;
+  signupData?: {
+    password: string;
+    fullName?: string;
+  };
 }
 
-const OTPVerificationForm: React.FC<OTPVerificationFormProps> = ({ email, type, onBack }) => {
+const OTPVerificationForm: React.FC<OTPVerificationFormProps> = ({ email, type, onBack, signupData }) => {
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [loading, setLoading] = useState(false);
   const [resending, setResending] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [devCode, setDevCode] = useState<string | null>(null);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const navigate = useNavigate();
-  const { verifyOTP, resendOTP } = useAuth();
+  const { verifyOTP, resendOTP, signIn } = useAuth();
   const { showSuccess, showError } = useToast();
 
   // Normalize email for display and use
   const normalizedEmail = email.trim().toLowerCase();
-
-  // Get dev code from sessionStorage in development mode
-  useEffect(() => {
-    if (import.meta.env.MODE === 'development') {
-      try {
-        const storedCode = sessionStorage.getItem(`dev_otp_${normalizedEmail}`);
-        if (storedCode) {
-          setDevCode(storedCode);
-        }
-      } catch (e) {
-        // Ignore if sessionStorage unavailable
-      }
-    }
-  }, [normalizedEmail]);
 
   useEffect(() => {
     // Focus first input on mount
@@ -110,29 +100,41 @@ const OTPVerificationForm: React.FC<OTPVerificationFormProps> = ({ email, type, 
     setError(null);
 
     try {
-      const { error } = await verifyOTP(normalizedEmail, otpCode, type);
-      
-      if (error) {
-        setError(error);
-        showError(error, 'Verification Failed');
-        setLoading(false);
-        return;
-      }
-      
-      // Success - clear OTP inputs
-      setOtp(['', '', '', '', '', '']);
-      
       if (type === 'signup') {
-        showSuccess('Account verified successfully! Welcome to Meme Library!', 'Verification Complete');
-        // Small delay to show success message before navigation
-        setTimeout(() => {
-          navigate('/home');
-        }, 1000);
+        if (!signupData?.password) {
+          setError('Signup session expired. Please go back and try again.');
+          showError('Signup session expired. Please start over.', 'Session Error');
+          setLoading(false);
+          return;
+        }
+
+        // Secure server-side completion (verifies OTP + creates account)
+        const { error } = await CustomAuthService.completeSignupWithOTP(
+          normalizedEmail,
+          otpCode,
+          signupData.password,
+          signupData.fullName
+        );
+
+        if (error) {
+          setError(error);
+          showError(error, 'Verification Failed');
+          setLoading(false);
+          return;
+        }
+
+        // Auto sign-in (client-side) after account creation
+        await signIn(normalizedEmail, signupData.password);
+
+        setOtp(['', '', '', '', '', '']);
+        showSuccess('Account created successfully! Welcome!', 'Signup Complete');
+        setTimeout(() => navigate('/home'), 600);
       } else {
-        showSuccess('Email verified! You can now reset your password.', 'Verification Complete');
-        // Small delay to show success message before navigation
+        // SECURITY: Do NOT verify+consume the OTP here, because password update must be gated by OTP.
+        // Instead, pass the code to the reset password form, and let the backend verify+update in one step.
+        showSuccess('Code received. Please set your new password.', 'Continue');
         setTimeout(() => {
-          navigate('/auth/reset-password', { state: { email: normalizedEmail } });
+          navigate('/auth/reset-password', { state: { email: normalizedEmail, code: otpCode } });
         }, 1000);
       }
     } catch (err) {

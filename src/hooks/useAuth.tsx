@@ -85,7 +85,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (key && (
           key.startsWith('register-') ||
           key.startsWith('forgot-password-') ||
-          key.startsWith('dev_otp_') ||
           key.startsWith('login-') ||
           key.startsWith('pending_')
         )) {

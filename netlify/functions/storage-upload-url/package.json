@@ -1,0 +1,10 @@
+{
+  "name": "storage-upload-url",
+  "version": "1.0.0",
+  "description": "Netlify function to mint signed upload URLs for Supabase Storage (admin-only)",
+  "main": "index.js",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.38.4"
+  }
+}
+

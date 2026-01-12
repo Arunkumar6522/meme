@@ -19,6 +19,8 @@ interface LibraryCardProps {
 const LibraryCard: React.FC<LibraryCardProps> = memo(({ item, className, isAdmin = false }) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [downloading, setDownloading] = useState(false);
+  const [resolvedFileUrl, setResolvedFileUrl] = useState<string>(item.file_url || '');
+  const [resolvedThumbUrl, setResolvedThumbUrl] = useState<string>(item.thumbnail_url || '');
   const audioElementRef = useRef<HTMLAudioElement | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const { showSuccess, showError } = useToast();
@@ -109,7 +111,25 @@ const LibraryCard: React.FC<LibraryCardProps> = memo(({ item, className, isAdmin
     window.dispatchEvent(new CustomEvent('media:play', { detail: mediaId }));
   };
 
+  const ensureSignedUrls = useCallback(async () => {
+    // Only fetch signed URLs if we don't already have a URL
+    if (!resolvedFileUrl) {
+      const signed = await LibraryService.getSignedItemUrl(item.id, 'file');
+      if (signed) setResolvedFileUrl(signed);
+    }
+    if (!resolvedThumbUrl && (item.thumbnail_bucket || item.thumbnail_path)) {
+      const signedThumb = await LibraryService.getSignedItemUrl(item.id, 'thumbnail');
+      if (signedThumb) setResolvedThumbUrl(signedThumb);
+    }
+  }, [item.id, item.thumbnail_bucket, item.thumbnail_path, resolvedFileUrl, resolvedThumbUrl]);
+
   const handlePlay = useCallback(async () => {
+    await ensureSignedUrls();
+    const fileUrl = resolvedFileUrl || item.file_url;
+    if (!fileUrl) {
+      showError('File unavailable', 'Playback Error');
+      return;
+    }
     if (item.media_type === 'audio') {
       if (isPlaying && audioElementRef.current) {
         audioElementRef.current.pause();
@@ -117,7 +137,7 @@ const LibraryCard: React.FC<LibraryCardProps> = memo(({ item, className, isAdmin
       } else {
         try {
           if (!audioElementRef.current) {
-            const audio = new Audio(item.file_url);
+            const audio = new Audio(fileUrl);
             audio.preload = 'auto';
             audio.addEventListener('ended', () => setIsPlaying(false));
             audio.addEventListener('error', () => {
@@ -145,6 +165,9 @@ const LibraryCard: React.FC<LibraryCardProps> = memo(({ item, className, isAdmin
       } else {
         try {
           emitPlay();
+          if (videoRef.current.src !== fileUrl) {
+            videoRef.current.src = fileUrl;
+          }
           await videoRef.current.play();
           setIsPlaying(true);
         } catch (error) {
@@ -153,7 +176,7 @@ const LibraryCard: React.FC<LibraryCardProps> = memo(({ item, className, isAdmin
         }
       }
     }
-  }, [item.media_type, item.file_url, isPlaying, showError]);
+  }, [ensureSignedUrls, resolvedFileUrl, item.media_type, item.file_url, isPlaying, showError]);
 
   const handleDownload = useCallback(async () => {
     if (downloading) return;
@@ -165,8 +188,8 @@ const LibraryCard: React.FC<LibraryCardProps> = memo(({ item, className, isAdmin
         // Silently fail - not critical
       });
       
-      // Use the file_url directly - it should be a public URL from Supabase storage
-      const downloadUrl = item.file_url;
+      const signed = await LibraryService.getSignedItemUrl(item.id, 'file');
+      const downloadUrl = signed || resolvedFileUrl || item.file_url;
       
       if (!downloadUrl) {
         throw new Error('File URL not available');
@@ -202,7 +225,7 @@ const LibraryCard: React.FC<LibraryCardProps> = memo(({ item, className, isAdmin
     } finally {
       setDownloading(false);
     }
-  }, [item.id, item.file_url, item.title, item.media_type, downloading, showSuccess, showError]);
+  }, [item.id, item.file_url, item.title, item.media_type, resolvedFileUrl, downloading, showSuccess, showError]);
 
   const handleLike = useCallback(async () => {
     try {
@@ -353,9 +376,9 @@ const LibraryCard: React.FC<LibraryCardProps> = memo(({ item, className, isAdmin
 
   const renderVideo = () => (
     <div className="relative w-full overflow-hidden rounded-lg shadow-sm border border-gray-200 bg-gray-900 aspect-[4/5] sm:aspect-video">
-      {item.thumbnail_url && !isPlaying ? (
+      {resolvedThumbUrl && !isPlaying ? (
         <img
-          src={item.thumbnail_url}
+          src={resolvedThumbUrl}
           alt={`Thumbnail for ${item.title}`}
           className="w-full h-full object-cover"
           loading="lazy"
@@ -365,7 +388,7 @@ const LibraryCard: React.FC<LibraryCardProps> = memo(({ item, className, isAdmin
         <video
           ref={videoRef}
           className="w-full h-full object-cover"
-          src={item.file_url}
+          src={resolvedFileUrl || item.file_url}
           playsInline
           controls
           onPlay={() => {
@@ -422,9 +445,9 @@ const LibraryCard: React.FC<LibraryCardProps> = memo(({ item, className, isAdmin
       )}
       aria-label={`Play ${item.title}`}
     >
-      {item.thumbnail_url ? (
+      {resolvedThumbUrl ? (
         <img
-          src={item.thumbnail_url}
+          src={resolvedThumbUrl}
           alt={`Thumbnail for ${item.title}`}
           className="w-full h-full object-cover rounded-full"
           loading="lazy"

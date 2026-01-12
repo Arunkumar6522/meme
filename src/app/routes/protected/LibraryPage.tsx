@@ -11,6 +11,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { DatabaseService } from '@/services/database.service';
 import type { LibraryFilters as LibraryFiltersType } from '@/types';
 import { cn } from '@/utils/cn';
+import { useLanguage } from '@/hooks/useLanguage';
 
 // Cache admin status to avoid repeated API calls
 const adminStatusCache = new Map<string, { status: boolean; timestamp: number }>();
@@ -19,21 +20,13 @@ const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 const LibraryPage: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { selectedLanguages } = useLanguage();
   const [isAdmin, setIsAdmin] = useState(false);
   const [filters, setFilters] = useState<LibraryFiltersType>({
     sort_by: 'latest',
     media_type: 'audio',
     artist: [],
-    languages: (() => {
-      const stored = localStorage.getItem('preferred_languages');
-      if (stored) {
-        try {
-          const parsed = JSON.parse(stored);
-          if (Array.isArray(parsed) && parsed.length) return parsed;
-        } catch {}
-      }
-      return undefined;
-    })(),
+    languages: selectedLanguages,
   });
   const [mediaTab, setMediaTab] = useState<'audio' | 'video'>('audio');
 
@@ -80,6 +73,14 @@ const LibraryPage: React.FC = () => {
     updateFilters(newFilters);
   }, [updateFilters]);
 
+  // Keep filters in sync with language selector (same tab, instant)
+  useEffect(() => {
+    const nextFilters = { ...filters, languages: selectedLanguages };
+    setFilters(nextFilters);
+    updateFilters(nextFilters);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedLanguages]);
+
   // Sync tab with filters
   useEffect(() => {
     if (filters.media_type === 'video') {
@@ -99,24 +100,7 @@ const LibraryPage: React.FC = () => {
     updateFilters(nextFilters);
   };
 
-  // Listen for language changes in localStorage (from header selector)
-  useEffect(() => {
-    const handler = () => {
-      const stored = localStorage.getItem('preferred_languages');
-      if (stored) {
-        try {
-          const parsed = JSON.parse(stored);
-          if (Array.isArray(parsed) && parsed.length) {
-            const nextFilters = { ...filters, languages: parsed };
-            setFilters(nextFilters);
-            updateFilters(nextFilters);
-          }
-        } catch {}
-      }
-    };
-    window.addEventListener('storage', handler);
-    return () => window.removeEventListener('storage', handler);
-  }, [filters, updateFilters]);
+  // language changes handled by LanguageProvider
 
   return (
     <div className="min-h-screen bg-gray-50">

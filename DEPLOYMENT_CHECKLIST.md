@@ -16,18 +16,18 @@
 Add these **SMTP variables** (required for email sending):
 
 ```
-VITE_SMTP_HOST=smtp.gmail.com
-VITE_SMTP_PORT=587
-VITE_SMTP_USER=your-email@gmail.com
-VITE_SMTP_PASSWORD=your-app-password
-VITE_SMTP_FROM_EMAIL=your-email@gmail.com
-VITE_SMTP_FROM_NAME=Meme Library
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=your-email@gmail.com
+SMTP_PASSWORD=your-app-password
+SMTP_FROM_EMAIL=your-email@gmail.com
+SMTP_FROM_NAME=ilovememe.in
 ```
 
 **Note:** For Gmail:
 1. Enable 2-factor authentication
 2. Generate an "App Password" (not your regular password)
-3. Use the app password as `VITE_SMTP_PASSWORD`
+3. Use the app password as `SMTP_PASSWORD`
 
 ### 3. Existing Environment Variables
 

@@ -4,6 +4,7 @@
   "description": "Netlify function to send OTP emails securely",
   "main": "index.js",
   "dependencies": {
+    "@supabase/supabase-js": "^2.38.4",
     "nodemailer": "^6.10.1"
   }
 }

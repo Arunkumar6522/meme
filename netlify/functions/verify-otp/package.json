@@ -1,0 +1,10 @@
+{
+  "name": "verify-otp",
+  "version": "1.0.0",
+  "description": "Netlify function to verify OTP codes securely (server-side)",
+  "main": "index.js",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.38.4"
+  }
+}
+

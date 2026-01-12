@@ -2,14 +2,39 @@
 // This prevents OTP codes from being exposed in client-side code
 
 const nodemailer = require('nodemailer');
+const { createClient } = require('@supabase/supabase-js');
+const crypto = require('crypto');
+
+function generateOtp() {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+}
+
+function normalizeEmail(email) {
+  return String(email || '').trim().toLowerCase();
+}
+
+function validateEmail(email) {
+  // keep in sync with client validator; server must be strict
+  return /^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/i.test(email) && email.length >= 6 && email.length <= 254;
+}
 
 exports.handler = async (event, context) => {
   // Set CORS headers
+  const origin = event.headers?.origin || event.headers?.Origin || '';
+  const allowedOriginsEnv = process.env.ALLOWED_ORIGINS || '';
+  const allowedOrigins = allowedOriginsEnv
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+
+  const originAllowed = allowedOrigins.length === 0 || (origin && allowedOrigins.includes(origin));
+
   const headers = {
     'Content-Type': 'application/json',
-    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Origin': originAllowed && origin ? origin : (allowedOrigins.length ? allowedOrigins[0] : '*'),
     'Access-Control-Allow-Headers': 'Content-Type',
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Vary': 'Origin',
   };
 
   // Handle preflight OPTIONS request
@@ -18,6 +43,14 @@ exports.handler = async (event, context) => {
       statusCode: 200,
       headers,
       body: JSON.stringify({}),
+    };
+  }
+
+  if (!originAllowed && allowedOrigins.length) {
+    return {
+      statusCode: 403,
+      headers,
+      body: JSON.stringify({ error: 'Origin not allowed' }),
     };
   }
 
@@ -43,25 +76,117 @@ exports.handler = async (event, context) => {
       };
     }
 
-    const { email, code, type } = requestData;
+    const email = normalizeEmail(requestData.email);
+    const type = requestData.type;
 
     // Validate input
-    if (!email || !code || !type) {
+    if (!email || !type) {
       return {
         statusCode: 400,
         headers,
-        body: JSON.stringify({ error: 'Missing required fields: email, code, type' }),
+        body: JSON.stringify({ error: 'Missing required fields: email, type' }),
+      };
+    }
+
+    if (!validateEmail(email)) {
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({ error: 'Invalid email address format' }),
+      };
+    }
+
+    if (type !== 'signup' && type !== 'password_reset') {
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({ error: 'Invalid type. Expected "signup" or "password_reset".' }),
+      };
+    }
+
+    // Supabase (service role) – used to store OTP server-side so the browser never sees the code.
+    const supabaseUrl = process.env.SUPABASE_URL;
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+    if (!supabaseUrl || !serviceKey) {
+      console.error('Supabase service configuration missing');
+      return {
+        statusCode: 500,
+        headers,
+        body: JSON.stringify({ error: 'Server not configured (missing SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY).' }),
+      };
+    }
+
+    const supabase = createClient(supabaseUrl, serviceKey, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
+
+    const otpCode = generateOtp();
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
+
+    // Hash OTP before storing (even if DB is leaked, OTP can't be derived).
+    // Uses a server-side secret (never shipped to browser).
+    const hmacSecret = process.env.OTP_HMAC_SECRET || serviceKey;
+    const otpHash = crypto
+      .createHmac('sha256', hmacSecret)
+      .update(`${email}:${type}:${otpCode}`)
+      .digest('hex');
+
+    // Basic throttling (per email+type) to reduce abuse/spam.
+    const minIntervalSeconds = Number(process.env.OTP_MIN_INTERVAL_SECONDS || 30);
+    if (Number.isFinite(minIntervalSeconds) && minIntervalSeconds > 0) {
+      const { data: recent } = await supabase
+        .from('otp_codes')
+        .select('created_at')
+        .eq('email', email)
+        .eq('type', type)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (recent?.created_at) {
+        const last = new Date(recent.created_at).getTime();
+        if (Number.isFinite(last) && Date.now() - last < minIntervalSeconds * 1000) {
+          return {
+            statusCode: 429,
+            headers,
+            body: JSON.stringify({ error: 'Please wait before requesting another code.' }),
+          };
+        }
+      }
+    }
+
+    // Best-effort cleanup of older OTPs for this email+type
+    try {
+      await supabase.from('otp_codes').delete().eq('email', email).eq('type', type);
+    } catch (e) {
+      // ignore cleanup failure
+    }
+
+    const { error: insertError } = await supabase.from('otp_codes').insert({
+      email,
+      code: otpHash,
+      type,
+      expires_at: expiresAt,
+    });
+
+    if (insertError) {
+      console.error('Failed to store OTP:', insertError);
+      return {
+        statusCode: 500,
+        headers,
+        body: JSON.stringify({ error: 'Failed to generate verification code. Please try again.' }),
       };
     }
 
     // Get SMTP configuration from environment variables
     const smtpConfig = {
-      host: process.env.VITE_SMTP_HOST || process.env.SMTP_HOST,
-      port: parseInt(process.env.VITE_SMTP_PORT || process.env.SMTP_PORT || '587'),
+      host: process.env.SMTP_HOST,
+      port: parseInt(process.env.SMTP_PORT || '587'),
       secure: false, // true for 465, false for other ports
       auth: {
-        user: process.env.VITE_SMTP_USER || process.env.SMTP_USER,
-        pass: process.env.VITE_SMTP_PASSWORD || process.env.SMTP_PASSWORD,
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASSWORD,
       },
     };
 
@@ -106,7 +231,7 @@ exports.handler = async (event, context) => {
           
           <div style="text-align: center; margin: 30px 0;">
             <div style="background-color: #F3F4F6; padding: 20px; border-radius: 8px; display: inline-block;">
-              <h1 style="font-size: 32px; letter-spacing: 8px; color: #4F46E5; margin: 0;">${code}</h1>
+              <h1 style="font-size: 32px; letter-spacing: 8px; color: #4F46E5; margin: 0;">${otpCode}</h1>
             </div>
           </div>
           
@@ -124,8 +249,8 @@ exports.handler = async (event, context) => {
       `;
     };
 
-    const fromEmail = process.env.VITE_SMTP_FROM_EMAIL || process.env.SMTP_FROM_EMAIL || smtpConfig.auth.user;
-    const fromName = process.env.VITE_SMTP_FROM_NAME || process.env.SMTP_FROM_NAME || 'Meme Library';
+    const fromEmail = process.env.SMTP_FROM_EMAIL || smtpConfig.auth.user;
+    const fromName = process.env.SMTP_FROM_NAME || 'ilovememe.in';
 
     // Send email
     const info = await transporter.sendMail({

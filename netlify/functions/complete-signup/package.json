@@ -1,0 +1,10 @@
+{
+  "name": "complete-signup",
+  "version": "1.0.0",
+  "description": "Netlify function to complete signup securely after OTP verification (server-side)",
+  "main": "index.js",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.38.4"
+  }
+}
+

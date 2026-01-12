@@ -7,18 +7,35 @@ Add these **4 environment variables** in your Netlify dashboard:
 ### Required Variables:
 
 ```env
-VITE_SUPABASE_URL=https://csajwbsedfaegygaeooy.supabase.co
-VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNzYWp3YnNlZGZhZWd5Z2Flb295Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc5NTc3NjksImV4cCI6MjA4MzUzMzc2OX0.Hw69uftUhcF2E49crp-KLWh_URAQC-RX0L7PCQoZdCo
+VITE_SUPABASE_URL=https://YOUR_PROJECT_REF.supabase.co
+VITE_SUPABASE_ANON_KEY=YOUR_SUPABASE_ANON_KEY
 NODE_ENV=production
-SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNzYWp3YnNlZGZhZWd5Z2Flb295Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2Nzk1Nzc2OSwiZXhwIjoyMDgzNTMzNzY5fQ.o3aIHMelGC6wNdVYoXTp4JjC4uERfd0Nnhp0UO6X9Uo
+SUPABASE_URL=https://YOUR_PROJECT_REF.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=YOUR_SUPABASE_SERVICE_ROLE_KEY
 
 # SMTP Email Configuration (Secure)
-VITE_SMTP_HOST=smtp.gmail.com
-VITE_SMTP_PORT=587
-VITE_SMTP_USER=arunkumark1664@gmail.com
-VITE_SMTP_PASSWORD=lilf nlea gvrw joif
-VITE_SMTP_FROM_EMAIL=arunkumark1664@gmail.com
-VITE_SMTP_FROM_NAME=Meme Library
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=YOUR_SMTP_USER
+SMTP_PASSWORD=YOUR_SMTP_PASSWORD
+SMTP_FROM_EMAIL=YOUR_FROM_EMAIL
+SMTP_FROM_NAME=ilovememe.in
+
+# OTP / Functions Security (Recommended)
+# Comma-separated list of allowed origins for Netlify functions (no '*' in production)
+ALLOWED_ORIGINS=https://ilovememe.in,https://www.ilovememe.in
+# Secret used to hash OTP codes before storing in DB (server-only)
+OTP_HMAC_SECRET=YOUR_LONG_RANDOM_SECRET
+# Throttle resend (seconds)
+OTP_MIN_INTERVAL_SECONDS=30
+
+# Signup completion (server-side)
+# Requires Netlify function `complete-signup` to create user securely after OTP.
+
+# Storage signed URLs (Recommended for security)
+# Keep buckets PRIVATE in Supabase Storage.
+# Admin upload uses Netlify function `storage-upload-url` and requires a valid session + admin role.
+# Playback/download uses Netlify function `library-item-url` by itemId (no bucket/path exposure).
 ```
 
 ### Optional Variables:
@@ -36,11 +53,11 @@ VITE_ENABLE_ANALYTICS=false
 
 **Variable 1:**
 - Name: `VITE_SUPABASE_URL`
-- Value: `https://csajwbsedfaegygaeooy.supabase.co`
+- Value: `https://YOUR_PROJECT_REF.supabase.co`
 
 **Variable 2:**
 - Name: `VITE_SUPABASE_ANON_KEY`  
-- Value: `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNzYWp3YnNlZGZhZWd5Z2Flb295Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc5NTc3NjksImV4cCI6MjA4MzUzMzc2OX0.Hw69uftUhcF2E49crp-KLWh_URAQC-RX0L7PCQoZdCo`
+- Value: `YOUR_SUPABASE_ANON_KEY`
 
 **Variable 3:**
 - Name: `NODE_ENV`
@@ -48,7 +65,7 @@ VITE_ENABLE_ANALYTICS=false
 
 **Variable 4:** ⚠️ **IMPORTANT - This creates the database tables!**
 - Name: `SUPABASE_SERVICE_ROLE_KEY`
-- Value: `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNzYWp3YnNlZGZhZWd5Z2Flb295Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2Nzk1Nzc2OSwiZXhwIjoyMDgzNTMzNzY5fQ.o3aIHMelGC6wNdVYoXTp4JjC4uERfd0Nnhp0UO6X9Uo`
+- Value: `YOUR_SUPABASE_SERVICE_ROLE_KEY`
 
 ## What Each Key Does:
 
@@ -71,3 +88,4 @@ VITE_ENABLE_ANALYTICS=false
 
 ⚠️ **Keep secret:**
 - SUPABASE_SERVICE_ROLE_KEY (admin privileges, only for build)
+- SMTP_PASSWORD (email credentials)

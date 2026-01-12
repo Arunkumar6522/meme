@@ -31,17 +31,17 @@ npm install
 Add these to your Netlify dashboard (Site settings → Environment variables):
 
 **Required:**
-- `VITE_SMTP_HOST` - SMTP server host (e.g., `smtp.gmail.com`)
-- `VITE_SMTP_PORT` - SMTP port (e.g., `587`)
-- `VITE_SMTP_USER` - SMTP username/email
-- `VITE_SMTP_PASSWORD` - SMTP password/app password
-- `VITE_SMTP_FROM_EMAIL` - From email address
-- `VITE_SMTP_FROM_NAME` - From name (e.g., "Meme Library")
+- `SMTP_HOST` - SMTP server host (e.g., `smtp.gmail.com`)
+- `SMTP_PORT` - SMTP port (e.g., `587`)
+- `SMTP_USER` - SMTP username/email
+- `SMTP_PASSWORD` - SMTP password/app password
+- `SMTP_FROM_EMAIL` - From email address
+- `SMTP_FROM_NAME` - From name (e.g., "ilovememe.in")
 
 **Note:** For Gmail, you'll need to:
 1. Enable 2-factor authentication
 2. Generate an "App Password" 
-3. Use the app password as `VITE_SMTP_PASSWORD`
+3. Use the app password as `SMTP_PASSWORD`
 
 ### 3. Local Development
 

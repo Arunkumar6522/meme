@@ -5,13 +5,11 @@ import { Button } from '@/components/ui';
 import { useAuth } from '@/hooks/useAuth';
 import { DatabaseService } from '@/services/database.service';
 import { cn } from '@/utils/cn';
-import { supabase } from '@/services/supabase';
+import { ALL_LANGUAGES, useLanguage } from '@/hooks/useLanguage';
 
 // Cache admin status to avoid repeated API calls
 const adminStatusCache = new Map<string, { status: boolean; timestamp: number }>();
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
-const LANG_STORAGE_KEY = 'preferred_languages';
-const ALL_LANGUAGES = ['English', 'Tamil', 'Malayalam', 'Kannada', 'Hindi', 'Telugu'];
 
 // Export function to clear admin cache (used on logout)
 export const clearAdminCache = () => {
@@ -23,16 +21,7 @@ const Header: React.FC = () => {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [langOpen, setLangOpen] = useState(false);
-  const [selectedLangs, setSelectedLangs] = useState<string[]>(() => {
-    const stored = localStorage.getItem(LANG_STORAGE_KEY);
-    if (stored) {
-      try {
-        const parsed = JSON.parse(stored);
-        if (Array.isArray(parsed) && parsed.length) return parsed;
-      } catch {}
-    }
-    return ['English', 'Tamil'];
-  });
+  const { selectedLanguages, setSelectedLanguages } = useLanguage();
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
 
@@ -68,21 +57,7 @@ const Header: React.FC = () => {
     navigate('/');
   };
 
-  useEffect(() => {
-    localStorage.setItem(LANG_STORAGE_KEY, JSON.stringify(selectedLangs));
-    if (user?.id) {
-      supabase
-        .from('users')
-        .update({ preferred_languages: selectedLangs })
-        .eq('id', user.id)
-        .then(() => {
-          // ignore
-        })
-        .catch(() => {
-          // ignore
-        });
-    }
-  }, [selectedLangs]);
+  // language persistence handled by LanguageProvider
 
   const navigation = useMemo(() => {
     const base = [{ name: 'Home', href: '/' }];
@@ -142,11 +117,13 @@ const Header: React.FC = () => {
                     <label key={lang} className="flex items-center gap-2 text-sm text-gray-700">
                       <input
                         type="checkbox"
-                        checked={selectedLangs.includes(lang)}
+                          checked={selectedLanguages.includes(lang)}
                         onChange={() => {
-                          setSelectedLangs((prev) =>
-                            prev.includes(lang) ? prev.filter((l) => l !== lang) : [...prev, lang]
-                          );
+                            setSelectedLanguages(
+                              selectedLanguages.includes(lang)
+                                ? selectedLanguages.filter((l) => l !== lang)
+                                : [...selectedLanguages, lang]
+                            );
                         }}
                       />
                       {lang}
@@ -255,10 +232,12 @@ const Header: React.FC = () => {
                     <label key={lang} className="flex items-center gap-2 text-sm text-gray-700">
                       <input
                         type="checkbox"
-                        checked={selectedLangs.includes(lang)}
+                        checked={selectedLanguages.includes(lang)}
                         onChange={() => {
-                          setSelectedLangs((prev) =>
-                            prev.includes(lang) ? prev.filter((l) => l !== lang) : [...prev, lang]
+                          setSelectedLanguages(
+                            selectedLanguages.includes(lang)
+                              ? selectedLanguages.filter((l) => l !== lang)
+                              : [...selectedLanguages, lang]
                           );
                         }}
                       />

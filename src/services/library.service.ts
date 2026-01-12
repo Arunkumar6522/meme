@@ -29,7 +29,8 @@ export class LibraryService {
         query = query.contains('keywords', filters.artist);
       }
       if (filters.languages && filters.languages.length > 0) {
-        query = query.contains('languages', filters.languages);
+        // Match items where languages overlap ANY selected language
+        query = query.overlaps('languages', filters.languages);
       }
 
       if (filters.emotion) {
@@ -146,6 +147,92 @@ export class LibraryService {
       console.error('Error getting download URL:', error);
       return null;
     }
+  }
+
+  private static async getAccessToken(): Promise<string | null> {
+    const { data } = await supabase.auth.getSession();
+    return data.session?.access_token || null;
+  }
+
+  /**
+   * Get a signed URL for a library item media/thumbnail by itemId.
+   * This keeps storage access behind a backend function.
+   */
+  static async getSignedItemUrl(itemId: string, kind: 'file' | 'thumbnail' = 'file'): Promise<string | null> {
+    try {
+      const functionUrl = import.meta.env.VITE_NETLIFY_FUNCTIONS_URL || '/.netlify/functions';
+      const res = await fetch(`${functionUrl}/library-item-url`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ itemId, kind }),
+      });
+      const text = await res.text();
+      const payload = text ? JSON.parse(text) : {};
+      if (!res.ok) return null;
+      return payload?.url || null;
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Admin-only: upload file using backend-minted signed upload URL.
+   * Returns bucket/path (and no public URL needed when buckets are private).
+   */
+  static async uploadFileSigned(
+    file: File,
+    mediaType: 'audio' | 'video' | 'thumbnail'
+  ): Promise<{ bucket: string; path: string }> {
+    const token = await this.getAccessToken();
+    if (!token) {
+      throw new Error('Not authenticated');
+    }
+
+    const functionUrl = import.meta.env.VITE_NETLIFY_FUNCTIONS_URL || '/.netlify/functions';
+    const res = await fetch(`${functionUrl}/storage-upload-url`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        mediaType,
+        originalName: file.name,
+      }),
+    });
+
+    const text = await res.text();
+    const payload = text ? JSON.parse(text) : {};
+
+    if (!res.ok) {
+      throw new Error(payload?.error || 'Failed to start upload');
+    }
+
+    const signedUrl: string | undefined = payload?.signedUrl;
+    const bucket: string | undefined = payload?.bucket;
+    const path: string | undefined = payload?.path;
+
+    if (!signedUrl || !bucket || !path) {
+      throw new Error('Invalid upload URL response');
+    }
+
+    // Upload directly to the signed URL
+    const uploadRes = await fetch(signedUrl, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': file.type || 'application/octet-stream',
+        // Supabase signed upload expects x-upsert sometimes; keep false
+        'x-upsert': 'false',
+      },
+      body: file,
+    });
+
+    if (!uploadRes.ok) {
+      const errText = await uploadRes.text().catch(() => '');
+      throw new Error(errText || `Upload failed (${uploadRes.status})`);
+    }
+
+    return { bucket, path };
   }
 
   // Admin: Create new library item

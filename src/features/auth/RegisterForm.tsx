@@ -30,8 +30,9 @@ const RegisterForm: React.FC = () => {
     stepRef.current = step;
   }, [step]);
 
-  // Clear sessionStorage on mount - always start fresh when component mounts
-  // Only restore if we're coming from OTP screen (via state or sessionStorage check)
+  // SECURITY: Do not persist passwords. We only restore email/fullName for convenience.
+  // We intentionally do NOT restore the OTP step after refresh, because that would require
+  // persisting the password somewhere, which is unsafe.
   useEffect(() => {
     // Check if we have a valid OTP flow in progress
     try {
@@ -45,22 +46,27 @@ const RegisterForm: React.FC = () => {
       // 2. Email exists and is not empty
       // 3. Email is FULLY valid (matches regex completely)
       // 4. Email is at least 5 characters (a@b.c minimum)
-      if (persistedStep === 'otp' && 
-          normalizedPersistedEmail && 
+      if (normalizedPersistedEmail && 
           normalizedPersistedEmail.length >= 5 &&
           validateEmail(normalizedPersistedEmail)) {
-        // Restore OTP step
-        setStep('otp');
-        stepRef.current = 'otp';
-        
-        // Restore form data if available
+        // Always restore to form step (not OTP)
+        setStep('form');
+        stepRef.current = 'form';
+
+        // Restore SAFE form data if available (no password)
         const savedFormData = sessionStorage.getItem('register-form-data');
         if (savedFormData) {
           try {
             const parsed = JSON.parse(savedFormData);
             // Only restore if the email matches
             if (parsed.email && parsed.email.trim().toLowerCase() === normalizedPersistedEmail) {
-              setFormData(parsed);
+              setFormData((prev) => ({
+                ...prev,
+                fullName: parsed.fullName || '',
+                email: parsed.email || '',
+                password: '',
+                confirmPassword: '',
+              }));
             }
           } catch (e) {
             // Ignore parse errors
@@ -82,11 +88,14 @@ const RegisterForm: React.FC = () => {
     }
   }, [location.pathname]); // Re-run when route changes
 
-  // Persist form data to sessionStorage
+  // Persist SAFE form data to sessionStorage (never store passwords)
   useEffect(() => {
     try {
       if (step === 'form') {
-        sessionStorage.setItem('register-form-data', JSON.stringify(formData));
+        sessionStorage.setItem('register-form-data', JSON.stringify({
+          fullName: formData.fullName,
+          email: formData.email,
+        }));
       }
     } catch (e) {
       // Ignore sessionStorage errors
@@ -335,6 +344,10 @@ const RegisterForm: React.FC = () => {
         key={`otp-${formData.email}`}
         email={formData.email.trim().toLowerCase()}
         type="signup"
+        signupData={{
+          password: formData.password,
+          fullName: formData.fullName?.trim() || undefined,
+        }}
         onBack={() => {
           // Clear sessionStorage and reset to form
           try {

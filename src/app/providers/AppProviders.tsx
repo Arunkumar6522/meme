@@ -3,6 +3,7 @@ import { BrowserRouter } from 'react-router-dom';
 import { AuthProvider } from '@/hooks/useAuth';
 import { ToastProvider } from '@/hooks/useToast';
 import ErrorBoundary from '@/components/ErrorBoundary';
+import { LanguageProvider } from '@/hooks/useLanguage';
 
 interface AppProvidersProps {
   children: React.ReactNode;
@@ -14,7 +15,9 @@ const AppProviders: React.FC<AppProvidersProps> = ({ children }) => {
       <BrowserRouter>
         <ToastProvider>
           <AuthProvider>
-            {children}
+            <LanguageProvider>
+              {children}
+            </LanguageProvider>
           </AuthProvider>
         </ToastProvider>
       </BrowserRouter>

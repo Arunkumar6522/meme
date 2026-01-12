@@ -5,6 +5,7 @@ export interface User {
   full_name?: string;
   avatar_url?: string;
   role: 'user' | 'admin';
+  preferred_languages?: string[];
   created_at: string;
   updated_at: string;
 }
@@ -18,6 +19,11 @@ export interface LibraryItem {
   media_type: 'audio' | 'video';
   file_url: string;
   thumbnail_url?: string;
+  // For private buckets + signed URLs
+  file_bucket?: string;
+  file_path?: string;
+  thumbnail_bucket?: string;
+  thumbnail_path?: string;
   duration?: number;
   file_size?: number;
   is_published: boolean;
@@ -25,6 +31,7 @@ export interface LibraryItem {
   created_at: string;
   updated_at: string;
   created_by: string;
+  languages?: string[];
 }
 
 // Emotion categories for filtering

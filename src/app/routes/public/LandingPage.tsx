@@ -6,15 +6,17 @@ import { BannerAd, SidebarAd } from '@/components/ads/AdBanner';
 import { useLibrary } from '@/hooks/useLibrary';
 import { useAuth } from '@/hooks/useAuth';
 import LibraryCard from '@/components/library/LibraryCard';
+import { useLanguage } from '@/hooks/useLanguage';
 
 const LandingPage: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { selectedLanguages } = useLanguage();
   const [searchTerm, setSearchTerm] = useState('');
 
   // Fetch top 6 audio + 6 video for public preview
-  const { data: topAudios, loading: topAudiosLoading } = useLibrary({ media_type: 'audio', sort_by: 'trending' }, 1, 6);
-  const { data: topVideos, loading: topVideosLoading } = useLibrary({ media_type: 'video', sort_by: 'trending' }, 1, 6);
+  const { data: topAudios, loading: topAudiosLoading } = useLibrary({ media_type: 'audio', sort_by: 'trending', languages: selectedLanguages }, 1, 6);
+  const { data: topVideos, loading: topVideosLoading } = useLibrary({ media_type: 'video', sort_by: 'trending', languages: selectedLanguages }, 1, 6);
 
   const handleSearch = (event: React.FormEvent) => {
     event.preventDefault();

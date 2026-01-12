@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS public.users (
   full_name TEXT,
   avatar_url TEXT,
   role TEXT DEFAULT 'user' NOT NULL,
+  preferred_languages TEXT[] DEFAULT '{}'::TEXT[] NOT NULL,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
 );
@@ -22,6 +23,12 @@ CREATE TABLE IF NOT EXISTS public.library_items (
   media_type TEXT NOT NULL,
   file_url TEXT NOT NULL,
   thumbnail_url TEXT,
+  -- For private buckets + signed URLs (recommended)
+  file_bucket TEXT,
+  file_path TEXT,
+  thumbnail_bucket TEXT,
+  thumbnail_path TEXT,
+  languages TEXT[] DEFAULT '{}'::TEXT[] NOT NULL,
   duration INTEGER,
   file_size BIGINT,
   is_published BOOLEAN DEFAULT false NOT NULL,
@@ -147,10 +154,12 @@ GRANT SELECT ON public.users TO anon, authenticated;
 GRANT SELECT ON public.library_items TO anon, authenticated;
 GRANT ALL ON public.users TO authenticated;
 GRANT ALL ON public.library_items TO authenticated;
-GRANT ALL ON public.otp_codes TO anon, authenticated;
+-- OTP is handled server-side via Netlify functions using SUPABASE_SERVICE_ROLE_KEY (bypasses RLS).
+-- Do NOT allow anon/authenticated roles direct access to otp_codes.
+REVOKE ALL ON public.otp_codes FROM anon, authenticated;
 
 -- RLS Policies for OTP codes
-CREATE POLICY "Allow all access to otp_codes" ON public.otp_codes USING (true) WITH CHECK (true);
+-- Intentionally no policies for anon/authenticated.
 
 -- Storage setup (create these buckets manually in Supabase dashboard)
 -- Bucket names: library-audio, library-video, thumbnails

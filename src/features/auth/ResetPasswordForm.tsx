@@ -26,14 +26,15 @@ const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({ email }) => {
 
   // Get email from props or location state
   const userEmail = email || (location.state as any)?.email;
+  const otpCode = (location.state as any)?.code as string | undefined;
 
   useEffect(() => {
     // Check if we have the user email
-    if (!userEmail) {
+    if (!userEmail || !otpCode) {
       showError('Invalid reset session. Please start over.', 'Session Error');
       navigate('/auth/forgot-password');
     }
-  }, [userEmail, navigate, showError]);
+  }, [userEmail, otpCode, navigate, showError]);
 
   const validateForm = () => {
     const newErrors: typeof errors = {};
@@ -57,13 +58,13 @@ const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({ email }) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!validateForm() || !userEmail) return;
+    if (!validateForm() || !userEmail || !otpCode) return;
 
     setLoading(true);
     setErrors({});
 
     try {
-      const { error } = await CustomAuthService.updatePasswordWithEmail(userEmail, formData.password);
+      const { error } = await CustomAuthService.updatePasswordWithEmail(userEmail, otpCode, formData.password);
       
       if (error) {
         setErrors({ general: error });
