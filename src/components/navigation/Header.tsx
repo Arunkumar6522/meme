@@ -61,14 +61,18 @@ const Header: React.FC = () => {
 
   const navigation = useMemo(() => {
     const base = [{ name: 'Home', href: '/' }];
-    if (isAdmin) {
+    // Library should be visible to any signed-in user
+    if (user) {
       base.push({ name: 'Library', href: '/library' });
+    }
+    // Admin-only links
+    if (isAdmin) {
       base.push({ name: 'Upload', href: '/upload' });
       base.push({ name: 'Artists', href: '/admin/artists' });
       base.push({ name: 'Create (beta)', href: '/create' });
     }
     return base;
-  }, [isAdmin]);
+  }, [isAdmin, user]);
 
   const userNavigation = [
     { name: 'Profile', href: '/profile', icon: User },
@@ -247,16 +251,7 @@ const Header: React.FC = () => {
                 </div>
               </div>
               
-              {user && isAdmin && (
-                <Link
-                  to="/admin/upload"
-                  className="flex items-center px-3 py-2 text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  <Shield className="h-5 w-5 mr-3" aria-hidden="true" />
-                  Admin Upload
-                </Link>
-              )}
+              {/* Admin upload link is already included in navigation for admins */}
               
               {user && (
                 <>

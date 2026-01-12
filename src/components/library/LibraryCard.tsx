@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback, memo } from 'react';
-import { Play, Pause, Download, Share2, Heart, Volume2, Video, Maximize } from 'lucide-react';
+import { Play, Pause, Download, Share2, Heart, Volume2, Maximize, MoreVertical } from 'lucide-react';
 import { Button } from '@/components/ui';
 import { LibraryService } from '@/services/library.service';
 import { useToast } from '@/hooks/useToast';
@@ -14,9 +14,10 @@ interface LibraryCardProps {
   item: LibraryItem;
   className?: string;
   isAdmin?: boolean;
+  locked?: boolean;
 }
 
-const LibraryCard: React.FC<LibraryCardProps> = memo(({ item, className, isAdmin = false }) => {
+const LibraryCard: React.FC<LibraryCardProps> = memo(({ item, className, isAdmin = false, locked = false }) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const [resolvedFileUrl, setResolvedFileUrl] = useState<string>(item.file_url || '');
@@ -111,23 +112,48 @@ const LibraryCard: React.FC<LibraryCardProps> = memo(({ item, className, isAdmin
     window.dispatchEvent(new CustomEvent('media:play', { detail: mediaId }));
   };
 
-  const ensureSignedUrls = useCallback(async () => {
-    // Only fetch signed URLs if we don't already have a URL
-    if (!resolvedFileUrl) {
+  const ensureSignedUrls = useCallback(async (): Promise<{ fileUrl: string; thumbUrl: string }> => {
+    // IMPORTANT: don't rely on async React state updates for immediate playback.
+    // Fetch and return the URLs directly, then also cache them in state for later renders.
+    let fileUrl = resolvedFileUrl || item.file_url || '';
+    let thumbUrl = resolvedThumbUrl || item.thumbnail_url || '';
+
+    if (!fileUrl) {
       const signed = await LibraryService.getSignedItemUrl(item.id, 'file');
-      if (signed) setResolvedFileUrl(signed);
+      if (signed) {
+        fileUrl = signed;
+        setResolvedFileUrl(signed);
+      }
     }
-    if (!resolvedThumbUrl && (item.thumbnail_bucket || item.thumbnail_path)) {
+
+    if (!thumbUrl && (item.thumbnail_bucket || item.thumbnail_path)) {
       const signedThumb = await LibraryService.getSignedItemUrl(item.id, 'thumbnail');
-      if (signedThumb) setResolvedThumbUrl(signedThumb);
+      if (signedThumb) {
+        thumbUrl = signedThumb;
+        setResolvedThumbUrl(signedThumb);
+      }
     }
-  }, [item.id, item.thumbnail_bucket, item.thumbnail_path, resolvedFileUrl, resolvedThumbUrl]);
+
+    return { fileUrl, thumbUrl };
+  }, [
+    item.id,
+    item.file_url,
+    item.thumbnail_url,
+    item.thumbnail_bucket,
+    item.thumbnail_path,
+    resolvedFileUrl,
+    resolvedThumbUrl,
+  ]);
 
   const handlePlay = useCallback(async () => {
-    await ensureSignedUrls();
-    const fileUrl = resolvedFileUrl || item.file_url;
+    if (locked) {
+      showError('Login to unlock this item.', 'Locked');
+      navigate('/auth/login');
+      return;
+    }
+    const { fileUrl } = await ensureSignedUrls();
     if (!fileUrl) {
-      showError('File unavailable', 'Playback Error');
+      showError('File unavailable. If you are admin, re-upload after running the DB migration for storage columns.', 'Playback Error');
       return;
     }
     if (item.media_type === 'audio') {
@@ -153,7 +179,7 @@ const LibraryCard: React.FC<LibraryCardProps> = memo(({ item, className, isAdmin
           setIsPlaying(true);
         } catch (error) {
           console.error('Error playing audio:', error);
-          showError('Failed to play audio', 'Playback Error');
+          showError('Failed to play audio. Please try again.', 'Playback Error');
         }
       }
     } else {
@@ -172,14 +198,19 @@ const LibraryCard: React.FC<LibraryCardProps> = memo(({ item, className, isAdmin
           setIsPlaying(true);
         } catch (error) {
           console.error('Error playing video:', error);
-          showError('Failed to play video', 'Playback Error');
+          showError('Failed to play video. Please try again.', 'Playback Error');
         }
       }
     }
-  }, [ensureSignedUrls, resolvedFileUrl, item.media_type, item.file_url, isPlaying, showError]);
+  }, [ensureSignedUrls, item.media_type, isPlaying, locked, navigate, showError]);
 
   const handleDownload = useCallback(async () => {
     if (downloading) return;
+    if (locked) {
+      showError('Login to unlock downloads.', 'Locked');
+      navigate('/auth/login');
+      return;
+    }
     
     setDownloading(true);
     try {
@@ -228,13 +259,18 @@ const LibraryCard: React.FC<LibraryCardProps> = memo(({ item, className, isAdmin
   }, [item.id, item.file_url, item.title, item.media_type, resolvedFileUrl, downloading, showSuccess, showError]);
 
   const handleLike = useCallback(async () => {
+    if (locked) {
+      showError('Login to use wishlist.', 'Locked');
+      navigate('/auth/login');
+      return;
+    }
     try {
       await toggleFavorite(item.id);
       showSuccess(isFavorite(item.id) ? 'Removed from wishlist' : 'Added to wishlist', 'Wishlist');
     } catch (e: any) {
       showError('Failed to update wishlist', 'Error');
     }
-  }, [item.id, toggleFavorite, showError, showSuccess, isFavorite]);
+  }, [locked, navigate, item.id, toggleFavorite, showError, showSuccess, isFavorite]);
 
   const handleShare = useCallback(async () => {
     const shareUrl = `${window.location.origin}/library/${item.id}`;
@@ -287,13 +323,10 @@ const LibraryCard: React.FC<LibraryCardProps> = memo(({ item, className, isAdmin
           emitMenuOpen();
           setMenuOpen((prev) => !prev);
         }}
-        className="w-10 h-10 rounded-full bg-white hover:bg-orange-50 flex items-center justify-center transition-all focus:outline-none focus:ring-2 focus:ring-orange-300 active:scale-95 shadow-sm hover:shadow touch-manipulation"
+        className="w-9 h-9 rounded-full bg-white/95 hover:bg-orange-50 flex items-center justify-center transition-all focus:outline-none focus:ring-2 focus:ring-orange-300 active:scale-95 shadow-sm hover:shadow touch-manipulation border border-gray-200"
         aria-label="More actions"
       >
-        <span className="sr-only">More actions</span>
-        <svg className="w-5 h-5 text-gray-600" fill="currentColor" viewBox="0 0 20 20">
-          <path d="M6 10a2 2 0 11-4 0 2 2 0 014 0zm6 0a2 2 0 11-4 0 2 2 0 014 0zm4 2a2 2 0 100-4 2 2 0 000 4z" />
-        </svg>
+        <MoreVertical className="w-5 h-5 text-gray-700" />
       </button>
       {menuOpen && (
         <div
@@ -375,7 +408,7 @@ const LibraryCard: React.FC<LibraryCardProps> = memo(({ item, className, isAdmin
   );
 
   const renderVideo = () => (
-    <div className="relative w-full overflow-hidden rounded-lg shadow-sm border border-gray-200 bg-gray-900 aspect-[4/5] sm:aspect-video">
+    <div className="relative w-full overflow-hidden rounded-lg shadow-sm border border-gray-200 bg-gray-900 aspect-video">
       {resolvedThumbUrl && !isPlaying ? (
         <img
           src={resolvedThumbUrl}
@@ -410,6 +443,17 @@ const LibraryCard: React.FC<LibraryCardProps> = memo(({ item, className, isAdmin
           </div>
         </button>
       )}
+      {/* kebab menu near the media */}
+      {!locked && (
+        <div className="absolute top-2 right-2 z-20">
+          {renderActionsMenu()}
+        </div>
+      )}
+      {locked && (
+        <div className="absolute inset-0 flex items-center justify-center bg-black/50 text-white text-sm font-semibold">
+          Login to unlock
+        </div>
+      )}
       {isPlaying && (
         <button
           onClick={() => {
@@ -433,39 +477,51 @@ const LibraryCard: React.FC<LibraryCardProps> = memo(({ item, className, isAdmin
   );
 
   const renderAudio = () => (
-    <button
-      onClick={handlePlay}
-      className={cn(
-        'relative w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-full shadow-lg hover:shadow-xl',
-        'transition-all duration-200 transform hover:scale-105 active:scale-95',
-        'focus:outline-none focus:ring-4 focus:ring-orange-300 focus:ring-offset-2',
-        'overflow-hidden border-2 sm:border-4 border-white',
-        'touch-manipulation',
-        getThumbnailColor()
-      )}
-      aria-label={`Play ${item.title}`}
-    >
-      {resolvedThumbUrl ? (
-        <img
-          src={resolvedThumbUrl}
-          alt={`Thumbnail for ${item.title}`}
-          className="w-full h-full object-cover rounded-full"
-          loading="lazy"
-          decoding="async"
-        />
-      ) : (
-        <div className="flex items-center justify-center w-full h-full">
-          <Volume2 className="h-6 w-6 sm:h-8 sm:w-8 md:h-10 md:w-10 text-white" aria-hidden="true" />
+    <div className="relative inline-block">
+      <button
+        onClick={handlePlay}
+        className={cn(
+          'relative w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-full shadow-lg hover:shadow-xl',
+          'transition-all duration-200 transform hover:scale-105 active:scale-95',
+          'focus:outline-none focus:ring-4 focus:ring-orange-300 focus:ring-offset-2',
+          'overflow-hidden border-2 sm:border-4 border-white',
+          'touch-manipulation',
+          getThumbnailColor()
+        )}
+        aria-label={`Play ${item.title}`}
+      >
+        {resolvedThumbUrl ? (
+          <img
+            src={resolvedThumbUrl}
+            alt={`Thumbnail for ${item.title}`}
+            className="w-full h-full object-cover rounded-full"
+            loading="lazy"
+            decoding="async"
+          />
+        ) : (
+          <div className="flex items-center justify-center w-full h-full">
+            <Volume2 className="h-6 w-6 sm:h-8 sm:w-8 md:h-10 md:w-10 text-white" aria-hidden="true" />
+          </div>
+        )}
+        <div className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/30 transition-all duration-200 rounded-full">
+          {isPlaying ? (
+            <Pause className="h-5 w-5 sm:h-6 sm:w-6 md:h-8 md:w-8 text-white opacity-100 transition-opacity" />
+          ) : (
+            <Play className="h-5 w-5 sm:h-6 sm:w-6 md:h-8 md:w-8 text-white ml-0.5 opacity-0 group-hover:opacity-100 transition-opacity" />
+          )}
+        </div>
+        {locked && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black/55 text-white text-xs font-semibold rounded-full">
+            Locked
+          </div>
+        )}
+      </button>
+      {!locked && (
+        <div className="absolute -right-2 -top-2">
+          {renderActionsMenu()}
         </div>
       )}
-      <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all duration-200 rounded-full">
-        {isPlaying ? (
-          <Pause className="h-5 w-5 sm:h-6 sm:w-6 md:h-8 md:w-8 text-white opacity-100 transition-opacity" />
-        ) : (
-          <Play className="h-5 w-5 sm:h-6 sm:w-6 md:h-8 md:w-8 text-white ml-0.5 opacity-0 group-hover:opacity-100 transition-opacity" />
-        )}
-      </div>
-    </button>
+    </div>
   );
 
   return (
@@ -476,24 +532,6 @@ const LibraryCard: React.FC<LibraryCardProps> = memo(({ item, className, isAdmin
         <h3 className="text-sm font-semibold text-gray-900 line-clamp-2 text-center">
           {item.title}
         </h3>
-        {item.description && (
-          <p className="text-xs text-gray-600 line-clamp-2 text-center">{item.description}</p>
-        )}
-        <div className="flex items-center justify-center gap-2">
-          <span className={cn('text-[11px] px-2 py-1 rounded-full border', emotionColors[item.emotion] || 'bg-gray-100 text-gray-700 border-gray-200')}>
-            {item.emotion}
-          </span>
-          {item.file_size && (
-            <span className="text-[11px] text-gray-500">{formatFileSize(item.file_size)}</span>
-          )}
-          {typeof item.download_count === 'number' && (
-            <span className="text-[11px] text-gray-500">{item.download_count} dl</span>
-          )}
-        </div>
-      </div>
-
-      <div className="flex items-center justify-center">
-        {renderActionsMenu()}
       </div>
 
       {isAdmin && editOpen && (

@@ -1,29 +1,95 @@
-import React, { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Play, Download, Search, Lock } from 'lucide-react';
-import { Button, SkeletonCard, Input } from '@/components/ui';
-import { BannerAd, SidebarAd } from '@/components/ads/AdBanner';
+import React, { useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Search, Lock } from 'lucide-react';
+import { Button, Input, SkeletonCard } from '@/components/ui';
+import { SidebarAd } from '@/components/ads/AdBanner';
 import { useLibrary } from '@/hooks/useLibrary';
 import { useAuth } from '@/hooks/useAuth';
-import LibraryCard from '@/components/library/LibraryCard';
 import { useLanguage } from '@/hooks/useLanguage';
+import LibraryCard from '@/components/library/LibraryCard';
+
+const LanguageSection: React.FC<{
+  lang: string;
+  canPlayAll: boolean;
+  onSeeAll: () => void;
+}> = ({ lang, canPlayAll, onSeeAll }) => {
+  const audioQuery = useLibrary({ media_type: 'audio', sort_by: 'trending', languages: [lang] }, 1, 10);
+  const videoQuery = useLibrary({ media_type: 'video', sort_by: 'trending', languages: [lang] }, 1, 10);
+
+  const renderRail = (items: any[], loading: boolean, kind: 'audio' | 'video') => {
+    if (loading) {
+      return (
+        <div className="flex gap-4 overflow-x-auto pb-2">
+          {Array.from({ length: 6 }).map((_, idx) => (
+            <div key={idx} className="flex-none w-40">
+              <SkeletonCard />
+            </div>
+          ))}
+        </div>
+      );
+    }
+
+    if (!items?.length) {
+      return <div className="text-sm text-gray-600">No {kind}s yet.</div>;
+    }
+
+    return (
+      <div className="flex gap-4 overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0">
+        {items.map((item: any, idx: number) => (
+          <div key={item.id} className="flex-none w-40 sm:w-44">
+            <LibraryCard item={item} locked={!canPlayAll && idx >= 5} />
+          </div>
+        ))}
+      </div>
+    );
+  };
+
+  return (
+    <section className="space-y-4">
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <h2 className="text-xl sm:text-2xl font-semibold text-gray-900">Trending in {lang}</h2>
+          {!canPlayAll && (
+            <p className="text-sm text-gray-600">
+              Showing 5 previews. <span className="font-medium">Login to unlock all 10.</span>
+            </p>
+          )}
+        </div>
+        <Button
+          className="bg-orange-600 hover:bg-orange-700 text-white border-orange-600"
+          onClick={onSeeAll}
+        >
+          See all
+        </Button>
+      </div>
+
+      <div className="space-y-2">
+        <div className="flex items-center gap-2 text-sm font-semibold text-gray-900">
+          Audio {!canPlayAll && <Lock className="h-4 w-4 text-orange-600" />}
+        </div>
+        {renderRail(audioQuery.data, audioQuery.loading, 'audio')}
+      </div>
+
+      <div className="space-y-2">
+        <div className="flex items-center gap-2 text-sm font-semibold text-gray-900">
+          Video {!canPlayAll && <Lock className="h-4 w-4 text-orange-600" />}
+        </div>
+        {renderRail(videoQuery.data, videoQuery.loading, 'video')}
+      </div>
+    </section>
+  );
+};
 
 const LandingPage: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { selectedLanguages } = useLanguage();
+  const { setSelectedLanguages } = useLanguage();
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Fetch top 6 audio + 6 video for public preview
-  const topAudiosQuery = useLibrary({ media_type: 'audio', sort_by: 'trending' }, 1, 6);
-  const topVideosQuery = useLibrary({ media_type: 'video', sort_by: 'trending' }, 1, 6);
-
-  // Language change should trigger a refetch immediately (same tab)
-  useEffect(() => {
-    topAudiosQuery.updateFilters({ media_type: 'audio', sort_by: 'trending', languages: selectedLanguages });
-    topVideosQuery.updateFilters({ media_type: 'video', sort_by: 'trending', languages: selectedLanguages });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedLanguages]);
+  const languagesToShow = useMemo(
+    () => ['Tamil', 'English', 'Malayalam', 'Kannada', 'Telugu'],
+    []
+  );
 
   const handleSearch = (event: React.FormEvent) => {
     event.preventDefault();
@@ -48,7 +114,7 @@ const LandingPage: React.FC = () => {
         <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
           <div className="text-center">
             <h1 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
-              ilovememe.in — clips and audios, ready to drop in.
+              Clips and audios, ready to drop in.
             </h1>
             <p className="mt-3 text-base sm:text-lg text-gray-700 max-w-2xl mx-auto">
               Search, preview, and download trending meme audios and short-ready videos. Sign in to unlock everything.
@@ -79,91 +145,21 @@ const LandingPage: React.FC = () => {
       {/* Preview rail */}
       <div className="bg-orange-50/60 border-t border-b border-orange-100">
         <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-10 sm:py-14 space-y-10">
-          {/* Audio rail */}
-          <section>
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h2 className="text-xl sm:text-2xl font-semibold text-gray-900">Top Audios</h2>
-                <p className="text-sm text-gray-600">Preview and download trending meme sounds.</p>
-              </div>
-              <div className="flex gap-3">
-                {!user && (
-                  <Button variant="outline" className="border-orange-500 text-orange-600 hover:bg-orange-50" onClick={() => navigate('/auth/login')}>
-                    <Lock className="h-4 w-4 mr-2" />
-                    Unlock All
-                  </Button>
-                )}
-                <Button
-                  className="bg-orange-600 hover:bg-orange-700 text-white border-orange-600"
-                  onClick={() => user ? navigate('/library?media_type=audio') : navigate('/auth/login')}
-                >
-                  {user ? 'See all' : 'Login to see all'}
-                </Button>
-              </div>
-            </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-              {topAudiosQuery.loading &&
-                Array.from({ length: 6 }).map((_, idx) => <SkeletonCard key={idx} />)}
-              {!topAudiosQuery.loading && topAudiosQuery.data && topAudiosQuery.data.map((item) => (
-                <LibraryCard key={item.id} item={item} />
-              ))}
-              {!topAudiosQuery.loading && (!topAudiosQuery.data || topAudiosQuery.data.length === 0) && (
-                <div className="col-span-full text-sm text-gray-600">No audios yet.</div>
-              )}
-            </div>
-          </section>
-
-          {/* Video rail */}
-          <section>
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h2 className="text-xl sm:text-2xl font-semibold text-gray-900">Top Videos</h2>
-                <p className="text-sm text-gray-600">Short-ready clips and green-screen templates.</p>
-              </div>
-              <div className="flex gap-3">
-                {!user && (
-                  <Button variant="outline" className="border-orange-500 text-orange-600 hover:bg-orange-50" onClick={() => navigate('/auth/login')}>
-                    <Lock className="h-4 w-4 mr-2" />
-                    Unlock All
-                  </Button>
-                )}
-                <Button
-                  className="bg-orange-600 hover:bg-orange-700 text-white border-orange-600"
-                  onClick={() => user ? navigate('/library?media_type=video') : navigate('/auth/login')}
-                >
-                  {user ? 'See all' : 'Login to see all'}
-                </Button>
-              </div>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {topVideosQuery.loading &&
-                Array.from({ length: 6 }).map((_, idx) => <SkeletonCard key={idx} />)}
-              {!topVideosQuery.loading && topVideosQuery.data && topVideosQuery.data.map((item) => (
-                <LibraryCard key={item.id} item={item} />
-              ))}
-              {!topVideosQuery.loading && (!topVideosQuery.data || topVideosQuery.data.length === 0) && (
-                <div className="col-span-full text-sm text-gray-600">No videos yet.</div>
-              )}
-            </div>
-          </section>
-
-          {!user && (
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 rounded-lg border border-orange-200 bg-white p-4 sm:p-5">
-              <div className="flex items-center gap-3 text-gray-800">
-                <Lock className="h-5 w-5 text-orange-600" />
-                <div>
-                  <p className="font-semibold">Login to unlock the full library</p>
-                  <p className="text-sm text-gray-600">
-                    Access all audio/video, filters, and downloads.
-                  </p>
-                </div>
-              </div>
-              <div className="flex gap-3">
-                <Button variant="outline" className="border-orange-500 text-orange-600 hover:bg-orange-50" onClick={() => navigate('/auth/login')}>Sign In</Button>
-                <Button className="bg-orange-600 hover:bg-orange-700 text-white border-orange-600" onClick={() => navigate('/auth/register')}>Create Account</Button>
-              </div>
-            </div>
-          )}
+          {languagesToShow.map((lang) => (
+            <LanguageSection
+              key={lang}
+              lang={lang}
+              canPlayAll={!!user}
+              onSeeAll={() => {
+                if (!user) {
+                  navigate('/auth/login');
+                  return;
+                }
+                setSelectedLanguages([lang]);
+                navigate('/library');
+              }}
+            />
+          ))}
         </div>
       </div>
     </div>
