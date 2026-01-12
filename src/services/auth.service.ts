@@ -2,6 +2,40 @@ import { supabase } from './supabase';
 import type { AuthUser } from '@/types';
 
 export class AuthService {
+  private static isInvalidRefreshTokenError(err: any): boolean {
+    const msg = String(err?.message || '');
+    return (
+      msg.includes('Invalid Refresh Token') ||
+      msg.includes('Refresh Token Not Found') ||
+      msg.includes('refresh_token')
+    );
+  }
+
+  static async clearLocalSession(): Promise<void> {
+    try {
+      // Prefer local-only signOut (no network)
+      // @ts-expect-error - supabase-js supports scope in signOut options
+      await supabase.auth.signOut({ scope: 'local' });
+    } catch {
+      // ignore
+    }
+
+    // Extra safety: remove supabase auth tokens from storage
+    try {
+      const keysToRemove: string[] = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (!key) continue;
+        // Supabase v2 storage keys often look like: sb-<ref>-auth-token
+        if (key.startsWith('sb-') && key.includes('-auth-token')) {
+          keysToRemove.push(key);
+        }
+      }
+      keysToRemove.forEach((k) => localStorage.removeItem(k));
+    } catch {
+      // ignore
+    }
+  }
   // Sign up with email and password (using custom OTP system)
   static async signUp(email: string, password: string, fullName?: string) {
     try {
@@ -124,18 +158,30 @@ export class AuthService {
   // Get current session
   static async getCurrentSession() {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      return session;
+      const { data, error } = await supabase.auth.getSession();
+      if (error) {
+        // Common in production after tokens are invalidated/rotated: clear and continue cleanly
+        if (this.isInvalidRefreshTokenError(error)) {
+          await this.clearLocalSession();
+          return null;
+        }
+        throw error;
+      }
+      return data.session;
     } catch (error) {
       console.error('Error getting current session:', error);
+      if (this.isInvalidRefreshTokenError(error)) {
+        await this.clearLocalSession();
+        return null;
+      }
       return null;
     }
   }
 
   // Listen to auth state changes
-  static onAuthStateChange(callback: (user: AuthUser | null) => void) {
+  static onAuthStateChange(callback: (event: string, user: AuthUser | null) => void) {
     return supabase.auth.onAuthStateChange((event, session) => {
-      callback(session?.user as AuthUser || null);
+      callback(event, (session?.user as AuthUser) || null);
     });
   }
 }

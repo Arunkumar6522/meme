@@ -27,8 +27,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Get initial session
     const getInitialSession = async () => {
       try {
-        const user = await AuthService.getCurrentUser();
-        setState(prev => ({ ...prev, user, loading: false }));
+        // If a stale refresh token exists in storage, Supabase may throw 400s on boot.
+        // We proactively try to read the session, and if it's invalid we clear it.
+        const session = await AuthService.getCurrentSession();
+        const user = session?.user ? (session.user as AuthUser) : await AuthService.getCurrentUser();
+        setState(prev => ({ ...prev, user, loading: false, error: null }));
       } catch (error) {
         setState(prev => ({ 
           ...prev, 
@@ -41,7 +44,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     getInitialSession();
 
     // Listen for auth changes
-    const { data: { subscription } } = AuthService.onAuthStateChange((user) => {
+    const { data: { subscription } } = AuthService.onAuthStateChange((event, user) => {
+      // If refresh token is invalid/corrupt, clean it and force signed-out state
+      if (event === 'TOKEN_REFRESH_FAILED') {
+        AuthService.clearLocalSession().finally(() => {
+          setState(prev => ({ ...prev, user: null, loading: false, error: null }));
+        });
+        return;
+      }
       setState(prev => ({ ...prev, user, loading: false, error: null }));
     });
 
