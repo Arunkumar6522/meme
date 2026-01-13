@@ -128,6 +128,17 @@ const LibraryCard: React.FC<LibraryCardProps> = memo(({ item, className, isAdmin
     window.dispatchEvent(new CustomEvent('menu:open', { detail: mediaId }));
   };
 
+  // Single-open guarantee across the whole app (stronger than relying on events alone)
+  useEffect(() => {
+    if (!menuOpen) return;
+    (window as any).__ilovememe_openMenuId = mediaId;
+    return () => {
+      if ((window as any).__ilovememe_openMenuId === mediaId) {
+        (window as any).__ilovememe_openMenuId = null;
+      }
+    };
+  }, [menuOpen, mediaId]);
+
   const positionMenu = useCallback(() => {
     const btn = menuButtonRef.current;
     if (!btn) return;
@@ -173,6 +184,9 @@ const LibraryCard: React.FC<LibraryCardProps> = memo(({ item, className, isAdmin
   useEffect(() => {
     if (!menuOpen) return;
     const onResizeOrScroll = () => positionMenu();
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setMenuOpen(false);
+    };
     const onDown = (e: MouseEvent) => {
       const target = e.target as Node | null;
       if (!target) return;
@@ -183,10 +197,12 @@ const LibraryCard: React.FC<LibraryCardProps> = memo(({ item, className, isAdmin
     window.addEventListener('resize', onResizeOrScroll);
     window.addEventListener('scroll', onResizeOrScroll, true);
     window.addEventListener('mousedown', onDown);
+    window.addEventListener('keydown', onKeyDown);
     return () => {
       window.removeEventListener('resize', onResizeOrScroll);
       window.removeEventListener('scroll', onResizeOrScroll, true);
       window.removeEventListener('mousedown', onDown);
+      window.removeEventListener('keydown', onKeyDown);
     };
   }, [menuOpen, positionMenu]);
 
@@ -409,10 +425,19 @@ const LibraryCard: React.FC<LibraryCardProps> = memo(({ item, className, isAdmin
         onClick={(e) => {
           e.stopPropagation();
           emitMenuOpen();
+          const openId = (window as any).__ilovememe_openMenuId as string | null | undefined;
+          // If another menu is open, close it via the shared event and open this one.
+          if (openId && openId !== mediaId) {
+            window.dispatchEvent(new CustomEvent('menu:open', { detail: mediaId }));
+            setMenuOpen(true);
+            return;
+          }
           setMenuOpen((prev) => !prev);
         }}
         className="w-9 h-9 rounded-full bg-white/95 hover:bg-orange-50 flex items-center justify-center transition-all focus:outline-none focus:ring-2 focus:ring-orange-300 active:scale-95 shadow-sm hover:shadow touch-manipulation border border-gray-200"
         aria-label="More actions"
+        aria-expanded={menuOpen}
+        aria-haspopup="menu"
       >
         <MoreVertical className="w-5 h-5 text-gray-700" />
       </button>
