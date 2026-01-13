@@ -9,6 +9,11 @@ import OTPVerificationForm from './OTPVerificationForm';
 const RegisterForm: React.FC = () => {
   const location = useLocation();
   const [step, setStep] = useState<'form' | 'otp'>('form');
+  const [otpContext, setOtpContext] = useState<{
+    email: string;
+    password: string;
+    fullName?: string;
+  } | null>(null);
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -34,52 +39,22 @@ const RegisterForm: React.FC = () => {
   // We intentionally do NOT restore the OTP step after refresh, because that would require
   // persisting the password somewhere, which is unsafe.
   useEffect(() => {
-    // Check if we have a valid OTP flow in progress
     try {
-      const persistedStep = sessionStorage.getItem('register-step');
-      const persistedEmail = sessionStorage.getItem('register-email');
-      
-      const normalizedPersistedEmail = persistedEmail?.trim().toLowerCase() || '';
-      
-      // CRITICAL: Only restore OTP step if:
-      // 1. Step is 'otp'
-      // 2. Email exists and is not empty
-      // 3. Email is FULLY valid (matches regex completely)
-      // 4. Email is at least 5 characters (a@b.c minimum)
-      if (normalizedPersistedEmail && 
-          normalizedPersistedEmail.length >= 5 &&
-          validateEmail(normalizedPersistedEmail)) {
-        // Always restore to form step (not OTP)
-        setStep('form');
-        stepRef.current = 'form';
-
-        // Restore SAFE form data if available (no password)
-        const savedFormData = sessionStorage.getItem('register-form-data');
-        if (savedFormData) {
-          try {
-            const parsed = JSON.parse(savedFormData);
-            // Only restore if the email matches
-            if (parsed.email && parsed.email.trim().toLowerCase() === normalizedPersistedEmail) {
-              setFormData((prev) => ({
-                ...prev,
-                fullName: parsed.fullName || '',
-                email: parsed.email || '',
-                password: '',
-                confirmPassword: '',
-              }));
-            }
-          } catch (e) {
-            // Ignore parse errors
-          }
+      // Restore SAFE form data if available (no password)
+      const savedFormData = sessionStorage.getItem('register-form-data');
+      if (savedFormData) {
+        try {
+          const parsed = JSON.parse(savedFormData);
+          setFormData((prev) => ({
+            ...prev,
+            fullName: parsed.fullName || '',
+            email: parsed.email || '',
+            password: '',
+            confirmPassword: '',
+          }));
+        } catch (e) {
+          // Ignore parse errors
         }
-      } else {
-        // Clear everything - fresh start
-        // This ensures we don't show OTP screen with incomplete emails
-        sessionStorage.removeItem('register-step');
-        sessionStorage.removeItem('register-email');
-        sessionStorage.removeItem('register-form-data');
-        setStep('form');
-        stepRef.current = 'form';
       }
     } catch (e) {
       // If sessionStorage fails, just start fresh
@@ -102,27 +77,15 @@ const RegisterForm: React.FC = () => {
     }
   }, [formData, step]);
   
-  // CRITICAL: If user is typing and email becomes invalid, ensure we're on form step
-  // This prevents OTP screen from showing with incomplete emails
+  // If OTP step is active but we lost the in-memory OTP context, return to form (no password persistence).
   useEffect(() => {
-    const normalizedEmail = formData.email?.trim().toLowerCase() || '';
-    const isEmailValid = normalizedEmail.length >= 5 && validateEmail(normalizedEmail);
-    
-    // If we're on OTP step but email is invalid or incomplete, go back to form
-    if (step === 'otp' && (!isEmailValid || !normalizedEmail)) {
+    if (step === 'otp' && !otpContext) {
       flushSync(() => {
         setStep('form');
         stepRef.current = 'form';
       });
-      // Clear sessionStorage
-      try {
-        sessionStorage.removeItem('register-step');
-        sessionStorage.removeItem('register-email');
-      } catch (e) {
-        // Ignore
-      }
     }
-  }, [formData.email, step]);
+  }, [otpContext, step]);
 
   // Proper email validation regex (require TLD length >= 2)
   const validateEmail = (email: string): boolean => {
@@ -256,18 +219,14 @@ const RegisterForm: React.FC = () => {
       }
 
       // Only proceed to OTP screen if there's NO error
-      // Success - persist email and step BEFORE state update
-      try {
-        sessionStorage.setItem('register-email', normalizedEmail);
-        sessionStorage.setItem('register-step', 'otp');
-        // Also update formData email to normalized version
-        setFormData(prev => ({ ...prev, email: normalizedEmail }));
-      } catch (e) {
-        console.error('Failed to save to sessionStorage:', e);
-      }
-
-      // Force synchronous state update FIRST
+      // Success - move to OTP step (keep signup data only in memory; never persist password)
       flushSync(() => {
+        setOtpContext({
+          email: normalizedEmail,
+          password: formData.password,
+          fullName: formData.fullName?.trim() || undefined,
+        });
+        setFormData(prev => ({ ...prev, email: normalizedEmail }));
         setStep('otp');
         stepRef.current = 'otp';
       });
@@ -324,41 +283,32 @@ const RegisterForm: React.FC = () => {
 
   // Show OTP verification form ONLY if:
   // 1. Step is 'otp'
-  // 2. Email exists and is not empty
-  // 3. Email is FULLY valid (complete email address, not partial)
-  // 4. Email is at least 5 characters (minimum: a@b.c)
-  // 5. NO errors exist (critical - don't show OTP if there's an error)
-  // 6. We have a valid email in formData
-  const normalizedEmail = formData.email?.trim().toLowerCase() || '';
-  const isEmailComplete = normalizedEmail.length >= 5 && validateEmail(normalizedEmail);
-  const hasAnyError = Object.values(errors).some(Boolean);
-  
-  const shouldShowOTP = step === 'otp' && 
-                        normalizedEmail && 
-                        normalizedEmail.length >= 5 &&
-                        isEmailComplete && 
-                        !hasAnyError;
+  // 2. We have the in-memory OTP context (email + password)
+  // 3. Email is valid
+  const shouldShowOTP =
+    step === 'otp' &&
+    !!otpContext?.email &&
+    validateEmail(otpContext.email);
 
   if (shouldShowOTP) {
     return (
       <OTPVerificationForm
-        key={`otp-${formData.email}`}
-        email={formData.email.trim().toLowerCase()}
+        key={`otp-${otpContext?.email}`}
+        email={otpContext!.email.trim().toLowerCase()}
         type="signup"
         signupData={{
-          password: formData.password,
-          fullName: formData.fullName?.trim() || undefined,
+          password: otpContext!.password,
+          fullName: otpContext!.fullName,
         }}
         onBack={() => {
-          // Clear sessionStorage and reset to form
+          // Reset to form (never persist password)
           try {
-            sessionStorage.removeItem('register-step');
-            sessionStorage.removeItem('register-email');
             sessionStorage.removeItem('register-form-data');
           } catch (e) {
             // Ignore
           }
           flushSync(() => {
+            setOtpContext(null);
             setStep('form');
             stepRef.current = 'form';
           });
