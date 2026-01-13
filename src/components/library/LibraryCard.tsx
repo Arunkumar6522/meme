@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef, useCallback, memo } from 'react';
+import React, { useLayoutEffect, useState, useEffect, useRef, useCallback, memo } from 'react';
+import { createPortal } from 'react-dom';
 import { Play, Pause, Download, Share2, Heart, Volume2, Maximize, MoreVertical, Trash2, Pencil } from 'lucide-react';
 import { Button } from '@/components/ui';
 import { LibraryService } from '@/services/library.service';
@@ -28,6 +29,9 @@ const LibraryCard: React.FC<LibraryCardProps> = memo(({ item, className, isAdmin
   const mediaId = item.id;
   const { isFavorite, toggleFavorite } = useFavorites();
   const [menuOpen, setMenuOpen] = useState(false);
+  const menuButtonRef = useRef<HTMLButtonElement | null>(null);
+  const menuPanelRef = useRef<HTMLDivElement | null>(null);
+  const [menuPos, setMenuPos] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
   const [editOpen, setEditOpen] = useState(false);
   const [editTitle, setEditTitle] = useState(item.title);
   const [editDescription, setEditDescription] = useState(item.description || '');
@@ -123,6 +127,68 @@ const LibraryCard: React.FC<LibraryCardProps> = memo(({ item, className, isAdmin
   const emitMenuOpen = () => {
     window.dispatchEvent(new CustomEvent('menu:open', { detail: mediaId }));
   };
+
+  const positionMenu = useCallback(() => {
+    const btn = menuButtonRef.current;
+    if (!btn) return;
+    const r = btn.getBoundingClientRect();
+    const padding = 8;
+    const assumedWidth = 200; // close to w-44 (176px) + padding
+
+    // Default: align menu's right edge to button's right edge
+    let left = r.right - assumedWidth;
+    left = Math.max(padding, Math.min(left, window.innerWidth - assumedWidth - padding));
+
+    let top = r.bottom + 8;
+    // If near bottom, try open upwards
+    if (top > window.innerHeight - 220) {
+      top = Math.max(padding, r.top - 8 - 220);
+    }
+
+    setMenuPos({ top, left });
+  }, []);
+
+  // Keep the portal menu positioned correctly
+  useLayoutEffect(() => {
+    if (!menuOpen) return;
+    positionMenu();
+    // After first paint, measure the actual panel height and adjust if needed
+    requestAnimationFrame(() => {
+      const panel = menuPanelRef.current;
+      const btn = menuButtonRef.current;
+      if (!panel || !btn) return;
+      const pr = panel.getBoundingClientRect();
+      const br = btn.getBoundingClientRect();
+      const padding = 8;
+      let top = br.bottom + 8;
+      if (top + pr.height > window.innerHeight - padding) {
+        top = Math.max(padding, br.top - 8 - pr.height);
+      }
+      let left = br.right - pr.width;
+      left = Math.max(padding, Math.min(left, window.innerWidth - pr.width - padding));
+      setMenuPos({ top, left });
+    });
+  }, [menuOpen, positionMenu]);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onResizeOrScroll = () => positionMenu();
+    const onDown = (e: MouseEvent) => {
+      const target = e.target as Node | null;
+      if (!target) return;
+      if (menuPanelRef.current?.contains(target)) return;
+      if (menuButtonRef.current?.contains(target)) return;
+      setMenuOpen(false);
+    };
+    window.addEventListener('resize', onResizeOrScroll);
+    window.addEventListener('scroll', onResizeOrScroll, true);
+    window.addEventListener('mousedown', onDown);
+    return () => {
+      window.removeEventListener('resize', onResizeOrScroll);
+      window.removeEventListener('scroll', onResizeOrScroll, true);
+      window.removeEventListener('mousedown', onDown);
+    };
+  }, [menuOpen, positionMenu]);
 
 
   const emitPlay = () => {
@@ -339,6 +405,7 @@ const LibraryCard: React.FC<LibraryCardProps> = memo(({ item, className, isAdmin
   const renderActionsMenu = () => (
     <div className="relative inline-block text-left">
       <button
+        ref={menuButtonRef}
         onClick={(e) => {
           e.stopPropagation();
           emitMenuOpen();
@@ -349,105 +416,109 @@ const LibraryCard: React.FC<LibraryCardProps> = memo(({ item, className, isAdmin
       >
         <MoreVertical className="w-5 h-5 text-gray-700" />
       </button>
-      {menuOpen && (
-        <div
-          className="absolute right-0 mt-2 w-44 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-20"
-          role="menu"
-        >
-          <button
-            className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-            onClick={(e) => {
-              e.stopPropagation();
-              handleLike();
-              setMenuOpen(false);
-            }}
-            role="menuitem"
+      {menuOpen &&
+        createPortal(
+          <div
+            ref={menuPanelRef}
+            className="fixed w-44 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-[9999]"
+            style={{ top: menuPos.top, left: menuPos.left }}
+            role="menu"
           >
-            <Heart className="w-4 h-4" />
-            {isFavorite(item.id) ? 'Remove from wishlist' : 'Add to wishlist'}
-          </button>
-          <button
-            className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-            onClick={(e) => {
-              e.stopPropagation();
-              handleShare();
-              setMenuOpen(false);
-            }}
-            role="menuitem"
-          >
-            <Share2 className="w-4 h-4" />
-            Share
-          </button>
-          <button
-            className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-50"
-            onClick={(e) => {
-              e.stopPropagation();
-              handleDownload();
-              setMenuOpen(false);
-            }}
-            role="menuitem"
-            disabled={downloading}
-          >
-            <Download className="w-4 h-4" />
-            {downloading ? 'Downloading…' : 'Download'}
-          </button>
-          {isAdmin && (
             <button
               className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
               onClick={(e) => {
                 e.stopPropagation();
-                setEditOpen(true);
+                handleLike();
                 setMenuOpen(false);
               }}
               role="menuitem"
             >
-              <Pencil className="w-4 h-4" />
-              Edit
+              <Heart className="w-4 h-4" />
+              {isFavorite(item.id) ? 'Remove from wishlist' : 'Add to wishlist'}
             </button>
-          )}
-          {isAdmin && (
-            <button
-              className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-700 hover:bg-red-50"
-              onClick={async (e) => {
-                e.stopPropagation();
-                setMenuOpen(false);
-                try {
-                  const ok = window.confirm(`Delete "${item.title}"? This cannot be undone.`);
-                  if (!ok) return;
-                  const success = await LibraryService.deleteLibraryItem(item.id);
-                  if (!success) throw new Error('Delete failed');
-                  showSuccess('Deleted', 'Library');
-                  window.dispatchEvent(new CustomEvent('library:itemDeleted', { detail: item.id }));
-                } catch (err: any) {
-                  showError(err?.message || 'Failed to delete', 'Error');
-                }
-              }}
-              role="menuitem"
-            >
-              <Trash2 className="w-4 h-4" />
-              Delete
-            </button>
-          )}
-          {item.media_type === 'video' && (
             <button
               className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
               onClick={(e) => {
                 e.stopPropagation();
-                if (videoRef.current?.requestFullscreen) {
-                  videoRef.current.requestFullscreen();
-                } else {
-                  window.open(item.file_url, '_blank', 'noopener,noreferrer');
-                }
+                handleShare();
                 setMenuOpen(false);
               }}
               role="menuitem"
             >
-              <Maximize className="w-4 h-4" />
-              Full view
+              <Share2 className="w-4 h-4" />
+              Share
             </button>
-          )}
-        </div>
-      )}
+            <button
+              className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleDownload();
+                setMenuOpen(false);
+              }}
+              role="menuitem"
+              disabled={downloading}
+            >
+              <Download className="w-4 h-4" />
+              {downloading ? 'Downloading…' : 'Download'}
+            </button>
+            {isAdmin && (
+              <button
+                className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setEditOpen(true);
+                  setMenuOpen(false);
+                }}
+                role="menuitem"
+              >
+                <Pencil className="w-4 h-4" />
+                Edit
+              </button>
+            )}
+            {isAdmin && (
+              <button
+                className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-700 hover:bg-red-50"
+                onClick={async (e) => {
+                  e.stopPropagation();
+                  setMenuOpen(false);
+                  try {
+                    const ok = window.confirm(`Delete "${item.title}"? This cannot be undone.`);
+                    if (!ok) return;
+                    const success = await LibraryService.deleteLibraryItem(item.id);
+                    if (!success) throw new Error('Delete failed');
+                    showSuccess('Deleted', 'Library');
+                    window.dispatchEvent(new CustomEvent('library:itemDeleted', { detail: item.id }));
+                  } catch (err: any) {
+                    showError(err?.message || 'Failed to delete', 'Error');
+                  }
+                }}
+                role="menuitem"
+              >
+                <Trash2 className="w-4 h-4" />
+                Delete
+              </button>
+            )}
+            {item.media_type === 'video' && (
+              <button
+                className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (videoRef.current?.requestFullscreen) {
+                    videoRef.current.requestFullscreen();
+                  } else {
+                    window.open(item.file_url, '_blank', 'noopener,noreferrer');
+                  }
+                  setMenuOpen(false);
+                }}
+                role="menuitem"
+              >
+                <Maximize className="w-4 h-4" />
+                Full view
+              </button>
+            )}
+          </div>,
+          document.body
+        )}
     </div>
   );
 
