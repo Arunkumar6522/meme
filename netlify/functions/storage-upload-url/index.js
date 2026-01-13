@@ -98,8 +98,10 @@ exports.handler = async (event) => {
       return { statusCode: 400, headers, body: JSON.stringify({ error: 'Invalid mediaType' }) };
     }
 
+    // Keep storage object names human-readable (use original filename),
+    // while staying unique using a timestamp prefix.
     const namePart = safeName(originalName);
-    const path = `${userId}/${Date.now()}-${Math.random().toString(16).slice(2, 10)}-${namePart}`;
+    const path = `${userId}/${Date.now()}-${namePart}`;
 
     const { data, error } = await supabase.storage.from(bucket).createSignedUploadUrl(path);
     if (error || !data?.signedUrl) {

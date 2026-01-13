@@ -39,6 +39,7 @@ const LibraryPage: React.FC = () => {
     count,
     updateFilters,
     goToPage,
+    refresh,
   } = useLibrary(filters);
 
   // Check if user is admin (with caching)
@@ -101,6 +102,13 @@ const LibraryPage: React.FC = () => {
   };
 
   // language changes handled by LanguageProvider
+
+  // Refresh list after admin deletes an item from the card menu
+  useEffect(() => {
+    const handler = () => refresh();
+    window.addEventListener('library:itemDeleted', handler as EventListener);
+    return () => window.removeEventListener('library:itemDeleted', handler as EventListener);
+  }, [refresh]);
 
   return (
     <div className="min-h-screen bg-gray-50">

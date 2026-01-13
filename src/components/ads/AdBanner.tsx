@@ -7,6 +7,7 @@ interface AdBannerProps {
   format?: 'auto' | 'rectangle' | 'horizontal' | 'vertical';
   responsive?: boolean;
   className?: string;
+  showPlaceholderWhenUnconfigured?: boolean;
   'data-testid'?: string;
 }
 
@@ -15,6 +16,7 @@ const AdBanner: React.FC<AdBannerProps> = ({
   format = 'auto',
   responsive = true,
   className,
+  showPlaceholderWhenUnconfigured = true,
   'data-testid': testId,
 }) => {
   const adRef = useRef<HTMLDivElement>(null);
@@ -69,7 +71,29 @@ const AdBanner: React.FC<AdBannerProps> = ({
   // Don't render if no client ID is configured
   const clientId = googleAdsConfig?.clientId;
   if (!clientId) {
-    return null;
+    if (!showPlaceholderWhenUnconfigured) return null;
+    const heightClass =
+      format === 'horizontal'
+        ? 'min-h-[90px]'
+        : format === 'rectangle'
+          ? 'min-h-[250px]'
+          : 'min-h-[100px]';
+    return (
+      <div
+        className={cn(
+          `ad-container flex justify-center items-center ${heightClass} bg-gray-50 border border-dashed border-gray-300 rounded-lg text-gray-500 text-sm`,
+          className
+        )}
+        data-testid={testId}
+        role="complementary"
+        aria-label="Advertisement"
+      >
+        <div className="text-center px-4">
+          <div className="font-medium">Ad Space</div>
+          <div className="text-xs mt-1 opacity-80">Configure AdSense later (won’t block UX)</div>
+        </div>
+      </div>
+    );
   }
 
   return (

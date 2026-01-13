@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback, memo } from 'react';
-import { Play, Pause, Download, Share2, Heart, Volume2, Maximize, MoreVertical } from 'lucide-react';
+import { Play, Pause, Download, Share2, Heart, Volume2, Maximize, MoreVertical, Trash2, Pencil } from 'lucide-react';
 import { Button } from '@/components/ui';
 import { LibraryService } from '@/services/library.service';
 import { useToast } from '@/hooks/useToast';
@@ -380,8 +380,31 @@ const LibraryCard: React.FC<LibraryCardProps> = memo(({ item, className, isAdmin
               }}
               role="menuitem"
             >
-              <Share2 className="w-4 h-4" />
+              <Pencil className="w-4 h-4" />
               Edit
+            </button>
+          )}
+          {isAdmin && (
+            <button
+              className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-700 hover:bg-red-50"
+              onClick={async (e) => {
+                e.stopPropagation();
+                setMenuOpen(false);
+                try {
+                  const ok = window.confirm(`Delete "${item.title}"? This cannot be undone.`);
+                  if (!ok) return;
+                  const success = await LibraryService.deleteLibraryItem(item.id);
+                  if (!success) throw new Error('Delete failed');
+                  showSuccess('Deleted', 'Library');
+                  window.dispatchEvent(new CustomEvent('library:itemDeleted', { detail: item.id }));
+                } catch (err: any) {
+                  showError(err?.message || 'Failed to delete', 'Error');
+                }
+              }}
+              role="menuitem"
+            >
+              <Trash2 className="w-4 h-4" />
+              Delete
             </button>
           )}
           {item.media_type === 'video' && (
