@@ -9,14 +9,23 @@ interface LibraryGridProps {
   loading?: boolean;
   className?: string;
   isAdmin?: boolean;
+  mediaType?: 'audio' | 'video';
 }
 
-const LibraryGrid: React.FC<LibraryGridProps> = memo(({ items, loading = false, className, isAdmin = false }) => {
+const LibraryGrid: React.FC<LibraryGridProps> = memo(({ items, loading = false, className, isAdmin = false, mediaType }) => {
+  const isVideoGrid =
+    mediaType === 'video' ||
+    (mediaType == null && items.length > 0 && items.every((i) => i.media_type === 'video'));
+
+  const gridClass = isVideoGrid
+    ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6'
+    : 'grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8 gap-3 sm:gap-4 md:gap-5 lg:gap-6 max-w-7xl w-full px-2 sm:px-4';
+
   if (loading) {
     return (
       <div
         className={cn(
-          'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6',
+          isVideoGrid ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6' : 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6',
           className
         )}
         aria-label="Loading library items"
@@ -64,13 +73,13 @@ const LibraryGrid: React.FC<LibraryGridProps> = memo(({ items, loading = false, 
     >
       <div
         className={cn(
-          'grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8 gap-3 sm:gap-4 md:gap-5 lg:gap-6 max-w-7xl w-full px-2 sm:px-4',
+          gridClass,
         )}
         role="grid"
         aria-label={`Library grid with ${items.length} items`}
       >
         {items.map((item) => (
-          <div key={item.id} role="gridcell" className="flex justify-center">
+          <div key={item.id} role="gridcell" className={cn('flex', isVideoGrid ? 'justify-stretch' : 'justify-center')}>
             <LibraryCard item={item} isAdmin={isAdmin} />
           </div>
         ))}

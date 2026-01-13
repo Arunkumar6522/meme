@@ -191,7 +191,7 @@ const LibraryPage: React.FC = () => {
 
         {/* Main Content */}
         <div>
-            <LibraryGrid items={items} loading={loading} isAdmin={isAdmin} />
+            <LibraryGrid items={items} loading={loading} isAdmin={isAdmin} mediaType={mediaTab} />
             
             {/* Pagination */}
             {totalPages > 1 && (

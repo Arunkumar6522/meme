@@ -431,71 +431,74 @@ const LibraryCard: React.FC<LibraryCardProps> = memo(({ item, className, isAdmin
   );
 
   const renderVideo = () => (
-    <div className="relative w-full overflow-hidden rounded-lg shadow-sm border border-gray-200 bg-gray-900 aspect-video">
-      {resolvedThumbUrl && !isPlaying ? (
-        <img
-          src={resolvedThumbUrl}
-          alt={`Thumbnail for ${item.title}`}
-          className="w-full h-full object-cover"
-          loading="lazy"
-          decoding="async"
-        />
-      ) : (
-        <video
-          ref={videoRef}
-          className="w-full h-full object-cover"
-          src={resolvedFileUrl || item.file_url}
-          playsInline
-          controls
-          onPlay={() => {
-            emitPlay();
-            setIsPlaying(true);
-          }}
-          onPause={() => setIsPlaying(false)}
-          onEnded={() => setIsPlaying(false)}
-        />
-      )}
-      {!isPlaying && (
-        <button
-          onClick={handlePlay}
-          className="absolute inset-0 flex items-center justify-center bg-black/30 hover:bg-black/40 transition-colors"
-          aria-label={`Play ${item.title}`}
-        >
-          <div className="h-12 w-12 rounded-full bg-white/90 flex items-center justify-center shadow-lg">
-            <Play className="h-6 w-6 text-orange-600 ml-0.5" />
-          </div>
-        </button>
-      )}
-      {/* kebab menu near the media */}
+    <div className="w-full">
+      {/* Put the kebab OUTSIDE the <video> surface so it remains clickable on mobile and isn't clipped by overflow-hidden */}
       {!locked && (
-        <div className="absolute top-2 right-2 z-20">
+        <div className="flex justify-end mb-2">
           {renderActionsMenu()}
         </div>
       )}
-      {locked && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black/50 text-white text-sm font-semibold">
-          Login to unlock
-        </div>
-      )}
-      {isPlaying && (
-        <button
-          onClick={() => {
-            if (videoRef.current) {
-              videoRef.current.pause();
-            }
-            setIsPlaying(false);
-          }}
-          className="absolute bottom-2 left-2 px-3 py-1 rounded-full bg-black/70 text-white text-xs"
-          aria-label="Stop video"
-        >
-          Stop
-        </button>
-      )}
-      {item.duration && (
-        <div className="absolute bottom-2 right-2 px-2 py-1 rounded bg-black/70 text-white text-xs">
-          {formatDuration(item.duration)}
-        </div>
-      )}
+
+      <div className="relative w-full overflow-hidden rounded-lg shadow-sm border border-gray-200 bg-gray-900 aspect-video">
+        {resolvedThumbUrl && !isPlaying ? (
+          <img
+            src={resolvedThumbUrl}
+            alt={`Thumbnail for ${item.title}`}
+            className="w-full h-full object-cover"
+            loading="lazy"
+            decoding="async"
+          />
+        ) : (
+          <video
+            ref={videoRef}
+            className="w-full h-full object-cover"
+            src={resolvedFileUrl || item.file_url}
+            playsInline
+            controls
+            onPlay={() => {
+              emitPlay();
+              setIsPlaying(true);
+            }}
+            onPause={() => setIsPlaying(false)}
+            onEnded={() => setIsPlaying(false)}
+          />
+        )}
+        {!isPlaying && (
+          <button
+            onClick={handlePlay}
+            className="absolute inset-0 flex items-center justify-center bg-black/30 hover:bg-black/40 transition-colors"
+            aria-label={`Play ${item.title}`}
+          >
+            <div className="h-12 w-12 rounded-full bg-white/90 flex items-center justify-center shadow-lg">
+              <Play className="h-6 w-6 text-orange-600 ml-0.5" />
+            </div>
+          </button>
+        )}
+        {locked && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black/50 text-white text-sm font-semibold">
+            Login to unlock
+          </div>
+        )}
+        {isPlaying && (
+          <button
+            onClick={() => {
+              if (videoRef.current) {
+                videoRef.current.pause();
+              }
+              setIsPlaying(false);
+            }}
+            className="absolute bottom-2 left-2 px-3 py-1 rounded-full bg-black/70 text-white text-xs"
+            aria-label="Stop video"
+          >
+            Stop
+          </button>
+        )}
+        {item.duration && (
+          <div className="absolute bottom-2 right-2 px-2 py-1 rounded bg-black/70 text-white text-xs">
+            {formatDuration(item.duration)}
+          </div>
+        )}
+      </div>
     </div>
   );
 
@@ -548,7 +551,13 @@ const LibraryCard: React.FC<LibraryCardProps> = memo(({ item, className, isAdmin
   );
 
   return (
-    <div className={cn('w-full max-w-[240px] sm:max-w-sm space-y-2 group', className)}>
+    <div
+      className={cn(
+        'w-full space-y-2 group',
+        item.media_type === 'video' ? 'max-w-full' : 'max-w-[240px] sm:max-w-sm',
+        className
+      )}
+    >
       {item.media_type === 'video' ? renderVideo() : renderAudio()}
 
       <div className="space-y-1">
