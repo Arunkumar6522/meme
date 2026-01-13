@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { TrendingUp, Clock, Download, Play } from 'lucide-react';
 import { Button } from '@/components/ui';
@@ -6,8 +6,29 @@ import { SidebarAd } from '@/components/ads/AdBanner';
 import { useLibrary } from '@/hooks/useLibrary';
 import LibraryCard from '@/components/library/LibraryCard';
 import { SkeletonCard } from '@/components/ui';
+import { useAuth } from '@/hooks/useAuth';
+import { DatabaseService } from '@/services/database.service';
 
 const HomePage: React.FC = () => {
+  const { user } = useAuth();
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    const run = async () => {
+      if (!user?.id) {
+        setIsAdmin(false);
+        return;
+      }
+      try {
+        const status = await DatabaseService.isUserAdmin(user.id);
+        setIsAdmin(status);
+      } catch {
+        setIsAdmin(false);
+      }
+    };
+    run();
+  }, [user?.id]);
+
   // Get trending memes
   const { 
     data: trendingItems, 
@@ -120,7 +141,7 @@ const HomePage: React.FC = () => {
                   ))
                 ) : (
                   trendingItems.slice(0, 4).map((item) => (
-                    <LibraryCard key={item.id} item={item} />
+                    <LibraryCard key={item.id} item={item} isAdmin={isAdmin} />
                   ))
                 )}
               </div>
@@ -147,7 +168,7 @@ const HomePage: React.FC = () => {
                   ))
                 ) : (
                   latestItems.slice(0, 4).map((item) => (
-                    <LibraryCard key={item.id} item={item} />
+                    <LibraryCard key={item.id} item={item} isAdmin={isAdmin} />
                   ))
                 )}
               </div>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Menu, X, LogOut, Shield, Heart, User } from 'lucide-react';
+import { Menu, X, LogOut, Heart, User, Languages } from 'lucide-react';
 import { Button } from '@/components/ui';
 import { useAuth } from '@/hooks/useAuth';
 import { DatabaseService } from '@/services/database.service';
@@ -79,6 +79,12 @@ const Header: React.FC = () => {
     { name: 'Wishlist', href: '/favorites', icon: Heart },
   ];
 
+  const selectedLabel = useMemo(() => {
+    if (!selectedLanguages.length) return 'English';
+    if (selectedLanguages.length === 1) return selectedLanguages[0];
+    return `${selectedLanguages[0]} +${selectedLanguages.length - 1}`;
+  }, [selectedLanguages]);
+
   return (
     <header className="bg-white shadow-sm border-b border-gray-200 relative z-40">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -107,39 +113,72 @@ const Header: React.FC = () => {
                 {item.name}
               </Link>
             ))}
-            {/* Language selector (desktop) */}
-            <div className="relative">
-              <button
-                onClick={() => setLangOpen((prev) => !prev)}
-                className="text-sm px-3 py-2 rounded border border-gray-200 text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2"
-              >
-                Languages
-              </button>
-              {langOpen && (
-                <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-md shadow-lg p-3 space-y-2 z-20">
-                  {ALL_LANGUAGES.map((lang) => (
-                    <label key={lang} className="flex items-center gap-2 text-sm text-gray-700">
-                      <input
-                        type="checkbox"
-                          checked={selectedLanguages.includes(lang)}
-                        onChange={() => {
-                            setSelectedLanguages(
-                              selectedLanguages.includes(lang)
-                                ? selectedLanguages.filter((l) => l !== lang)
-                                : [...selectedLanguages, lang]
-                            );
-                        }}
-                      />
-                      {lang}
-                    </label>
-                  ))}
-                </div>
-              )}
-            </div>
           </nav>
 
           {/* User Menu / Auth Buttons */}
               <div className="flex items-center space-x-2 sm:space-x-3">
+                {/* Language selector (always visible, incl. mobile) */}
+                <div className="relative">
+                  <button
+                    onClick={() => setLangOpen((prev) => !prev)}
+                    className={cn(
+                      'inline-flex items-center gap-2 text-sm px-3 py-2 rounded-full border border-gray-200 text-gray-700 hover:bg-gray-50',
+                      'focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2'
+                    )}
+                    aria-label="Select languages"
+                    aria-expanded={langOpen}
+                  >
+                    <Languages className="h-4 w-4 text-orange-600" />
+                    <span className="hidden sm:inline">Language:</span>
+                    <span className="font-medium">{selectedLabel}</span>
+                  </button>
+                  {langOpen && (
+                    <div className="absolute right-0 mt-2 w-64 bg-white border border-gray-200 rounded-md shadow-lg p-3 space-y-2 z-50">
+                      <div className="text-xs font-semibold text-gray-600">Filter by language</div>
+                      <div className="grid grid-cols-2 gap-2">
+                        {ALL_LANGUAGES.map((lang) => (
+                          <label
+                            key={lang}
+                            className={cn(
+                              'flex items-center gap-2 text-sm rounded-md px-2 py-1 border',
+                              selectedLanguages.includes(lang)
+                                ? 'border-orange-200 bg-orange-50 text-gray-900'
+                                : 'border-gray-200 bg-white text-gray-700'
+                            )}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={selectedLanguages.includes(lang)}
+                              onChange={() => {
+                                setSelectedLanguages(
+                                  selectedLanguages.includes(lang)
+                                    ? selectedLanguages.filter((l) => l !== lang)
+                                    : [...selectedLanguages, lang]
+                                );
+                              }}
+                            />
+                            {lang}
+                          </label>
+                        ))}
+                      </div>
+                      <div className="flex justify-end gap-2 pt-1">
+                        <button
+                          className="text-xs text-gray-600 hover:text-gray-900"
+                          onClick={() => setSelectedLanguages(['English'])}
+                        >
+                          Reset
+                        </button>
+                        <button
+                          className="text-xs text-orange-700 hover:text-orange-900 font-semibold"
+                          onClick={() => setLangOpen(false)}
+                        >
+                          Done
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
                 {/* Mobile menu button (only icon; remove inline avatar) */}
                 <div className="md:hidden">
                   <button
@@ -228,28 +267,7 @@ const Header: React.FC = () => {
                 </Link>
               ))}
               
-              {/* Languages mobile */}
-              <div className="px-3 py-2">
-                <p className="text-sm font-medium text-gray-700 mb-2">Languages</p>
-                <div className="grid grid-cols-2 gap-2">
-                  {ALL_LANGUAGES.map((lang) => (
-                    <label key={lang} className="flex items-center gap-2 text-sm text-gray-700">
-                      <input
-                        type="checkbox"
-                        checked={selectedLanguages.includes(lang)}
-                        onChange={() => {
-                          setSelectedLanguages(
-                            selectedLanguages.includes(lang)
-                              ? selectedLanguages.filter((l) => l !== lang)
-                              : [...selectedLanguages, lang]
-                          );
-                        }}
-                      />
-                      {lang}
-                    </label>
-                  ))}
-                </div>
-              </div>
+              {/* Language selector moved to top bar for mobile; keep menu clean */}
               
               {/* Admin upload link is already included in navigation for admins */}
               

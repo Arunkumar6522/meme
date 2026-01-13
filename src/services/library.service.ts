@@ -273,12 +273,23 @@ export class LibraryService {
   // Admin: Delete library item
   static async deleteLibraryItem(id: string): Promise<boolean> {
     try {
-      const { error } = await supabase
-        .from('library_items')
-        .delete()
-        .eq('id', id);
+      const token = await this.getAccessToken();
+      if (!token) throw new Error('Not authenticated');
 
-      if (error) throw error;
+      const functionUrl = import.meta.env.VITE_NETLIFY_FUNCTIONS_URL || '/.netlify/functions';
+      const res = await fetch(`${functionUrl}/delete-library-item`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ itemId: id }),
+      });
+      const text = await res.text();
+      const payload = text ? JSON.parse(text) : {};
+      if (!res.ok) {
+        throw new Error(payload?.error || 'Failed to delete item');
+      }
       return true;
     } catch (error) {
       console.error('Error deleting library item:', error);

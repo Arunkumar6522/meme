@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, Lock } from 'lucide-react';
 import { Button, Input, SkeletonCard } from '@/components/ui';
@@ -7,12 +7,14 @@ import { useLibrary } from '@/hooks/useLibrary';
 import { useAuth } from '@/hooks/useAuth';
 import { useLanguage } from '@/hooks/useLanguage';
 import LibraryCard from '@/components/library/LibraryCard';
+import { DatabaseService } from '@/services/database.service';
 
 const LanguageSection: React.FC<{
   lang: string;
   canPlayAll: boolean;
+  isAdmin: boolean;
   onSeeAll: () => void;
-}> = ({ lang, canPlayAll, onSeeAll }) => {
+}> = ({ lang, canPlayAll, isAdmin, onSeeAll }) => {
   const audioQuery = useLibrary({ media_type: 'audio', sort_by: 'trending', languages: [lang] }, 1, 10);
   const videoQuery = useLibrary({ media_type: 'video', sort_by: 'trending', languages: [lang] }, 1, 10);
 
@@ -37,7 +39,7 @@ const LanguageSection: React.FC<{
       <div className="flex gap-4 overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0">
         {items.map((item: any, idx: number) => (
           <div key={item.id} className="flex-none w-40 sm:w-44">
-            <LibraryCard item={item} locked={!canPlayAll && idx >= 5} />
+            <LibraryCard item={item} locked={!canPlayAll && idx >= 5} isAdmin={isAdmin} />
           </div>
         ))}
       </div>
@@ -85,6 +87,24 @@ const LandingPage: React.FC = () => {
   const { user } = useAuth();
   const { setSelectedLanguages } = useLanguage();
   const [searchTerm, setSearchTerm] = useState('');
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  // Check admin for showing admin-only actions on cards (delete/edit)
+  useEffect(() => {
+    const run = async () => {
+      if (!user?.id) {
+        setIsAdmin(false);
+        return;
+      }
+      try {
+        const status = await DatabaseService.isUserAdmin(user.id);
+        setIsAdmin(status);
+      } catch {
+        setIsAdmin(false);
+      }
+    };
+    run();
+  }, [user?.id]);
 
   const languagesToShow = useMemo(
     () => ['Tamil', 'English', 'Malayalam', 'Kannada', 'Telugu'],
@@ -112,16 +132,16 @@ const LandingPage: React.FC = () => {
 
       <div className="relative overflow-hidden">
         <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
-          <div className="text-center">
+          <div className="text-left">
             <h1 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
               Clips and audios, ready to drop in.
             </h1>
-            <p className="mt-3 text-base sm:text-lg text-gray-700 max-w-2xl mx-auto">
+            <p className="mt-3 text-base sm:text-lg text-gray-700 max-w-2xl">
               Search, preview, and download trending meme audios and short-ready videos. Sign in to unlock everything.
             </p>
             <form
               onSubmit={handleSearch}
-              className="mt-6 flex flex-col sm:flex-row items-center gap-3 max-w-3xl mx-auto"
+              className="mt-6 flex flex-col sm:flex-row items-stretch sm:items-center gap-3 max-w-3xl"
             >
               <Input
                 value={searchTerm}
@@ -150,6 +170,7 @@ const LandingPage: React.FC = () => {
               key={lang}
               lang={lang}
               canPlayAll={!!user}
+              isAdmin={isAdmin}
               onSeeAll={() => {
                 if (!user) {
                   navigate('/auth/login');
