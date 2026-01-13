@@ -92,6 +92,23 @@ const LibraryCard: React.FC<LibraryCardProps> = memo(({ item, className, isAdmin
     window.addEventListener('media:play', handler as EventListener);
     return () => window.removeEventListener('media:play', handler as EventListener);
   }, [mediaId]);
+
+  // Stop playback on global navigation/pagination changes
+  useEffect(() => {
+    const handler = () => {
+      if (audioElementRef.current) {
+        audioElementRef.current.pause();
+        audioElementRef.current.src = '';
+        audioElementRef.current = null;
+      }
+      if (videoRef.current) {
+        videoRef.current.pause();
+      }
+      setIsPlaying(false);
+    };
+    window.addEventListener('media:stopAll', handler as EventListener);
+    return () => window.removeEventListener('media:stopAll', handler as EventListener);
+  }, []);
   useEffect(() => {
     const handler = (e: Event) => {
       const detail = (e as CustomEvent<string>).detail;
@@ -173,6 +190,10 @@ const LibraryCard: React.FC<LibraryCardProps> = memo(({ item, className, isAdmin
             audio.addEventListener('play', () => setIsPlaying(true));
             audio.addEventListener('pause', () => setIsPlaying(false));
             audioElementRef.current = audio;
+          } else if (audioElementRef.current.src !== fileUrl) {
+            // Signed URLs can expire; always refresh to the latest URL before playing.
+            audioElementRef.current.pause();
+            audioElementRef.current.src = fileUrl;
           }
           emitPlay();
           await audioElementRef.current.play();

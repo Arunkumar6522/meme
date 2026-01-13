@@ -119,6 +119,15 @@
     justify-content: center;
   }
 
+  /* Hide scrollbars but keep scrolling (better mobile UX for horizontal rails) */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
+  }
+
   .ad-container ins {
     /* Prevent ad overflow */
     max-width: 100%;

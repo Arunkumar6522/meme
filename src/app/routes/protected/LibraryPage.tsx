@@ -212,7 +212,11 @@ const LibraryPage: React.FC = () => {
                 <Pagination
                   currentPage={page}
                   totalPages={totalPages}
-                  onPageChange={goToPage}
+                  onPageChange={(next) => {
+                    // Stop any playing audio/video when navigating pages
+                    window.dispatchEvent(new CustomEvent('media:stopAll'));
+                    goToPage(next);
+                  }}
                 />
               </div>
             )}

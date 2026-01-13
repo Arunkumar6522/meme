@@ -36,7 +36,7 @@ const LanguageSection: React.FC<{
     }
 
     return (
-      <div className="flex gap-4 overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0">
+      <div className="flex gap-4 overflow-x-auto no-scrollbar pb-2 -mx-4 px-4 sm:mx-0 sm:px-0">
         {items.map((item: any, idx: number) => (
           <div key={item.id} className="flex-none w-40 sm:w-44">
             <LibraryCard item={item} locked={!canPlayAll && idx >= 5} isAdmin={isAdmin} />
