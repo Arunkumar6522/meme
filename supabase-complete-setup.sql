@@ -144,6 +144,110 @@ CREATE INDEX IF NOT EXISTS idx_library_items_emotion ON public.library_items(emo
 CREATE INDEX IF NOT EXISTS idx_library_items_media_type ON public.library_items(media_type);
 CREATE INDEX IF NOT EXISTS idx_library_items_created_at ON public.library_items(created_at);
 
+-- ============================================================
+-- Search (case-insensitive partial + typo-tolerant)
+-- Requires pg_trgm extension for fuzzy matching.
+-- ============================================================
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
+
+-- Helpful trigram indexes (optional but recommended once you have many rows)
+CREATE INDEX IF NOT EXISTS idx_library_items_title_trgm
+  ON public.library_items USING gin (title gin_trgm_ops);
+CREATE INDEX IF NOT EXISTS idx_library_items_description_trgm
+  ON public.library_items USING gin (description gin_trgm_ops);
+CREATE INDEX IF NOT EXISTS idx_library_items_keywords_trgm
+  ON public.library_items USING gin ((array_to_string(keywords, ' ')) gin_trgm_ops);
+
+-- Fuzzy search function used by the app when filters.search is present.
+-- Returns published items only (safe for anon/authenticated).
+CREATE OR REPLACE FUNCTION public.search_library_items(
+  q text,
+  p_media_type text DEFAULT NULL,
+  p_emotion text DEFAULT NULL,
+  p_languages text[] DEFAULT NULL,
+  p_artist text[] DEFAULT NULL,
+  p_sort_by text DEFAULT 'latest',
+  p_page int DEFAULT 1,
+  p_per_page int DEFAULT 20
+)
+RETURNS TABLE (
+  id uuid,
+  title text,
+  description text,
+  keywords text[],
+  emotion text,
+  media_type text,
+  file_url text,
+  thumbnail_url text,
+  file_bucket text,
+  file_path text,
+  thumbnail_bucket text,
+  thumbnail_path text,
+  languages text[],
+  duration integer,
+  file_size bigint,
+  is_published boolean,
+  download_count integer,
+  created_at timestamptz,
+  updated_at timestamptz,
+  created_by uuid,
+  total_count bigint,
+  rank real
+)
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+WITH norm AS (
+  SELECT trim(coalesce(q, '')) AS q
+),
+base AS (
+  SELECT
+    li.*,
+    greatest(
+      similarity(coalesce(li.title, ''), (SELECT q FROM norm)),
+      similarity(coalesce(li.description, ''), (SELECT q FROM norm)),
+      coalesce((
+        SELECT max(similarity(coalesce(kw, ''), (SELECT q FROM norm)))
+        FROM unnest(coalesce(li.keywords, '{}'::text[])) kw
+      ), 0)
+    ) AS rank
+  FROM public.library_items li
+  WHERE li.is_published = true
+    AND (p_media_type IS NULL OR p_media_type = '' OR li.media_type = p_media_type)
+    AND (p_emotion IS NULL OR p_emotion = '' OR li.emotion = p_emotion)
+    AND (p_languages IS NULL OR array_length(p_languages, 1) IS NULL OR li.languages && p_languages)
+    AND (p_artist IS NULL OR array_length(p_artist, 1) IS NULL OR li.keywords @> p_artist)
+    AND (
+      (SELECT q FROM norm) = ''
+      OR li.title ILIKE '%' || (SELECT q FROM norm) || '%'
+      OR li.description ILIKE '%' || (SELECT q FROM norm) || '%'
+      OR EXISTS (
+        SELECT 1 FROM unnest(coalesce(li.keywords, '{}'::text[])) kw
+        WHERE kw ILIKE '%' || (SELECT q FROM norm) || '%'
+      )
+      OR similarity(coalesce(li.title, ''), (SELECT q FROM norm)) > 0.22
+      OR similarity(coalesce(li.description, ''), (SELECT q FROM norm)) > 0.22
+      OR EXISTS (
+        SELECT 1 FROM unnest(coalesce(li.keywords, '{}'::text[])) kw
+        WHERE similarity(coalesce(kw, ''), (SELECT q FROM norm)) > 0.22
+      )
+    )
+)
+SELECT
+  base.*,
+  count(*) OVER () AS total_count
+FROM base
+ORDER BY
+  CASE WHEN (SELECT q FROM norm) <> '' THEN rank ELSE NULL END DESC NULLS LAST,
+  CASE WHEN p_sort_by = 'trending' THEN download_count ELSE NULL END DESC NULLS LAST,
+  CASE WHEN p_sort_by = 'title' THEN title ELSE NULL END ASC NULLS LAST,
+  created_at DESC
+LIMIT greatest(p_per_page, 1)
+OFFSET greatest((p_page - 1), 0) * greatest(p_per_page, 1);
+$$;
+
 -- OTP codes indexes
 CREATE INDEX IF NOT EXISTS idx_otp_codes_email ON public.otp_codes(email);
 CREATE INDEX IF NOT EXISTS idx_otp_codes_expires_at ON public.otp_codes(expires_at);
@@ -154,6 +258,7 @@ GRANT SELECT ON public.users TO anon, authenticated;
 GRANT SELECT ON public.library_items TO anon, authenticated;
 GRANT ALL ON public.users TO authenticated;
 GRANT ALL ON public.library_items TO authenticated;
+GRANT EXECUTE ON FUNCTION public.search_library_items(text, text, text, text[], text[], text, int, int) TO anon, authenticated;
 -- OTP is handled server-side via Netlify functions using SUPABASE_SERVICE_ROLE_KEY (bypasses RLS).
 -- Do NOT allow anon/authenticated roles direct access to otp_codes.
 REVOKE ALL ON public.otp_codes FROM anon, authenticated;

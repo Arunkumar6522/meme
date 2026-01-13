@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Upload } from 'lucide-react';
 import LibraryFilters from '@/components/library/LibraryFilters';
 import LibraryGrid from '@/components/library/LibraryGrid';
@@ -19,6 +19,7 @@ const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
 const LibraryPage: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
   const { selectedLanguages } = useLanguage();
   const [isAdmin, setIsAdmin] = useState(false);
@@ -73,6 +74,18 @@ const LibraryPage: React.FC = () => {
     setFilters(newFilters);
     updateFilters(newFilters);
   }, [updateFilters]);
+
+  // Pull initial search from URL (?search=...) so Landing page search works.
+  useEffect(() => {
+    const sp = new URLSearchParams(location.search);
+    const urlSearch = (sp.get('search') || '').trim();
+    if (!urlSearch) return;
+    if ((filters.search || '').trim() === urlSearch) return;
+    const nextFilters = { ...filters, search: urlSearch };
+    setFilters(nextFilters);
+    updateFilters(nextFilters);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.search]);
 
   // Keep filters in sync with language selector (same tab, instant)
   useEffect(() => {

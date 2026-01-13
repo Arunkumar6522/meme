@@ -15,6 +15,37 @@ export class LibraryService {
     perPage = 20
   ): Promise<PaginatedResponse<LibraryItem>> {
     try {
+      // If a search query is present, use the DB-side fuzzy search (pg_trgm) for:
+      // - case-insensitive partial matches
+      // - typo tolerance (e.g., "motivationn" -> "motivation")
+      const q = String(filters.search || '').trim();
+      if (q) {
+        const { data, error } = await supabase.rpc('search_library_items', {
+          q,
+          p_media_type: filters.media_type || null,
+          p_emotion: (filters.emotion as any) || null,
+          p_languages: (filters.languages && filters.languages.length ? filters.languages : null),
+          p_artist: (filters.artist && filters.artist.length ? filters.artist : null),
+          p_sort_by: (filters.sort_by as any) || 'latest',
+          p_page: page,
+          p_per_page: perPage,
+        });
+
+        if (error) throw error;
+
+        const rows = (data || []) as any[];
+        const totalCount = Number(rows?.[0]?.total_count ?? 0);
+        const items = rows.map(({ total_count, rank, ...rest }) => rest) as LibraryItem[];
+
+        return {
+          data: items,
+          count: totalCount,
+          page,
+          per_page: perPage,
+          total_pages: Math.ceil(totalCount / perPage),
+        };
+      }
+
       let query = supabase
         .from('library_items')
         .select('*', { count: 'exact' })
