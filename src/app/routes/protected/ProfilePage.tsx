@@ -112,21 +112,31 @@ const ProfilePage: React.FC = () => {
                 label="Full name"
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
+                maxLength={50}
+                helperText="Max 50 characters. Letters, spaces and . ' - only."
               />
               <Button
                 size="sm"
                 loading={savingName}
                 onClick={async () => {
                   if (!user?.id) return;
+                  const trimmed = fullName.trim();
+                  if (!trimmed) return showError('Full name is required.', 'Validation');
+                  if (trimmed.length < 2) return showError('Full name must be at least 2 characters.', 'Validation');
+                  if (trimmed.length > 50) return showError('Full name must be 50 characters or less.', 'Validation');
+                  const re = /^\p{L}[\p{L}\p{M}\s.'-]*$/u;
+                  if (!re.test(trimmed)) {
+                    return showError("Name can only contain letters, spaces, and . ' -", 'Validation');
+                  }
                   setSavingName(true);
                   try {
                     const { error: uerr } = await supabase
                       .from('users')
-                      .update({ full_name: fullName.trim() || null })
+                      .update({ full_name: trimmed || null })
                       .eq('id', user.id);
                     if (uerr) throw uerr;
                     const { error: aerr } = await supabase.auth.updateUser({
-                      data: { full_name: fullName.trim() || null },
+                      data: { full_name: trimmed || null },
                     });
                     if (aerr) throw aerr;
                     showSuccess('Name updated', 'Profile');

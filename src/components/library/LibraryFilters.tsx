@@ -39,10 +39,28 @@ const LibraryFilters: React.FC<LibraryFiltersProps> = ({
   className,
 }) => {
   const [isExpanded, setIsExpanded] = React.useState(false);
+  const [searchInput, setSearchInput] = React.useState(filters.search || '');
+  const searchTimer = React.useRef<number | null>(null);
 
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    onFiltersChange({ ...filters, search: e.target.value });
-  };
+  // Keep local input in sync if filters are changed externally (e.g. URL search)
+  React.useEffect(() => {
+    setSearchInput(filters.search || '');
+  }, [filters.search]);
+
+  // Debounce search to reduce API calls while typing
+  React.useEffect(() => {
+    if (searchTimer.current) window.clearTimeout(searchTimer.current);
+    searchTimer.current = window.setTimeout(() => {
+      const next = searchInput;
+      if ((filters.search || '') !== next) {
+        onFiltersChange({ ...filters, search: next });
+      }
+    }, 350);
+    return () => {
+      if (searchTimer.current) window.clearTimeout(searchTimer.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchInput]);
 
   const [artistQuery, setArtistQuery] = React.useState('');
   const artists = filters.artist || [];
@@ -82,8 +100,8 @@ const LibraryFilters: React.FC<LibraryFiltersProps> = ({
         <Input
           type="text"
           placeholder="Search memes by title, description, or keywords..."
-          value={filters.search || ''}
-          onChange={handleSearchChange}
+          value={searchInput}
+          onChange={(e) => setSearchInput(e.target.value)}
           className="pl-10 pr-4"
           aria-label="Search memes"
         />

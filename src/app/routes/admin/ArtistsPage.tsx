@@ -100,7 +100,13 @@ const ArtistsPage: React.FC = () => {
               options={[{ value: '', label: 'All languages' }, ...allLanguages.map(l => ({ value: l, label: l }))]}
               className="w-40"
             />
-            <Button onClick={load} loading={loading}>Search</Button>
+            <Button
+              onClick={load}
+              loading={loading}
+              disabled={loading || (!search.trim() && !filterLang)}
+            >
+              Search
+            </Button>
             <Button onClick={() => startEdit()} variant="outline">New</Button>
           </div>
         </div>

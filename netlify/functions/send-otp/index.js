@@ -121,6 +121,27 @@ exports.handler = async (event, context) => {
       auth: { persistSession: false, autoRefreshToken: false },
     });
 
+    // If user is signing up and the email already exists, don't send OTP.
+    // (This is a better UX and avoids confusing "OTP sent" when signup can't complete.)
+    if (type === 'signup') {
+      try {
+        const { data: existing } = await supabase
+          .from('users')
+          .select('id')
+          .eq('email', email)
+          .maybeSingle();
+        if (existing?.id) {
+          return {
+            statusCode: 409,
+            headers,
+            body: JSON.stringify({ error: 'An account with this email already exists. Please sign in.' }),
+          };
+        }
+      } catch (e) {
+        // ignore lookup failure; continue
+      }
+    }
+
     const otpCode = generateOtp();
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
 

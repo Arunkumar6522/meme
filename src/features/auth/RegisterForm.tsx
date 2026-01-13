@@ -132,15 +132,24 @@ const RegisterForm: React.FC = () => {
     return normalized.length >= 6 && normalized.length <= 254 && emailRegex.test(normalized);
   };
 
+  // Allow letters (any language), spaces, and common name punctuation.
+  const validateFullName = (name: string): { ok: boolean; error?: string } => {
+    const trimmed = name.trim();
+    if (!trimmed) return { ok: false, error: 'Full name is required' };
+    if (trimmed.length < 2) return { ok: false, error: 'Full name must be at least 2 characters' };
+    if (trimmed.length > 50) return { ok: false, error: 'Full name must be 50 characters or less' };
+    // Unicode letters + combining marks + spaces + . ' -
+    const re = /^\p{L}[\p{L}\p{M}\s.'-]*$/u;
+    if (!re.test(trimmed)) return { ok: false, error: 'Name can only contain letters, spaces, and . \' -' };
+    return { ok: true };
+  };
+
   const validateForm = () => {
     const newErrors: typeof errors = {};
 
     // Validate full name
-    if (!formData.fullName.trim()) {
-      newErrors.fullName = 'Full name is required';
-    } else if (formData.fullName.trim().length < 2) {
-      newErrors.fullName = 'Full name must be at least 2 characters';
-    }
+    const nameCheck = validateFullName(formData.fullName);
+    if (!nameCheck.ok) newErrors.fullName = nameCheck.error;
 
     // Validate email with proper regex
     if (!formData.email.trim()) {
@@ -322,13 +331,13 @@ const RegisterForm: React.FC = () => {
   // 6. We have a valid email in formData
   const normalizedEmail = formData.email?.trim().toLowerCase() || '';
   const isEmailComplete = normalizedEmail.length >= 5 && validateEmail(normalizedEmail);
+  const hasAnyError = Object.values(errors).some(Boolean);
   
   const shouldShowOTP = step === 'otp' && 
                         normalizedEmail && 
                         normalizedEmail.length >= 5 &&
                         isEmailComplete && 
-                        !errors.general &&
-                        Object.keys(errors).length === 0;
+                        !hasAnyError;
 
   if (shouldShowOTP) {
     return (
@@ -393,6 +402,7 @@ const RegisterForm: React.FC = () => {
           placeholder="Enter your full name"
           autoComplete="name"
           autoFocus
+          maxLength={50}
           required
         />
 
