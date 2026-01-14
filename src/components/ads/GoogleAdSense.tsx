@@ -75,6 +75,8 @@ const GoogleAdSense: React.FC<GoogleAdSenseProps> = ({ type, className, style })
         return () => observer.disconnect();
     }, [type]);
 
+    if (isAdmin) return null;
+
     return (
         <div className={className} style={{ minHeight: '50px', ...style }}>
             <ins
