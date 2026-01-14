@@ -7,19 +7,22 @@ Add these **4 environment variables** in your Netlify dashboard:
 ### Required Variables:
 
 ```env
-VITE_SUPABASE_URL=https://YOUR_PROJECT_REF.supabase.co
-VITE_SUPABASE_ANON_KEY=YOUR_SUPABASE_ANON_KEY
+VITE_SUPABASE_URL=https://csajwbsedfaegygaeooy.supabase.co
+VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNzYWp3YnNlZGZhZWd5Z2Flb295Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc5NTMwOTQsImV4cCI6MjA4MzUyOTA5NH0.gJOhLCcIEUNlGJxLSGQMZHwzOcKJiPdxSJCbmGEb4Zg
 NODE_ENV=production
-SUPABASE_URL=https://YOUR_PROJECT_REF.supabase.co
-SUPABASE_SERVICE_ROLE_KEY=YOUR_SUPABASE_SERVICE_ROLE_KEY
+SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNzYWp3YnNlZGZhZWd5Z2Flb295Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2Nzk1MzA5NCwiZXhwIjoyMDgzNTI5MDk0fQ.qB8tDAU1a2-kj9HoYgt9SavQq7ZHERAKEILVWvLiW9Q
+
+# Google OAuth Configuration
+VITE_ENABLE_GOOGLE_SSO=true
+VITE_GOOGLE_OAUTH_CLIENT_ID=2007102877-kd1r89e9ekr1mi3t06i9pcueeuu9q682.apps.googleusercontent.com
 
 # SMTP Email Configuration (Secure)
-SMTP_HOST=smtp.gmail.com
-SMTP_PORT=587
-SMTP_USER=YOUR_SMTP_USER
-SMTP_PASSWORD=YOUR_SMTP_PASSWORD
-SMTP_FROM_EMAIL=YOUR_FROM_EMAIL
-SMTP_FROM_NAME=ilovememe.in
+VITE_SMTP_HOST=smtp.gmail.com
+VITE_SMTP_PORT=587
+VITE_SMTP_USER=arunkumark1664@gmail.com
+VITE_SMTP_PASSWORD=lilf nlea gvrw joif
+VITE_SMTP_FROM_EMAIL=arunkumark1664@gmail.com
+VITE_SMTP_FROM_NAME=I Love Meme
 
 # OTP / Functions Security (Recommended)
 # Comma-separated list of allowed origins for Netlify functions (no '*' in production)
@@ -41,8 +44,17 @@ OTP_MIN_INTERVAL_SECONDS=30
 ### Optional Variables:
 
 ```env
-VITE_GOOGLE_ADS_CLIENT_ID=ca-pub-your-id-here
+# Application Configuration
+VITE_APP_NAME=ilovememe.in
+VITE_APP_VERSION=1.2.0
+
+# Feature Flags
 VITE_ENABLE_ANALYTICS=false
+VITE_ENABLE_UPLOADS=true
+VITE_ENABLE_DEBUG_LOGS=false
+
+# Google Ads (Monetag)
+VITE_GOOGLE_ADS_CLIENT_ID=ae562b7ca89a32cf54f0e23d39a65ba5
 ```
 
 ## How to Add in Netlify:
