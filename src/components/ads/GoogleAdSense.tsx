@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 
 type AdType = 'horizontal' | 'vertical' | 'square';
 
@@ -17,26 +17,25 @@ const AD_SLOTS: Record<AdType, string> = {
 const CLIENT_ID = 'ca-pub-9385541671046952';
 
 const GoogleAdSense: React.FC<GoogleAdSenseProps> = ({ type, className, style }) => {
+    const adRef = useRef<HTMLModElement>(null);
+
     useEffect(() => {
-        try {
-            // @ts-ignore
-            (window.adsbygoogle = window.adsbygoogle || []).push({});
-        } catch (err) {
-            console.error('AdSense error:', err);
+        // Check if the element is visible and has width before requesting an ad
+        // This prevents "No slot size for availableWidth=0" error when ad is in a hidden container (e.g. mobile vs desktop)
+        if (adRef.current && adRef.current.offsetWidth > 0) {
+            try {
+                // @ts-ignore
+                (window.adsbygoogle = window.adsbygoogle || []).push({});
+            } catch (err) {
+                console.error('AdSense error:', err);
+            }
         }
     }, []);
 
     return (
-        <div className={className} style={style}>
-            {/* AdSense Script - This is safe to include multiple times as browsers will cache it, 
-            but traditionally it's better in head. However, per user request snippet, we include it here 
-            or assume it's loaded. To be safe and follow the snippets exactly, we can include it, 
-            but for React it's better to verify if it's already there to avoid unnecessary network requests.
-            The user snippet explicitly showing the script tag suggests they might want it.
-            But the best practice is to have the script in index.html once.
-            I will put the script in index.html and ONLY the ins tag here.
-        */}
+        <div className={className} style={{ minHeight: '50px', ...style }}>
             <ins
+                ref={adRef}
                 className="adsbygoogle"
                 style={{ display: 'block', ...style }}
                 data-ad-client={CLIENT_ID}
