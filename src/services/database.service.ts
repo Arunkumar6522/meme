@@ -9,12 +9,12 @@ export class DatabaseService {
   static async initializeDatabase(): Promise<boolean> {
     try {
       if (enableDebugLogs) console.debug('🔄 Initializing database...');
-      
+
       // Since tables are created during build or manually, skip the check
       // and assume they exist. This avoids RLS permission issues.
       if (enableDebugLogs) console.debug('✅ Database assumed to be initialized (tables created during build)');
       return true;
-      
+
     } catch (error) {
       if (enableDebugLogs) console.error('❌ Database initialization failed:', error);
       // Always return true since tables should exist
@@ -41,11 +41,11 @@ export class DatabaseService {
         const { error } = await supabase.storage.createBucket(bucket.id, {
           public: bucket.public,
           fileSizeLimit: 100 * 1024 * 1024, // 100MB
-          allowedMimeTypes: bucket.id === 'library-audio' 
+          allowedMimeTypes: bucket.id === 'library-audio'
             ? ['audio/mpeg', 'audio/wav', 'audio/ogg']
             : bucket.id === 'library-video'
-            ? ['video/mp4', 'video/webm', 'video/ogg']
-            : ['image/jpeg', 'image/png', 'image/webp']
+              ? ['video/mp4', 'video/webm', 'video/ogg']
+              : ['image/jpeg', 'image/png', 'image/webp']
         });
 
         if (error && !error.message.includes('already exists')) {
@@ -78,27 +78,27 @@ export class DatabaseService {
       CREATE POLICY IF NOT EXISTS "Authenticated users can view all library items" ON public.library_items
         FOR SELECT USING (auth.role() = 'authenticated');
 
-      CREATE POLICY IF NOT EXISTS "Admins can insert library items" ON public.library_items
+      CREATE POLICY IF NOT EXISTS "Admins and Superadmins can insert library items" ON public.library_items
         FOR INSERT WITH CHECK (
           EXISTS (
             SELECT 1 FROM public.users 
-            WHERE id = auth.uid() AND role = 'admin'
+            WHERE id = auth.uid() AND role IN ('admin', 'superadmin')
           )
         );
 
-      CREATE POLICY IF NOT EXISTS "Admins can update library items" ON public.library_items
+      CREATE POLICY IF NOT EXISTS "Admins and Superadmins can update library items" ON public.library_items
         FOR UPDATE USING (
           EXISTS (
             SELECT 1 FROM public.users 
-            WHERE id = auth.uid() AND role = 'admin'
+            WHERE id = auth.uid() AND role IN ('admin', 'superadmin')
           )
         );
 
-      CREATE POLICY IF NOT EXISTS "Admins can delete library items" ON public.library_items
+      CREATE POLICY IF NOT EXISTS "Admins and Superadmins can delete library items" ON public.library_items
         FOR DELETE USING (
           EXISTS (
             SELECT 1 FROM public.users 
-            WHERE id = auth.uid() AND role = 'admin'
+            WHERE id = auth.uid() AND role IN ('admin', 'superadmin')
           )
         );
     `;
@@ -174,9 +174,9 @@ export class DatabaseService {
 
   // Add new column to existing table (migration helper)
   static async addColumn(
-    tableName: string, 
-    columnName: string, 
-    columnType: string, 
+    tableName: string,
+    columnName: string,
+    columnType: string,
     defaultValue?: string
   ): Promise<boolean> {
     try {
@@ -198,7 +198,7 @@ export class DatabaseService {
     }
   }
 
-  // Check if user is admin
+  // Check if user is admin or superadmin
   static async isUserAdmin(userId: string): Promise<boolean> {
     try {
       const { data, error } = await supabase
@@ -208,7 +208,23 @@ export class DatabaseService {
         .single();
 
       if (error) return false;
-      return data?.role === 'admin';
+      return data?.role === 'admin' || data?.role === 'superadmin';
+    } catch {
+      return false;
+    }
+  }
+
+  // Check if user is specifically superadmin
+  static async isUserSuperAdmin(userId: string): Promise<boolean> {
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .select('role')
+        .eq('id', userId)
+        .single();
+
+      if (error) return false;
+      return data?.role === 'superadmin';
     } catch {
       return false;
     }

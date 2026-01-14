@@ -314,17 +314,17 @@ const LibraryCard: React.FC<LibraryCardProps> = memo(({ item, className, isAdmin
       navigate('/auth/login');
       return;
     }
-    
+
     setDownloading(true);
     try {
       // Increment download count (non-blocking)
       LibraryService.incrementDownloadCount(item.id).catch(() => {
         // Silently fail - not critical
       });
-      
+
       const signed = await LibraryService.getSignedItemUrl(item.id, 'file');
       const downloadUrl = signed || resolvedFileUrl || item.file_url;
-      
+
       if (!downloadUrl) {
         throw new Error('File URL not available');
       }
@@ -334,10 +334,10 @@ const LibraryCard: React.FC<LibraryCardProps> = memo(({ item, className, isAdmin
       if (!response.ok) {
         throw new Error(`Failed to fetch file: ${response.statusText}`);
       }
-      
+
       const blob = await response.blob();
       const blobUrl = window.URL.createObjectURL(blob);
-      
+
       // Trigger download
       const link = document.createElement('a');
       link.href = blobUrl;
@@ -345,13 +345,13 @@ const LibraryCard: React.FC<LibraryCardProps> = memo(({ item, className, isAdmin
       link.style.display = 'none';
       document.body.appendChild(link);
       link.click();
-      
+
       // Cleanup
       setTimeout(() => {
         document.body.removeChild(link);
         window.URL.revokeObjectURL(blobUrl);
       }, 100);
-      
+
       showSuccess('Download started!', 'Download');
     } catch (error: any) {
       console.error('Download error:', error);
@@ -682,6 +682,12 @@ const LibraryCard: React.FC<LibraryCardProps> = memo(({ item, className, isAdmin
           {item.title}
         </h3>
       </div>
+
+      {isAdmin && item.users && (
+        <div className="text-xs text-center text-gray-500">
+          By: {item.users.full_name || item.users.email || 'Unknown'}
+        </div>
+      )}
 
       {isAdmin && editOpen && (
         <Modal open onClose={() => setEditOpen(false)} title="Edit item">

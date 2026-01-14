@@ -48,7 +48,7 @@ export class LibraryService {
 
       let query = supabase
         .from('library_items')
-        .select('*', { count: 'exact' })
+        .select('*, users(full_name, email)', { count: 'exact' })
         .eq('is_published', true);
 
       // Apply filters

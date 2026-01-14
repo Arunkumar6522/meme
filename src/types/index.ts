@@ -4,7 +4,7 @@ export interface User {
   email: string;
   full_name?: string;
   avatar_url?: string;
-  role: 'user' | 'admin';
+  role: 'user' | 'admin' | 'superadmin';
   preferred_languages?: string[];
   created_at: string;
   updated_at: string;
@@ -32,12 +32,16 @@ export interface LibraryItem {
   updated_at: string;
   created_by: string;
   languages?: string[];
+  users?: {
+    full_name?: string;
+    email?: string;
+  };
 }
 
 // Emotion categories for filtering
-export type EmotionType = 
+export type EmotionType =
   | 'happy'
-  | 'sad' 
+  | 'sad'
   | 'funny'
   | 'thug'
   | 'angry'
