@@ -1,0 +1,18 @@
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://ilovememe.in/sitemap.xml
+
+# Disallow admin areas
+Disallow: /admin/
+Disallow: /api/
+
+# Allow important pages for SEO
+Allow: /
+Allow: /library
+Allow: /auth/login
+Allow: /auth/register
+
+# Crawl-delay for respectful crawling
+Crawl-delay: 1

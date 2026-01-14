@@ -134,10 +134,10 @@ const LandingPage: React.FC = () => {
         <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
           <div className="text-left">
             <h1 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
-              Clips and audios, ready to drop in.
+              I Love Meme - Your Ultimate Meme Audio Destination
             </h1>
             <p className="mt-3 text-base sm:text-lg text-gray-700 max-w-2xl">
-              Search, preview, and download trending meme audios and short-ready videos. Sign in to unlock everything.
+              Welcome to I Love Meme (ilovememe.in)! Discover trending meme audios, funny sound effects, and viral video clips. Search, preview, and download the best meme sounds for your content creation needs.
             </p>
             <form
               onSubmit={handleSearch}

@@ -1,6 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { flushSync } from 'react-dom';
-import { Link, useLocation } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { Button, Input } from '@/components/ui';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/useToast';
@@ -9,10 +8,9 @@ import OTPVerificationForm from './OTPVerificationForm';
 import RegistrationDebug from '@/components/debug/RegistrationDebug';
 
 const RegisterForm: React.FC = () => {
-  const location = useLocation();
   const [step, setStep] = useState<'form' | 'otp'>('form');
-  const [otpContext, setOtpContext] = useState<{
-    email: string;
+  const [otpEmail, setOtpEmail] = useState<string>('');
+  const [signupData, setSignupData] = useState<{
     password: string;
     fullName?: string;
   } | null>(null);
@@ -31,63 +29,11 @@ const RegisterForm: React.FC = () => {
   }>({});
   const { signUp, signInWithGoogle, loading } = useAuth();
   const { showSuccess, showError } = useToast();
-  const stepRef = useRef(step);
 
+  // Simple effect to log state changes for debugging
   useEffect(() => {
-    stepRef.current = step;
-  }, [step]);
-
-  // SECURITY: Do not persist passwords. We only restore email/fullName for convenience.
-  // We intentionally do NOT restore the OTP step after refresh, because that would require
-  // persisting the password somewhere, which is unsafe.
-  useEffect(() => {
-    try {
-      // Restore SAFE form data if available (no password)
-      const savedFormData = sessionStorage.getItem('register-form-data');
-      if (savedFormData) {
-        try {
-          const parsed = JSON.parse(savedFormData);
-          setFormData((prev) => ({
-            ...prev,
-            fullName: parsed.fullName || '',
-            email: parsed.email || '',
-            password: '',
-            confirmPassword: '',
-          }));
-        } catch (e) {
-          // Ignore parse errors
-        }
-      }
-    } catch (e) {
-      // If sessionStorage fails, just start fresh
-      setStep('form');
-      stepRef.current = 'form';
-    }
-  }, [location.pathname]); // Re-run when route changes
-
-  // Persist SAFE form data to sessionStorage (never store passwords)
-  useEffect(() => {
-    try {
-      if (step === 'form') {
-        sessionStorage.setItem('register-form-data', JSON.stringify({
-          fullName: formData.fullName,
-          email: formData.email,
-        }));
-      }
-    } catch (e) {
-      // Ignore sessionStorage errors
-    }
-  }, [formData, step]);
-  
-  // If OTP step is active but we lost the in-memory OTP context, return to form (no password persistence).
-  useEffect(() => {
-    if (step === 'otp' && !otpContext) {
-      flushSync(() => {
-        setStep('form');
-        stepRef.current = 'form';
-      });
-    }
-  }, [otpContext, step]);
+    console.log('🔄 RegisterForm state changed:', { step, otpEmail, hasSignupData: !!signupData });
+  }, [step, otpEmail, signupData]);
 
   const validateForm = () => {
     const newErrors: typeof errors = {};
@@ -150,7 +96,7 @@ const RegisterForm: React.FC = () => {
       
       console.log('📨 SignUp result:', result);
       
-      // Check for error - CRITICAL: Don't show OTP screen if there's an error
+      // Check for error
       if (result?.error) {
         console.error('❌ Registration error:', result.error);
         
@@ -169,25 +115,24 @@ const RegisterForm: React.FC = () => {
         
         setErrors({ general: userFriendlyError });
         showError(userFriendlyError, 'Registration Failed');
-        return; // CRITICAL: Return here to prevent OTP screen
+        return;
       }
 
-      // SUCCESS: Show OTP screen
-      console.log('✅ Email sent successfully! Showing OTP screen...');
+      // SUCCESS: Switch to OTP screen
+      console.log('✅ Email sent successfully! Switching to OTP screen...');
       
-      // Set OTP context and switch to OTP step
-      setOtpContext({
-        email: normalizedEmail,
+      // Store signup data and email for OTP verification
+      setSignupData({
         password: formData.password,
         fullName: formData.fullName?.trim() || undefined,
       });
-      
+      setOtpEmail(normalizedEmail);
       setStep('otp');
       
       // Show success message
       showSuccess('Verification code sent to your email!', 'Check Your Email');
       
-      console.log('🎯 OTP screen should now be visible');
+      console.log('🎯 OTP screen should now be visible with email:', normalizedEmail);
       
     } catch (err) {
       console.error('💥 Exception in handleSubmit:', err);
@@ -223,37 +168,20 @@ const RegisterForm: React.FC = () => {
     }
   };
 
-  // Show OTP verification form if we're on the OTP step and have context
-  if (step === 'otp' && otpContext?.email) {
-    console.log('🎯 Rendering OTP screen for:', otpContext.email);
+  // Show OTP verification form if we're on the OTP step
+  if (step === 'otp' && otpEmail && signupData) {
+    console.log('🎯 Rendering OTP screen for:', otpEmail);
     return (
       <OTPVerificationForm
-        key={`otp-${otpContext?.email}`}
-        email={otpContext!.email.trim().toLowerCase()}
+        key={`otp-${otpEmail}`}
+        email={otpEmail}
         type="signup"
-        signupData={{
-          password: otpContext!.password,
-          fullName: otpContext!.fullName,
-        }}
+        signupData={signupData}
         onBack={() => {
-          // Reset to form (never persist password)
-          try {
-            sessionStorage.removeItem('register-form-data');
-          } catch (e) {
-            // Ignore
-          }
-          flushSync(() => {
-            setOtpContext(null);
-            setStep('form');
-            stepRef.current = 'form';
-          });
-          // Reset form data
-          setFormData({
-            fullName: '',
-            email: '',
-            password: '',
-            confirmPassword: '',
-          });
+          // Reset to form
+          setStep('form');
+          setOtpEmail('');
+          setSignupData(null);
           setErrors({});
         }}
       />
@@ -264,7 +192,7 @@ const RegisterForm: React.FC = () => {
     <>
       <RegistrationDebug 
         step={step} 
-        otpContext={otpContext} 
+        otpContext={{ email: otpEmail, ...signupData }} 
         formData={formData} 
         errors={errors} 
       />
