@@ -20,11 +20,18 @@ exports.handler = async (event) => {
     }
 
     if (!KEY_ID || !KEY_SECRET) {
-        console.error('Missing Razorpay Environment Variables');
+        console.error('Missing Razorpay Env Vars:', {
+            hasKeyId: !!KEY_ID,
+            hasKeySecret: !!KEY_SECRET,
+            envKeys: Object.keys(process.env).filter(k => k.includes('RAZORPAY'))
+        });
         return {
             statusCode: 500,
             headers,
-            body: JSON.stringify({ error: 'Server Misconfigured: Missing Razorpay Keys' }),
+            body: JSON.stringify({
+                error: 'Server Misconfigured: Missing Razorpay Keys',
+                debug: { hasKeyId: !!KEY_ID, hasKeySecret: !!KEY_SECRET }
+            }),
         };
     }
 
