@@ -5,6 +5,7 @@ import LibraryFilters from '@/components/library/LibraryFilters';
 import LibraryGrid from '@/components/library/LibraryGrid';
 import Pagination from '@/components/library/Pagination';
 import GoogleAdSense from '@/components/ads/GoogleAdSense';
+import { PremiumBanner } from '@/components/premium/PremiumBanner';
 import { Button } from '@/components/ui';
 import { useLibrary } from '@/hooks/useLibrary';
 import { useAuth } from '@/hooks/useAuth';
@@ -50,8 +51,7 @@ const LibraryPage: React.FC = () => {
         setIsAdmin(false);
         return;
       }
-
-      // Check cache first
+      // ... (existing admin check)
       const cached = adminStatusCache.get(user.id);
       if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
         setIsAdmin(cached.status);
@@ -61,7 +61,6 @@ const LibraryPage: React.FC = () => {
       try {
         const adminStatus = await DatabaseService.isUserAdmin(user.id);
         setIsAdmin(adminStatus);
-        // Update cache
         adminStatusCache.set(user.id, { status: adminStatus, timestamp: Date.now() });
       } catch (error) {
         setIsAdmin(false);
@@ -70,11 +69,11 @@ const LibraryPage: React.FC = () => {
     checkAdmin();
   }, [user?.id]);
 
+  // ... (existing filters logic)
   const handleFiltersChange = useCallback((newFilters: LibraryFiltersType) => {
     setFilters(newFilters);
     updateFilters(newFilters);
   }, [updateFilters]);
-
   // Pull initial search from URL (?search=...) so Landing page search works.
   useEffect(() => {
     const sp = new URLSearchParams(location.search);
@@ -87,7 +86,6 @@ const LibraryPage: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.search]);
 
-  // Keep filters in sync with language selector (same tab, instant)
   useEffect(() => {
     const nextFilters = { ...filters, languages: selectedLanguages };
     setFilters(nextFilters);
@@ -95,7 +93,6 @@ const LibraryPage: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedLanguages]);
 
-  // Sync tab with filters
   useEffect(() => {
     if (filters.media_type === 'video') {
       setMediaTab('video');
@@ -114,8 +111,6 @@ const LibraryPage: React.FC = () => {
     updateFilters(nextFilters);
   };
 
-  // language changes handled by LanguageProvider
-
   // Refresh list after admin deletes an item from the card menu
   useEffect(() => {
     const handler = () => refresh();
@@ -131,6 +126,9 @@ const LibraryPage: React.FC = () => {
       </div>
 
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
+
+        <PremiumBanner />
+
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center justify-between flex-wrap gap-4">

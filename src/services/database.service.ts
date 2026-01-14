@@ -5,6 +5,8 @@ import { enableDebugLogs } from '@/config';
 
 // Database schema definitions - code-level table creation
 export class DatabaseService {
+  public static readonly supabase = supabase;
+
   // Check if tables exist and create them if they don't
   static async initializeDatabase(): Promise<boolean> {
     try {

@@ -5,6 +5,7 @@ export interface User {
   full_name?: string;
   avatar_url?: string;
   role: 'user' | 'admin' | 'superadmin';
+  is_premium?: boolean;
   preferred_languages?: string[];
   created_at: string;
   updated_at: string;
