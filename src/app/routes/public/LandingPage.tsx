@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Search, Lock } from 'lucide-react';
 import { Button, Input, SkeletonCard } from '@/components/ui';
 import { SidebarAd } from '@/components/ads/AdBanner';
+import { HeaderAd, ContentAd, FooterAd } from '@/components/ads/UnifiedAds';
 import { useLibrary } from '@/hooks/useLibrary';
 import { useAuth } from '@/hooks/useAuth';
 import { useLanguage } from '@/hooks/useLanguage';
@@ -120,6 +121,9 @@ const LandingPage: React.FC = () => {
 
   return (
     <div className="bg-white">
+      {/* Header Ad */}
+      <HeaderAd className="mt-4" />
+
       {/* Side Ads (desktop only) */}
       <div className="hidden lg:block">
         <div className="fixed left-4 top-24 z-20">
@@ -162,6 +166,9 @@ const LandingPage: React.FC = () => {
         </div>
       </div>
 
+      {/* Content Ad */}
+      <ContentAd className="my-8" />
+
       {/* Preview rail */}
       <div className="bg-orange-50/60 border-t border-b border-orange-100">
         <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-10 sm:py-14 space-y-10">
@@ -183,6 +190,9 @@ const LandingPage: React.FC = () => {
           ))}
         </div>
       </div>
+
+      {/* Footer Ad */}
+      <FooterAd className="mb-8" />
     </div>
   );
 };

@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import AppProviders from '@/app/providers/AppProviders';
 import AppRoutes from '@/app/routes/AppRoutes';
 import DatabaseSetupNotice from '@/components/DatabaseSetupNotice';
+import { MonetagPopup } from '@/components/ads/MonetagAds';
 import { DatabaseService } from '@/services/database.service';
 import { validateConfig, enableDebugLogs } from '@/config';
 import '@/styles/globals.css';
@@ -31,6 +32,9 @@ function App() {
 
   return (
     <AppProviders>
+      {/* Monetag Popup Ad (loads once per session) */}
+      <MonetagPopup />
+      
       {/* Skip to main content link for accessibility */}
       <a
         href="#main-content"

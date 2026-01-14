@@ -5,6 +5,7 @@ import LibraryFilters from '@/components/library/LibraryFilters';
 import LibraryGrid from '@/components/library/LibraryGrid';
 import Pagination from '@/components/library/Pagination';
 import { BannerAd, MobileAd } from '@/components/ads/AdBanner';
+import { HeaderAd, ContentAd } from '@/components/ads/UnifiedAds';
 import { Button } from '@/components/ui';
 import { useLibrary } from '@/hooks/useLibrary';
 import { useAuth } from '@/hooks/useAuth';
@@ -125,6 +126,9 @@ const LibraryPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Header Ad */}
+      <HeaderAd className="mb-6" />
+      
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
@@ -205,6 +209,9 @@ const LibraryPage: React.FC = () => {
         {/* Main Content */}
         <div>
             <LibraryGrid items={items} loading={loading} isAdmin={isAdmin} mediaType={mediaTab} />
+            
+            {/* Content Ad between results and pagination */}
+            <ContentAd className="my-8" />
             
             {/* Pagination */}
             {totalPages > 1 && (
