@@ -29,27 +29,44 @@ export const MonetagBannerAd: React.FC<MonetagBannerAdProps> = ({
     adRef.current.innerHTML = '';
     adRef.current.appendChild(adContainer);
 
-    // Add the Monetag script directly to the container
-    const script = document.createElement('script');
-    script.type = 'text/javascript';
-    script.innerHTML = `
-      (function() {
-        var atOptions = {
+    // Use safer async script loading instead of document.write
+    const loadAd = async () => {
+      try {
+        // Set up global atOptions for Monetag
+        (window as any).atOptions = {
           'key': 'ae562b7ca89a32cf54f0e23d39a65ba5',
           'format': 'iframe',
-          'height': ${height},
-          'width': ${width},
+          'height': height,
+          'width': width,
           'params': {}
         };
-        document.write('<scr' + 'ipt type="text/javascript" src="https://www.topcreativeformat.com/ae562b7ca89a32cf54f0e23d39a65ba5/invoke.js"></scr' + 'ipt>');
-      })();
-    `;
-    
-    adContainer.appendChild(script);
-    
-    console.log('🎯 Direct Monetag banner loaded:', { width, height });
+
+        // Create and load the script asynchronously
+        const script = document.createElement('script');
+        script.type = 'text/javascript';
+        script.async = true;
+        script.src = 'https://www.topcreativeformat.com/ae562b7ca89a32cf54f0e23d39a65ba5/invoke.js';
+        
+        // Add error handling
+        script.onerror = () => {
+          console.warn('Monetag ad script failed to load');
+        };
+        
+        script.onload = () => {
+          console.log('🎯 Monetag banner loaded successfully:', { width, height });
+        };
+        
+        adContainer.appendChild(script);
+      } catch (error) {
+        console.warn('Failed to load Monetag ad:', error);
+      }
+    };
+
+    // Load ad after a small delay to prevent blocking
+    const timeoutId = setTimeout(loadAd, 100);
 
     return () => {
+      clearTimeout(timeoutId);
       if (adRef.current) {
         adRef.current.innerHTML = '';
       }
