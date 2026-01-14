@@ -34,8 +34,7 @@ const GoogleAdSense: React.FC<GoogleAdSenseProps> = ({ type, className, style })
     const adRef = useRef<HTMLModElement>(null);
     const initialized = useRef(false);
 
-    // Don't render anything if user is admin/superadmin
-    if (isAdmin) return null;
+
 
     useEffect(() => {
         const element = adRef.current;
