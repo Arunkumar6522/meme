@@ -14,22 +14,45 @@ const AuthCallbackPage: React.FC = () => {
   useEffect(() => {
     const handleAuthCallback = async () => {
       try {
+        console.log('🔍 Auth callback started');
+        console.log('🔍 Current URL:', window.location.href);
+        console.log('🔍 Hash:', window.location.hash);
+        
         // Get the hash from URL (Supabase sends tokens in hash)
         const hashParams = new URLSearchParams(window.location.hash.substring(1));
         const accessToken = hashParams.get('access_token');
         const refreshToken = hashParams.get('refresh_token');
         const type = hashParams.get('type');
+        const errorParam = hashParams.get('error');
+        const errorDescription = hashParams.get('error_description');
+
+        console.log('🔍 Tokens found:', { 
+          hasAccessToken: !!accessToken, 
+          hasRefreshToken: !!refreshToken, 
+          type,
+          error: errorParam 
+        });
+
+        // Check for OAuth errors first
+        if (errorParam) {
+          throw new Error(errorDescription || errorParam);
+        }
 
         if (accessToken && refreshToken) {
+          console.log('✅ Setting session with tokens');
+          
           // Set the session with the tokens
-          const { error } = await supabase.auth.setSession({
+          const { data, error } = await supabase.auth.setSession({
             access_token: accessToken,
             refresh_token: refreshToken,
           });
 
           if (error) {
+            console.error('❌ Session error:', error);
             throw error;
           }
+
+          console.log('✅ Session set successfully:', data);
 
           // Handle different callback types
           if (type === 'signup') {
@@ -39,16 +62,19 @@ const AuthCallbackPage: React.FC = () => {
             showSuccess('Email verified! You can now reset your password.', 'Email Verified');
             navigate(`/auth/reset-password?access_token=${accessToken}&refresh_token=${refreshToken}`);
           } else {
-            showSuccess('Authentication successful!', 'Welcome Back');
+            // OAuth login (Google, etc.)
+            showSuccess('Successfully signed in!', 'Welcome Back');
             navigate('/home');
           }
         } else {
-          // Check for error in URL params
-          const errorDescription = searchParams.get('error_description') || 'Authentication failed';
-          throw new Error(errorDescription);
+          // Check for error in URL params (fallback)
+          const urlErrorDescription = searchParams.get('error_description') || 'Authentication failed - no tokens received';
+          console.error('❌ No tokens found:', urlErrorDescription);
+          throw new Error(urlErrorDescription);
         }
       } catch (err) {
         const errorMessage = (err as Error).message;
+        console.error('❌ Auth callback error:', errorMessage);
         setError(errorMessage);
         showError(errorMessage, 'Authentication Error');
         

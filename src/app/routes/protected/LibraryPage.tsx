@@ -5,7 +5,7 @@ import LibraryFilters from '@/components/library/LibraryFilters';
 import LibraryGrid from '@/components/library/LibraryGrid';
 import Pagination from '@/components/library/Pagination';
 // Removed old AdBanner imports - using SimpleAds only
-import { SafeLeaderboard, SafeRectangle, SafeMobile } from '@/components/ads/SafeAds';
+import { ResponsiveLeaderboard, ResponsiveRectangle, ResponsiveMobile } from '@/components/ads/MobileResponsiveAds';
 import { Button } from '@/components/ui';
 import { useLibrary } from '@/hooks/useLibrary';
 import { useAuth } from '@/hooks/useAuth';
@@ -128,7 +128,7 @@ const LibraryPage: React.FC = () => {
     <div className="min-h-screen bg-gray-50">
       {/* Monetag Header Banner Ad */}
       <div className="mb-6 pt-4">
-        <SafeLeaderboard className="max-w-4xl mx-auto" />
+        <ResponsiveLeaderboard className="max-w-4xl mx-auto" />
       </div>
       
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
@@ -162,7 +162,7 @@ const LibraryPage: React.FC = () => {
 
         {/* Mobile Ad */}
         <div className="mb-6 md:hidden">
-          <SafeMobile />
+          <ResponsiveMobile />
         </div>
 
         {/* Media Tabs */}
@@ -216,7 +216,7 @@ const LibraryPage: React.FC = () => {
             
             {/* Monetag Content Rectangle Ad between results and pagination */}
             <div className="my-8">
-              <SafeRectangle className="max-w-md mx-auto" />
+              <ResponsiveRectangle className="max-w-md mx-auto" />
             </div>
             
             {/* Pagination */}
@@ -237,7 +237,7 @@ const LibraryPage: React.FC = () => {
 
         {/* Bottom Banner Ad */}
         <div className="mt-12">
-          <SafeLeaderboard className="max-w-4xl mx-auto" />
+          <ResponsiveLeaderboard className="max-w-4xl mx-auto" />
         </div>
       </div>
     </div>

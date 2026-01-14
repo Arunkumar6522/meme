@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Search, Lock } from 'lucide-react';
 import { Button, Input, SkeletonCard } from '@/components/ui';
 // Removed old AdBanner import - using SimpleAds only
-import { SafeLeaderboard, SafeRectangle } from '@/components/ads/SafeAds';
+import { ResponsiveLeaderboard, ResponsiveRectangle } from '@/components/ads/MobileResponsiveAds';
 import { useLibrary } from '@/hooks/useLibrary';
 import { useAuth } from '@/hooks/useAuth';
 import { useLanguage } from '@/hooks/useLanguage';
@@ -123,16 +123,16 @@ const LandingPage: React.FC = () => {
     <div className="bg-white">
       {/* Monetag Header Banner Ad */}
       <div className="mt-4 mb-6">
-        <SafeLeaderboard className="max-w-4xl mx-auto" />
+        <ResponsiveLeaderboard className="max-w-4xl mx-auto" />
       </div>
 
       {/* Side Ads (desktop only) */}
       <div className="hidden lg:block">
         <div className="fixed left-4 top-24 z-20">
-          <SafeRectangle className="w-40" />
+          <ResponsiveRectangle className="w-40" />
         </div>
         <div className="fixed right-4 top-24 z-20">
-          <SafeRectangle className="w-40" />
+          <ResponsiveRectangle className="w-40" />
         </div>
       </div>
 
@@ -170,7 +170,7 @@ const LandingPage: React.FC = () => {
 
       {/* Monetag Content Rectangle Ad */}
       <div className="my-8">
-        <SafeRectangle className="max-w-md mx-auto" />
+        <ResponsiveRectangle className="max-w-md mx-auto" />
       </div>
 
       {/* Preview rail */}
@@ -197,7 +197,7 @@ const LandingPage: React.FC = () => {
 
       {/* Monetag Footer Banner Ad */}
       <div className="mb-8">
-        <SafeLeaderboard className="max-w-4xl mx-auto" />
+        <ResponsiveLeaderboard className="max-w-4xl mx-auto" />
       </div>
     </div>
   );
