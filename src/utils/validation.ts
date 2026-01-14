@@ -34,13 +34,15 @@ export const validateFullName = (name: string): { ok: boolean; error?: string } 
   
   const trimmed = name.trim();
   if (!trimmed) return { ok: false, error: 'Full name is required' };
-  if (trimmed.length < 2) return { ok: false, error: 'Full name must be at least 2 characters' };
-  if (trimmed.length > 50) return { ok: false, error: 'Full name must be 50 characters or less' };
   
-  // Unicode letters + combining marks + spaces + . ' -
-  const nameRegex = /^\p{L}[\p{L}\p{M}\s.'-]*$/u;
+  // Length limits
+  if (trimmed.length < 2) return { ok: false, error: 'Name must be at least 2 characters' };
+  if (trimmed.length > 30) return { ok: false, error: 'Name must be 30 characters or less' };
+  
+  // Only allow letters (no spaces, no special characters, no numbers)
+  const nameRegex = /^[a-zA-Z]+$/;
   if (!nameRegex.test(trimmed)) {
-    return { ok: false, error: 'Name can only contain letters, spaces, and . \' -' };
+    return { ok: false, error: 'Name can only contain letters (no spaces or special characters)' };
   }
   
   return { ok: true };

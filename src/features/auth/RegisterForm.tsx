@@ -162,13 +162,25 @@ const RegisterForm: React.FC = () => {
     if (error) {
       setErrors({ general: error });
       showError(error, 'Google Sign-in Failed');
-    } else {
-      showSuccess('Successfully signed in with Google!', 'Welcome Back');
     }
+    // Don't show success toast here - let AuthCallbackPage handle it after actual completion
   };
 
   const handleInputChange = (field: keyof typeof formData) => (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData(prev => ({ ...prev, [field]: e.target.value }));
+    let value = e.target.value;
+    
+    // For full name, filter out invalid characters in real-time
+    if (field === 'fullName') {
+      // Only allow letters, remove everything else immediately
+      value = value.replace(/[^a-zA-Z]/g, '');
+      // Limit to 30 characters
+      if (value.length > 30) {
+        value = value.substring(0, 30);
+      }
+    }
+    
+    setFormData(prev => ({ ...prev, [field]: value }));
+    
     // Clear error when user starts typing
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: undefined }));
@@ -237,10 +249,11 @@ const RegisterForm: React.FC = () => {
           value={formData.fullName}
           onChange={handleInputChange('fullName')}
           error={errors.fullName}
-          placeholder="Enter your full name"
+          placeholder="Enter your name (letters only)"
           autoComplete="name"
           autoFocus
-          maxLength={50}
+          maxLength={30}
+          helperText="Only letters allowed, no spaces or special characters"
           required
         />
 

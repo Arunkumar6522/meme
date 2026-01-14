@@ -130,9 +130,8 @@ const LoginForm: React.FC = () => {
     if (error) {
       setErrors({ general: error });
       showError(error, 'Google Sign-in Failed');
-    } else {
-      showSuccess('Successfully signed in with Google!', 'Welcome Back');
     }
+    // Don't show success toast here - let AuthCallbackPage handle it after actual completion
   };
 
   return (
