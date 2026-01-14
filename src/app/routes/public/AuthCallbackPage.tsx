@@ -18,6 +18,16 @@ const AuthCallbackPage: React.FC = () => {
         console.log('🔍 Auth callback started');
         console.log('🔍 Current URL:', window.location.href);
         console.log('🔍 Hash:', window.location.hash);
+        console.log('🔍 Search:', window.location.search);
+
+        // 0) If session already exists (common on mobile / some browsers), just proceed.
+        const { data: existingSession } = await supabase.auth.getSession();
+        if (existingSession?.session) {
+          console.log('✅ Session already present, skipping URL parsing');
+          showSuccess('Successfully signed in!', 'Welcome Back');
+          navigate('/home');
+          return;
+        }
         
         // Get the hash from URL (Supabase sends tokens in hash)
         const hashParams = new URLSearchParams(window.location.hash.substring(1));
@@ -30,13 +40,15 @@ const AuthCallbackPage: React.FC = () => {
         // Also check URL search params for errors (some OAuth providers use this)
         const urlError = searchParams.get('error');
         const urlErrorDescription = searchParams.get('error_description');
+        const code = searchParams.get('code'); // PKCE code flow
 
         console.log('🔍 Tokens found:', { 
           hasAccessToken: !!accessToken, 
           hasRefreshToken: !!refreshToken, 
           type,
           hashError: errorParam,
-          urlError: urlError
+          urlError: urlError,
+          hasCode: !!code
         });
 
         // Check for OAuth errors (hash or URL params)
@@ -57,6 +69,32 @@ const AuthCallbackPage: React.FC = () => {
           }
           
           throw new Error(description || error);
+        }
+
+        // 1) PKCE / code flow: exchange ?code=... for a session
+        if (code) {
+          console.log('🔁 Exchanging OAuth code for session...');
+          // supabase-js v2: exchangeCodeForSession(code)
+          const { data, error } = await (supabase.auth as any).exchangeCodeForSession(code);
+          if (error) {
+            console.error('❌ Code exchange failed:', error);
+            throw error;
+          }
+          console.log('✅ Code exchange success:', data);
+
+          // Clean the URL (remove ?code=...)
+          try {
+            const url = new URL(window.location.href);
+            url.searchParams.delete('code');
+            url.searchParams.delete('state');
+            window.history.replaceState({}, document.title, url.pathname);
+          } catch {
+            // ignore
+          }
+
+          showSuccess('Successfully signed in!', 'Welcome Back');
+          navigate('/home');
+          return;
         }
 
         if (accessToken && refreshToken) {
@@ -105,11 +143,14 @@ const AuthCallbackPage: React.FC = () => {
           }
           
           // Generic error for missing tokens
-          const userFriendlyMessage = 'Authentication incomplete. This can happen if:\n' +
-            '• You closed the login window\n' +
-            '• Your internet connection was interrupted\n' +
-            '• The login process timed out\n\n' +
-            'Please try signing in again.';
+          const userFriendlyMessage =
+            'Authentication failed: no tokens/code returned.\n\n' +
+            'Most common cause: Google OAuth redirect URI is set wrong.\n' +
+            'In Google Cloud Console → Credentials → OAuth Client → Authorized redirect URIs, you MUST add:\n' +
+            `https://csajwbsedfaegygaeooy.supabase.co/auth/v1/callback\n\n` +
+            'Do NOT set the redirect URI to your domain callback.\n' +
+            'Supabase will redirect back to your site after it finishes.\n\n' +
+            'Then try Google Sign-in again.';
           
           throw new Error(userFriendlyMessage);
         }
