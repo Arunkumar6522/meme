@@ -105,6 +105,32 @@ export class AuthService {
         },
       });
 
+      // Set up detection for window close/cancellation
+      if (data?.url) {
+        console.log('🔗 OAuth URL generated, setting up cancellation detection');
+        
+        // Listen for page visibility changes (user might close tab/window)
+        const handleVisibilityChange = () => {
+          if (document.visibilityState === 'visible') {
+            // User came back to the page - check if they completed OAuth
+            setTimeout(() => {
+              const { data: { session } } = supabase.auth.getSession();
+              if (!session) {
+                console.log('🚫 User returned without completing OAuth');
+                // Could trigger cleanup here if needed
+              }
+            }, 1000);
+          }
+        };
+
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+        
+        // Clean up listener after 5 minutes
+        setTimeout(() => {
+          document.removeEventListener('visibilitychange', handleVisibilityChange);
+        }, 5 * 60 * 1000);
+      }
+
       if (error) throw error;
       return { data, error: null };
     } catch (error) {

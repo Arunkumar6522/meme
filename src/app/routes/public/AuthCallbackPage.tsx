@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/services/supabase';
 import { LoadingSpinner } from '@/components/ui';
 import { useToast } from '@/hooks/useToast';
+import { AccountCleanupService } from '@/services/account-cleanup.service';
 
 const AuthCallbackPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
@@ -26,16 +27,36 @@ const AuthCallbackPage: React.FC = () => {
         const errorParam = hashParams.get('error');
         const errorDescription = hashParams.get('error_description');
 
+        // Also check URL search params for errors (some OAuth providers use this)
+        const urlError = searchParams.get('error');
+        const urlErrorDescription = searchParams.get('error_description');
+
         console.log('🔍 Tokens found:', { 
           hasAccessToken: !!accessToken, 
           hasRefreshToken: !!refreshToken, 
           type,
-          error: errorParam 
+          hashError: errorParam,
+          urlError: urlError
         });
 
-        // Check for OAuth errors first
-        if (errorParam) {
-          throw new Error(errorDescription || errorParam);
+        // Check for OAuth errors (hash or URL params)
+        if (errorParam || urlError) {
+          const error = errorParam || urlError;
+          const description = errorDescription || urlErrorDescription;
+          
+          // Handle user cancellation
+          if (error === 'access_denied' || description?.includes('cancelled') || description?.includes('denied')) {
+            console.log('🚫 User cancelled OAuth - cleaning up and redirecting');
+            
+            // Clean up any partial accounts
+            await AccountCleanupService.handleOAuthCancellation();
+            
+            showError('Sign-in was cancelled', 'Authentication Cancelled');
+            navigate('/auth/login');
+            return;
+          }
+          
+          throw new Error(description || error);
         }
 
         if (accessToken && refreshToken) {
@@ -67,10 +88,30 @@ const AuthCallbackPage: React.FC = () => {
             navigate('/home');
           }
         } else {
-          // Check for error in URL params (fallback)
-          const urlErrorDescription = searchParams.get('error_description') || 'Authentication failed - no tokens received';
-          console.error('❌ No tokens found:', urlErrorDescription);
-          throw new Error(urlErrorDescription);
+          // No tokens found - could be user cancellation or error
+          console.error('❌ No tokens found in callback');
+          
+          // Check if this might be a cancellation
+          if (window.location.href.includes('error=access_denied') || 
+              window.location.href.includes('cancelled')) {
+            console.log('🚫 Detected user cancellation - cleaning up');
+            
+            // Clean up any partial accounts
+            await AccountCleanupService.handleOAuthCancellation();
+            
+            showError('Sign-in was cancelled', 'Authentication Cancelled');
+            navigate('/auth/login');
+            return;
+          }
+          
+          // Generic error for missing tokens
+          const userFriendlyMessage = 'Authentication incomplete. This can happen if:\n' +
+            '• You closed the login window\n' +
+            '• Your internet connection was interrupted\n' +
+            '• The login process timed out\n\n' +
+            'Please try signing in again.';
+          
+          throw new Error(userFriendlyMessage);
         }
       } catch (err) {
         const errorMessage = (err as Error).message;
