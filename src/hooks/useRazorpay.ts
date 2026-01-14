@@ -42,12 +42,16 @@ export const useRazorpay = () => {
             }
 
             // 2. Create Order
-            const orderData = await fetch('/.netlify/functions/create-razorpay-order', {
+            // 2. Create Order
+            const response = await fetch('https://ilovememe.in/.netlify/functions/create-razorpay-order', {
                 method: 'POST',
-            }).then((t) => t.json());
+            });
 
-            if (!orderData.id) {
-                alert('Server error. Are you running the netlify functions?');
+            const orderData = await response.json();
+
+            if (!response.ok || !orderData.id) {
+                console.error('Order creation failed:', orderData);
+                alert(`Payment Error: ${orderData.details || orderData.error || 'Server error'}`);
                 setLoading(false);
                 return;
             }
