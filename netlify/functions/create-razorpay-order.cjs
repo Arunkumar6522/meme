@@ -1,8 +1,8 @@
 const Razorpay = require('razorpay');
 
-// These should be in process.env
-const KEY_ID = 'rzp_test_S3jpsysZ3aqLiQ';
-const KEY_SECRET = '7YsdNv7HjVfTp1w76awb6DYL';
+// Keys should be set in Netlify Environment Variables
+const KEY_ID = process.env.RAZORPAY_KEY_ID;
+const KEY_SECRET = process.env.RAZORPAY_KEY_SECRET;
 
 exports.handler = async (event) => {
     const headers = {
