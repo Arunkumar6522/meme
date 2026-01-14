@@ -7,7 +7,7 @@ interface SimpleAdProps {
   format?: 'banner' | 'rectangle' | 'mobile';
 }
 
-// Simple Monetag Banner (non-intrusive)
+// Simple Monetag Banner (working implementation)
 export const SimpleMonetagBanner: React.FC<SimpleAdProps> = ({ 
   className = '', 
   style = {},
@@ -16,10 +16,7 @@ export const SimpleMonetagBanner: React.FC<SimpleAdProps> = ({
   const adRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Load simple banner ad without popups or redirects
-    const script = document.createElement('script');
-    script.type = 'text/javascript';
-    
+    // Standard Monetag implementation
     const adConfig = {
       banner: { height: 90, width: 728 },
       rectangle: { height: 250, width: 300 },
@@ -28,27 +25,33 @@ export const SimpleMonetagBanner: React.FC<SimpleAdProps> = ({
     
     const config = adConfig[format];
     
-    script.innerHTML = `
+    // Create the ad configuration script
+    const configScript = document.createElement('script');
+    configScript.type = 'text/javascript';
+    configScript.innerHTML = `
       atOptions = {
-        'key' : 'ae562b7ca89a32cf54f0e23d39a65ba5',
-        'format' : 'iframe',
-        'height' : ${config.height},
-        'width' : ${config.width},
-        'params' : {
-          'no_popup': true,
-          'no_redirect': true,
-          'safe_mode': true
-        }
+        'key': 'ae562b7ca89a32cf54f0e23d39a65ba5',
+        'format': 'iframe',
+        'height': ${config.height},
+        'width': ${config.width},
+        'params': {}
       };
     `;
     
-    const adScript = document.createElement('script');
-    adScript.type = 'text/javascript';
-    adScript.src = 'https://www.topcreativeformat.com/ae562b7ca89a32cf54f0e23d39a65ba5/invoke.js';
+    // Create the invoke script
+    const invokeScript = document.createElement('script');
+    invokeScript.type = 'text/javascript';
+    invokeScript.src = 'https://www.topcreativeformat.com/ae562b7ca89a32cf54f0e23d39a65ba5/invoke.js';
     
     if (adRef.current) {
-      adRef.current.appendChild(script);
-      adRef.current.appendChild(adScript);
+      // Clear any existing content
+      adRef.current.innerHTML = '';
+      
+      // Add both scripts
+      adRef.current.appendChild(configScript);
+      adRef.current.appendChild(invokeScript);
+      
+      console.log('🎯 Monetag ad loaded for format:', format);
     }
 
     return () => {
@@ -64,7 +67,7 @@ export const SimpleMonetagBanner: React.FC<SimpleAdProps> = ({
     <div 
       ref={adRef}
       className={cn(
-        'simple-ad-banner flex justify-center items-center bg-gray-50 border border-gray-200 rounded-lg',
+        'monetag-ad-container flex justify-center items-center',
         className
       )}
       style={{ minHeight, ...style }}

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Search, Lock } from 'lucide-react';
 import { Button, Input, SkeletonCard } from '@/components/ui';
 // Removed old AdBanner import - using SimpleAds only
-import { SimpleAdBanner } from '@/components/ads/SimpleAds';
+import { MonetagLeaderboard, MonetagRectangle } from '@/components/ads/MonetagBannerAd';
 import { useLibrary } from '@/hooks/useLibrary';
 import { useAuth } from '@/hooks/useAuth';
 import { useLanguage } from '@/hooks/useLanguage';
@@ -121,18 +121,18 @@ const LandingPage: React.FC = () => {
 
   return (
     <div className="bg-white">
-      {/* Simple Header Banner Ad */}
+      {/* Monetag Header Banner Ad */}
       <div className="mt-4 mb-6">
-        <SimpleAdBanner format="banner" className="max-w-4xl mx-auto" />
+        <MonetagLeaderboard className="max-w-4xl mx-auto" />
       </div>
 
       {/* Side Ads (desktop only) */}
       <div className="hidden lg:block">
         <div className="fixed left-4 top-24 z-20">
-          <SimpleAdBanner format="rectangle" className="w-40" />
+          <MonetagRectangle className="w-40" />
         </div>
         <div className="fixed right-4 top-24 z-20">
-          <SimpleAdBanner format="rectangle" className="w-40" />
+          <MonetagRectangle className="w-40" />
         </div>
       </div>
 
@@ -168,9 +168,9 @@ const LandingPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Simple Content Banner Ad */}
+      {/* Monetag Content Rectangle Ad */}
       <div className="my-8">
-        <SimpleAdBanner format="rectangle" className="max-w-md mx-auto" />
+        <MonetagRectangle className="max-w-md mx-auto" />
       </div>
 
       {/* Preview rail */}
@@ -195,9 +195,9 @@ const LandingPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Simple Footer Banner Ad */}
+      {/* Monetag Footer Banner Ad */}
       <div className="mb-8">
-        <SimpleAdBanner format="banner" className="max-w-4xl mx-auto" />
+        <MonetagLeaderboard className="max-w-4xl mx-auto" />
       </div>
     </div>
   );

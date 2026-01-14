@@ -5,7 +5,7 @@ import LibraryFilters from '@/components/library/LibraryFilters';
 import LibraryGrid from '@/components/library/LibraryGrid';
 import Pagination from '@/components/library/Pagination';
 // Removed old AdBanner imports - using SimpleAds only
-import { SimpleAdBanner } from '@/components/ads/SimpleAds';
+import { MonetagLeaderboard, MonetagRectangle, MonetagMobile } from '@/components/ads/MonetagBannerAd';
 import { Button } from '@/components/ui';
 import { useLibrary } from '@/hooks/useLibrary';
 import { useAuth } from '@/hooks/useAuth';
@@ -126,9 +126,9 @@ const LibraryPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Simple Header Banner Ad */}
+      {/* Monetag Header Banner Ad */}
       <div className="mb-6 pt-4">
-        <SimpleAdBanner format="banner" className="max-w-4xl mx-auto" />
+        <MonetagLeaderboard className="max-w-4xl mx-auto" />
       </div>
       
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
@@ -162,7 +162,7 @@ const LibraryPage: React.FC = () => {
 
         {/* Mobile Ad */}
         <div className="mb-6 md:hidden">
-          <SimpleAdBanner format="mobile" />
+          <MonetagMobile />
         </div>
 
         {/* Media Tabs */}
@@ -214,9 +214,9 @@ const LibraryPage: React.FC = () => {
         <div>
             <LibraryGrid items={items} loading={loading} isAdmin={isAdmin} mediaType={mediaTab} />
             
-            {/* Simple Content Banner Ad between results and pagination */}
+            {/* Monetag Content Rectangle Ad between results and pagination */}
             <div className="my-8">
-              <SimpleAdBanner format="rectangle" className="max-w-md mx-auto" />
+              <MonetagRectangle className="max-w-md mx-auto" />
             </div>
             
             {/* Pagination */}
@@ -237,7 +237,7 @@ const LibraryPage: React.FC = () => {
 
         {/* Bottom Banner Ad */}
         <div className="mt-12">
-          <SimpleAdBanner format="banner" className="max-w-4xl mx-auto" />
+          <MonetagLeaderboard className="max-w-4xl mx-auto" />
         </div>
       </div>
     </div>
