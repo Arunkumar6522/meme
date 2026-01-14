@@ -49,10 +49,11 @@ exports.handler = async (event) => {
             amount: amount,
             currency: 'INR',
             receipt: `receipt_${Date.now()}`,
-            payment_capture: 1, // Auto capture
+            payment_capture: 1,
         };
 
         console.log('Creating order with options:', options);
+        // The SDK calls https://api.razorpay.com/v1/orders internally
         const order = await razorpay.orders.create(options);
         console.log('Order created:', order);
 
