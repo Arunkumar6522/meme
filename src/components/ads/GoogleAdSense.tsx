@@ -16,48 +16,53 @@ const AD_SLOTS: Record<AdType, string> = {
 
 const CLIENT_ID = 'ca-pub-9385541671046952';
 
-useEffect(() => {
-    // Delay initialization slightly to ensure layout is stable/calculated
-    const timer = setTimeout(() => {
-        const element = adRef.current;
-        if (!element) return;
+const GoogleAdSense: React.FC<GoogleAdSenseProps> = ({ type, className, style }) => {
+    const adRef = useRef<HTMLModElement>(null);
 
-        // Check if element is truly visible in the DOM
-        // offsetParent is null if element or any ancestor is display: none
-        const isVisible = element.offsetParent !== null;
-        // Also check computed style as a backup
-        const style = window.getComputedStyle(element);
-        const isNotHidden = style.display !== 'none' && style.visibility !== 'hidden' && parseFloat(style.opacity) > 0;
-        const hasWidth = element.offsetWidth > 0;
+    useEffect(() => {
+        // Delay initialization slightly to ensure layout is stable/calculated
+        const timer = setTimeout(() => {
+            const element = adRef.current;
+            if (!element) return;
 
-        if (isVisible && isNotHidden && hasWidth) {
-            try {
+            // Check if element is truly visible in the DOM
+            // offsetParent is null if element or any ancestor is display: none
+            const isVisible = element.offsetParent !== null;
+            // Also check computed style as a backup
+            const style = window.getComputedStyle(element);
+            const isNotHidden = style.display !== 'none' && style.visibility !== 'hidden' && parseFloat(style.opacity || '1') > 0;
+            const hasWidth = element.offsetWidth > 0;
+
+            if (isVisible && isNotHidden && hasWidth) {
+                try {
+                    // @ts-ignore
+                    (window.adsbygoogle = window.adsbygoogle || []).push({});
+                } catch (err) {
+                    console.error('AdSense error:', err);
+                }
+            } else {
                 // @ts-ignore
-                (window.adsbygoogle = window.adsbygoogle || []).push({});
-            } catch (err) {
-                console.error('AdSense error:', err);
+                const width = element.offsetWidth;
+                // console.debug('AdSense: Skipping ad push for hidden/zero-width slot', { type, isVisible, isNotHidden, width });
             }
-        } else {
-            console.debug('AdSense: Skipping ad push for hidden/zero-width slot', { type, isVisible, isNotHidden, width: element.offsetWidth });
-        }
-    }, 100); // 100ms delay
+        }, 100); // 100ms delay
 
-    return () => clearTimeout(timer);
-}, [type]); // Re-run if type changes, though it typically won't
+        return () => clearTimeout(timer);
+    }, [type]);
 
-return (
-    <div className={className} style={{ minHeight: '50px', ...style }}>
-        <ins
-            ref={adRef}
-            className="adsbygoogle"
-            style={{ display: 'block', ...style }}
-            data-ad-client={CLIENT_ID}
-            data-ad-slot={AD_SLOTS[type]}
-            data-ad-format="auto"
-            data-full-width-responsive="true"
-        />
-    </div>
-);
+    return (
+        <div className={className} style={{ minHeight: '50px', ...style }}>
+            <ins
+                ref={adRef}
+                className="adsbygoogle"
+                style={{ display: 'block', ...style }}
+                data-ad-client={CLIENT_ID}
+                data-ad-slot={AD_SLOTS[type]}
+                data-ad-format="auto"
+                data-full-width-responsive="true"
+            />
+        </div>
+    );
 };
 
 export default GoogleAdSense;
