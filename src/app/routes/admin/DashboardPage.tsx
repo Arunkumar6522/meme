@@ -12,12 +12,19 @@ const DashboardPage: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
 
+    // Filters
+    const [selectedLang, setSelectedLang] = useState<string>('');
+    const [selectedMedia, setSelectedMedia] = useState<string>('');
+
+    const languages = ['Tamil', 'English', 'Malayalam', 'Kannada', 'Telugu', 'Hindi'];
+
     useEffect(() => {
         const fetchStats = async () => {
             if (!user) return;
+            setLoading(true);
             try {
                 const isAdmin = await DatabaseService.isUserAdmin(user.id);
-                const isSuper = await DatabaseService.isUserSuperAdmin(user.id); // Assuming you added this
+                const isSuper = await DatabaseService.isUserSuperAdmin(user.id);
 
                 if (!isAdmin && !isSuper) {
                     setError('Unauthorized');
@@ -25,17 +32,13 @@ const DashboardPage: React.FC = () => {
                     return;
                 }
 
-                const data = await DatabaseService.getDashboardStats();
+                const data = await DatabaseService.getDashboardStats(selectedLang, selectedMedia);
                 if (data) {
                     setStats(data);
                 } else {
-                    // Mock data if RPC fails (for development/demo before SQL run)
-                    setStats({
-                        users: { total: 0, premium: 0, admins: 0 },
-                        library: { total_items: 0, audio_count: 0, video_count: 0, total_downloads: 0 },
-                        languages: {}
-                    });
-                    setError('Could not load detailed stats. Ensure database migration is run.');
+                    // Fallback/Mock
+                    setStats(null);
+                    setError('No data returned. Ensure updated SQL script is run.');
                 }
             } catch (err) {
                 setError('Failed to load dashboard.');
@@ -44,25 +47,39 @@ const DashboardPage: React.FC = () => {
             }
         };
         fetchStats();
-    }, [user]);
+    }, [user, selectedLang, selectedMedia]);
 
-    if (loading) return <div className="h-screen flex items-center justify-center"><LoadingSpinner size="lg" /></div>;
-    if (!stats && !loading) return <div className="p-8 text-center text-red-600">Failed to load dashboard. {error}</div>;
-
-    const statCards = [
-        { label: 'Total Users', value: stats?.users?.total || 0, icon: Users, color: 'bg-blue-500' },
-        { label: 'Premium Users', value: stats?.users?.premium || 0, icon: TrendingUp, color: 'bg-yellow-500' },
-        { label: 'Total Audios', value: stats?.library?.audio_count || 0, icon: Music, color: 'bg-green-500' },
-        { label: 'Total Videos', value: stats?.library?.video_count || 0, icon: Video, color: 'bg-red-500' },
-        { label: 'Total Downloads', value: stats?.library?.total_downloads || 0, icon: Download, color: 'bg-purple-500' },
-    ];
+    if (loading && !stats) return <div className="h-screen flex items-center justify-center"><LoadingSpinner size="lg" /></div>;
 
     return (
         <div className="min-h-screen bg-gray-50 p-6 md:p-8">
             <div className="max-w-7xl mx-auto space-y-8">
 
-                <div className="flex justify-between items-center">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                     <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
+
+                    <div className="flex gap-4">
+                        {/* Language Filter */}
+                        <select
+                            className="rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500"
+                            value={selectedLang}
+                            onChange={(e) => setSelectedLang(e.target.value)}
+                        >
+                            <option value="">All Languages</option>
+                            {languages.map(l => <option key={l} value={l}>{l}</option>)}
+                        </select>
+
+                        {/* Media Filter */}
+                        <select
+                            className="rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500"
+                            value={selectedMedia}
+                            onChange={(e) => setSelectedMedia(e.target.value)}
+                        >
+                            <option value="">All Media</option>
+                            <option value="audio">Audio</option>
+                            <option value="video">Video</option>
+                        </select>
+                    </div>
                 </div>
 
                 {error && (
@@ -72,58 +89,93 @@ const DashboardPage: React.FC = () => {
                     </div>
                 )}
 
-                {/* Key Metrics */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-                    {statCards.map((stat) => (
-                        <div key={stat.label} className="bg-white rounded-lg shadow border border-gray-100 p-4 flex items-center space-x-4 hover:shadow-md transition-shadow">
-                            <div className={`${stat.color} p-3 rounded-full text-white`}>
-                                <stat.icon className="w-6 h-6" />
+                {/* Overview Cards */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                    <div className="bg-white p-6 rounded-lg shadow border border-gray-100">
+                        <div className="flex items-center gap-4">
+                            <div className="bg-blue-100 p-3 rounded-full text-blue-600">
+                                <Music className="h-6 w-6" />
                             </div>
-                            <div className="flex-1">
-                                <p className="text-gray-500 text-xs font-medium uppercase tracking-wider">{stat.label}</p>
-                                <p className="text-2xl font-bold text-gray-900">{stat.value.toLocaleString()}</p>
+                            <div>
+                                <p className="text-sm font-medium text-gray-500">Total Items</p>
+                                <p className="text-2xl font-bold text-gray-900">{stats?.metrics?.total_items || 0}</p>
                             </div>
                         </div>
-                    ))}
+                    </div>
+                    <div className="bg-white p-6 rounded-lg shadow border border-gray-100">
+                        <div className="flex items-center gap-4">
+                            <div className="bg-green-100 p-3 rounded-full text-green-600">
+                                <Download className="h-6 w-6" />
+                            </div>
+                            <div>
+                                <p className="text-sm font-medium text-gray-500">Total Downloads</p>
+                                <p className="text-2xl font-bold text-gray-900">{stats?.metrics?.total_downloads || 0}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="bg-white p-6 rounded-lg shadow border border-gray-100">
+                        <div className="flex items-center gap-4">
+                            <div className="bg-purple-100 p-3 rounded-full text-purple-600">
+                                <TrendingUp className="h-6 w-6" />
+                            </div>
+                            <div>
+                                <p className="text-sm font-medium text-gray-500">Total Views</p>
+                                <p className="text-2xl font-bold text-gray-900">{stats?.metrics?.total_views || 0}</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
-                {/* Language Breakdown */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    {/* Top Viewed */}
                     <div className="bg-white rounded-lg shadow p-6">
                         <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
                             <Globe className="h-5 w-5 text-gray-500" />
-                            Content by Language
+                            Most Viewed Content
                         </h2>
                         <div className="space-y-4">
-                            {Object.entries(stats?.languages || {}).length === 0 ? (
-                                <p className="text-gray-500">No language data available.</p>
+                            {!stats?.top_viewed?.length ? (
+                                <p className="text-gray-500 italic">No data yet.</p>
                             ) : (
-                                Object.entries(stats?.languages || {}).map(([lang, count]: any) => (
-                                    <div key={lang} className="flex items-center justify-between">
-                                        <span className="text-gray-700 font-medium">{lang}</span>
-                                        <div className="flex items-center gap-4 flex-1 mx-4">
-                                            <div className="w-full bg-gray-200 rounded-full h-2.5">
-                                                <div
-                                                    className="bg-orange-600 h-2.5 rounded-full"
-                                                    style={{ width: `${Math.min(100, (count / (stats?.library?.total_items || 1)) * 100)}%` }}
-                                                ></div>
+                                stats.top_viewed.map((item: any, i: number) => (
+                                    <div key={item.id} className="flex items-center justify-between border-b border-gray-50 pb-2 last:border-0">
+                                        <div className="flex items-center gap-3">
+                                            <span className="text-lg font-bold text-gray-300 w-6">#{i + 1}</span>
+                                            <div>
+                                                <p className="font-medium text-gray-900 line-clamp-1">{item.title}</p>
+                                                <p className="text-xs text-gray-500">{item.media_type} • {item.languages?.join(', ')}</p>
                                             </div>
                                         </div>
-                                        <span className="text-gray-900 font-bold">{count}</span>
+                                        <span className="font-semibold text-gray-700">{item.view_count} views</span>
                                     </div>
                                 ))
                             )}
                         </div>
                     </div>
 
-                    {/* Quick Actions / Placeholders for future Analytics */}
+                    {/* Top Downloaded */}
                     <div className="bg-white rounded-lg shadow p-6">
-                        <h2 className="text-lg font-bold text-gray-900 mb-4">Ad Performance (Placeholder)</h2>
-                        <p className="text-gray-600 mb-4">
-                            Access comprehensive ad reports directly in your <a href="https://adsense.google.com" target="_blank" className="text-blue-600 hover:underline">Google AdSense Dashboard</a>.
-                        </p>
-                        <div className="p-4 bg-gray-50 rounded border border-gray-200 text-sm text-gray-600">
-                            Internal impression tracking coming soon. For now, download counts act as a proxy for user engagement.
+                        <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                            <Download className="h-5 w-5 text-gray-500" />
+                            Most Downloaded Content
+                        </h2>
+                        <div className="space-y-4">
+                            {!stats?.top_downloaded?.length ? (
+                                <p className="text-gray-500 italic">No data yet.</p>
+                            ) : (
+                                stats.top_downloaded.map((item: any, i: number) => (
+                                    <div key={item.id} className="flex items-center justify-between border-b border-gray-50 pb-2 last:border-0">
+                                        <div className="flex items-center gap-3">
+                                            <span className="text-lg font-bold text-gray-300 w-6">#{i + 1}</span>
+                                            <div>
+                                                <p className="font-medium text-gray-900 line-clamp-1">{item.title}</p>
+                                                <p className="text-xs text-gray-500">{item.media_type} • {item.languages?.join(', ')}</p>
+                                            </div>
+                                        </div>
+                                        <span className="font-semibold text-gray-700">{item.download_count} saves</span>
+                                    </div>
+                                ))
+                            )}
                         </div>
                     </div>
                 </div>
