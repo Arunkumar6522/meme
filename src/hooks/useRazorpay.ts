@@ -51,7 +51,8 @@ export const useRazorpay = () => {
 
             if (!response.ok || !orderData.id) {
                 console.error('Order creation failed:', orderData);
-                alert(`Payment Error: ${orderData.details || orderData.error || 'Server error'}`);
+                // ALERT THE FULL JSON to figure out the 500 cause
+                alert(`Payment Error:\n${JSON.stringify(orderData, null, 2)}`);
                 setLoading(false);
                 return;
             }

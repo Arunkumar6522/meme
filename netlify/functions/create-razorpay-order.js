@@ -1,7 +1,6 @@
-import RazorpayPackage from 'razorpay';
-
-// Handle CommonJS/ESM interop
-const Razorpay = RazorpayPackage.default || RazorpayPackage;
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
+const Razorpay = require('razorpay');
 
 // These should be in process.env
 const KEY_ID = 'rzp_test_S3jpsysZ3aqLiQ';
