@@ -33,7 +33,7 @@ const RegisterForm: React.FC = () => {
   const { signUp, signInWithGoogle, loading } = useAuth();
   const { showSuccess, showError } = useToast();
 
-  // Enhanced effect to log state changes and ensure OTP screen shows
+  // Simple effect to log state changes (NO state updates to prevent loops)
   useEffect(() => {
     console.log('🔄 RegisterForm state changed:', { 
       step, 
@@ -47,11 +47,7 @@ const RegisterForm: React.FC = () => {
       console.log('🚀 OTP data is ready, component should re-render');
     }
     
-    // If we have OTP data but step is not 'otp', force it
-    if (otpData && step !== 'otp') {
-      console.log('🔧 Forcing step to otp because we have otpData');
-      setStep('otp');
-    }
+    // REMOVED: Don't update state in useEffect - this causes infinite loops!
   }, [step, otpData]);
 
   const validateForm = () => {
@@ -163,36 +159,25 @@ const RegisterForm: React.FC = () => {
       console.log('🔄 Setting OTP data:', newOtpData);
       console.log('🔄 Current step before change:', step);
       
-      // Update state synchronously using flushSync - try multiple approaches
-      console.log('🔄 About to update state with flushSync...');
+      // Update state - use simple approach without flushSync to prevent issues
+      console.log('🔄 About to update state...');
       
-      // Method 1: Direct flushSync
-      flushSync(() => {
-        setOtpData(newOtpData);
+      // Set OTP data first
+      setOtpData(newOtpData);
+      
+      // Then set step in next tick to ensure otpData is set
+      setTimeout(() => {
         setStep('otp');
-      });
+        console.log('🔄 Step updated to otp');
+      }, 0);
       
-      // Method 2: Backup state update with setTimeout
+      console.log('🎯 OTP screen should show after state updates');
+      
+      // Reset submission flag after a delay
       setTimeout(() => {
-        console.log('🔄 Backup state update - checking if OTP screen is visible');
-        if (step !== 'otp' || !otpData) {
-          console.log('🔧 State was reset, forcing OTP screen again');
-          setOtpData(newOtpData);
-          setStep('otp');
-        }
-      }, 50);
-      
-      console.log('🔄 Step after flushSync:', 'otp');
-      console.log('🎯 OTP screen should now be visible with email:', normalizedEmail);
-      
-      // Don't reset isSubmittingRef here - let the component handle it
-      
-      // Force a small delay to ensure DOM updates
-      setTimeout(() => {
-        console.log('🔍 Final check - otpData:', otpData);
-        console.log('🔍 Final check - step:', step);
-        isSubmittingRef.current = false; // Reset after state is confirmed
-      }, 100);
+        isSubmittingRef.current = false;
+        console.log('🔍 Final check - registration process complete');
+      }, 200);
       
     } catch (err) {
       console.error('💥 Exception in handleSubmit:', err);
