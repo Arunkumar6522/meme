@@ -1,4 +1,7 @@
-import Razorpay from 'razorpay';
+import RazorpayPackage from 'razorpay';
+
+// Handle CommonJS/ESM interop
+const Razorpay = RazorpayPackage.default || RazorpayPackage;
 
 // These should be in process.env
 const KEY_ID = 'rzp_test_S3jpsysZ3aqLiQ';
