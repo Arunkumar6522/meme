@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { flushSync } from 'react-dom';
 import { Link } from 'react-router-dom';
 import { Button, Input } from '@/components/ui';
@@ -16,6 +16,7 @@ const RegisterForm: React.FC = () => {
     password: string;
     fullName?: string;
   } | null>(null);
+  const isSubmittingRef = useRef(false);
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -87,9 +88,19 @@ const RegisterForm: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+    e.stopPropagation(); // Prevent event bubbling
+
+    // Prevent multiple submissions
+    if (isSubmittingRef.current) {
+      console.log('🚫 Already submitting, ignoring duplicate submission');
+      return;
+    }
+
+    isSubmittingRef.current = true;
+
     // Validate form first
     if (!validateForm()) {
+      isSubmittingRef.current = false;
       return;
     }
 
@@ -152,19 +163,35 @@ const RegisterForm: React.FC = () => {
       console.log('🔄 Setting OTP data:', newOtpData);
       console.log('🔄 Current step before change:', step);
       
-      // Update state synchronously using flushSync
+      // Update state synchronously using flushSync - try multiple approaches
+      console.log('🔄 About to update state with flushSync...');
+      
+      // Method 1: Direct flushSync
       flushSync(() => {
         setOtpData(newOtpData);
         setStep('otp');
       });
       
+      // Method 2: Backup state update with setTimeout
+      setTimeout(() => {
+        console.log('🔄 Backup state update - checking if OTP screen is visible');
+        if (step !== 'otp' || !otpData) {
+          console.log('🔧 State was reset, forcing OTP screen again');
+          setOtpData(newOtpData);
+          setStep('otp');
+        }
+      }, 50);
+      
       console.log('🔄 Step after flushSync:', 'otp');
       console.log('🎯 OTP screen should now be visible with email:', normalizedEmail);
+      
+      // Don't reset isSubmittingRef here - let the component handle it
       
       // Force a small delay to ensure DOM updates
       setTimeout(() => {
         console.log('🔍 Final check - otpData:', otpData);
         console.log('🔍 Final check - step:', step);
+        isSubmittingRef.current = false; // Reset after state is confirmed
       }, 100);
       
     } catch (err) {
@@ -173,6 +200,7 @@ const RegisterForm: React.FC = () => {
       const errorMessage = (err as Error).message || 'An unexpected error occurred';
       setErrors({ general: errorMessage });
       showError(errorMessage, 'Registration Failed');
+      isSubmittingRef.current = false; // Reset on error
     }
   };
 
@@ -341,7 +369,7 @@ const RegisterForm: React.FC = () => {
           type="submit"
           className="w-full"
           loading={loading}
-          disabled={loading}
+          disabled={loading || step === 'otp'}
         >
           Create Account
         </Button>
