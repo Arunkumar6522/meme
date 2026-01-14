@@ -2,17 +2,20 @@ import React from 'react';
 import { cn } from '@/utils/cn';
 import AdBanner from './AdBanner';
 import { MonetagBanner, MonetagNative, MonetagMobileBanner, MonetagVideo } from './MonetagAds';
+import { Quge5Ad, MultiNetworkAd } from './AdditionalAds';
 
 interface UnifiedAdProps {
   placement: 'header' | 'sidebar' | 'footer' | 'content' | 'mobile';
   className?: string;
   showBoth?: boolean; // Show both AdSense and Monetag
+  showAllNetworks?: boolean; // Show all ad networks (Monetag + Quge5 + AdSense)
 }
 
 export const UnifiedAd: React.FC<UnifiedAdProps> = ({ 
   placement, 
   className = '', 
-  showBoth = false 
+  showBoth = false,
+  showAllNetworks = false
 }) => {
   const getAdConfig = () => {
     switch (placement) {
@@ -58,6 +61,25 @@ export const UnifiedAd: React.FC<UnifiedAdProps> = ({
   const config = getAdConfig();
   const MonetagComponent = config.monetag;
 
+  if (showAllNetworks) {
+    return (
+      <div className={cn('space-y-4', config.containerClass, className)}>
+        {/* Google AdSense */}
+        <AdBanner
+          slot={config.adsense.slot}
+          format={config.adsense.format}
+          className="w-full"
+        />
+        
+        {/* Monetag Ad */}
+        <MonetagComponent className="w-full" />
+        
+        {/* Quge5 Ad */}
+        <Quge5Ad className="w-full" />
+      </div>
+    );
+  }
+
   if (showBoth) {
     return (
       <div className={cn('space-y-4', config.containerClass, className)}>
@@ -74,10 +96,11 @@ export const UnifiedAd: React.FC<UnifiedAdProps> = ({
     );
   }
 
-  // Show Monetag by default (since it's newly integrated)
+  // Show multiple networks by default for maximum revenue
   return (
-    <div className={cn(config.containerClass, className)}>
+    <div className={cn('space-y-3', config.containerClass, className)}>
       <MonetagComponent className="w-full" />
+      <Quge5Ad className="w-full" />
     </div>
   );
 };

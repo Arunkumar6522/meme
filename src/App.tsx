@@ -3,6 +3,7 @@ import AppProviders from '@/app/providers/AppProviders';
 import AppRoutes from '@/app/routes/AppRoutes';
 import DatabaseSetupNotice from '@/components/DatabaseSetupNotice';
 import { MonetagPopup } from '@/components/ads/MonetagAds';
+import { PushNotificationAd } from '@/components/ads/AdditionalAds';
 import { DatabaseService } from '@/services/database.service';
 import { validateConfig, enableDebugLogs } from '@/config';
 import '@/styles/globals.css';
@@ -16,6 +17,16 @@ function App() {
         if (!validateConfig()) {
           console.error('Invalid configuration. Please check your environment variables.');
           return;
+        }
+
+        // Register service worker for ad networks
+        if ('serviceWorker' in navigator && import.meta.env.PROD) {
+          try {
+            const registration = await navigator.serviceWorker.register('/sw.js');
+            console.log('Service Worker registered:', registration);
+          } catch (error) {
+            console.warn('Service Worker registration failed:', error);
+          }
         }
 
         // Check database tables (and show helpful messages if missing)
@@ -32,8 +43,9 @@ function App() {
 
   return (
     <AppProviders>
-      {/* Monetag Popup Ad (loads once per session) */}
+      {/* Ad Network Integrations */}
       <MonetagPopup />
+      <PushNotificationAd />
       
       {/* Skip to main content link for accessibility */}
       <a

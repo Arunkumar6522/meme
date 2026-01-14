@@ -14,6 +14,11 @@
   status = 200
 
 [[redirects]]
+  from = "/sw.js"
+  to = "/sw.js"
+  status = 200
+
+[[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
@@ -27,3 +32,9 @@
   for = "/robots.txt"
   [headers.values]
     Content-Type = "text/plain"
+
+[[headers]]
+  for = "/sw.js"
+  [headers.values]
+    Content-Type = "application/javascript"
+    Cache-Control = "no-cache"
