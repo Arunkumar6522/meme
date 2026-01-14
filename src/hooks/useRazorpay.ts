@@ -55,7 +55,16 @@ export const useRazorpay = () => {
                 return;
             }
 
-            // 3. Open Modal
+            // 3. Open Modal (or handle Mock Mode)
+            if (orderData.mock) {
+                // MOCK MODE: Simulate instant payment success
+                alert('🎉 TEST MODE: Payment simulation successful!\n\nYou are now a Premium user (for testing).');
+                await DatabaseService.setPremiumStatus(user.id, true);
+                onSuccess();
+                setLoading(false);
+                return;
+            }
+
             const options = {
                 key: orderData.key,
                 amount: orderData.amount,
@@ -64,12 +73,6 @@ export const useRazorpay = () => {
                 description: 'Upgrade to Premium - No Ads & Unlimited Downloads',
                 order_id: orderData.id,
                 handler: async function (response: any) {
-                    // Verify payment here (or assume success for now and verify on backend ideally)
-                    // For simplicity in this step, we trust the success callback to update UI, 
-                    // BUT crucially we should call backend to update DB securely.
-                    // Since we don't have a secure backend verification function set up yet, 
-                    // we will rely on client-side update for the DEMO, but warn this is not prod-secure.
-
                     await DatabaseService.setPremiumStatus(user.id, true);
                     onSuccess();
                 },
@@ -78,7 +81,7 @@ export const useRazorpay = () => {
                     email: user.email || '',
                 },
                 theme: {
-                    color: '#ea580c', // Orange-600
+                    color: '#ea580c',
                 },
             };
 
