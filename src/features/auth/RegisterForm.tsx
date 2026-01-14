@@ -17,6 +17,9 @@ const RegisterForm: React.FC = () => {
     fullName?: string;
   } | null>(null);
   const isSubmittingRef = useRef(false);
+  
+  // Add a force update mechanism
+  const [forceUpdate, setForceUpdate] = useState(0);
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -161,14 +164,35 @@ const RegisterForm: React.FC = () => {
       
       // Update state - use simple approach without flushSync to prevent issues
       console.log('🔄 About to update state...');
+      console.log('🔄 newOtpData:', newOtpData);
       
       // Set OTP data first
+      console.log('🔄 Setting otpData...');
       setOtpData(newOtpData);
       
       // Then set step in next tick to ensure otpData is set
       setTimeout(() => {
+        console.log('🔄 Setting step to otp...');
         setStep('otp');
-        console.log('🔄 Step updated to otp');
+        console.log('🔄 Step should now be otp');
+        
+        // Force a re-render
+        setForceUpdate(prev => prev + 1);
+        
+        // Force another check after a longer delay
+        setTimeout(() => {
+          console.log('🔍 FINAL STATE CHECK:');
+          console.log('🔍 Current step should be otp');
+          console.log('🔍 Current otpData should exist');
+          
+          // If still not working, force it again
+          if (step !== 'otp' || !otpData) {
+            console.log('🚨 STATE STILL WRONG - FORCING AGAIN');
+            setOtpData(newOtpData);
+            setStep('otp');
+            setForceUpdate(prev => prev + 1);
+          }
+        }, 100);
       }, 0);
       
       console.log('🎯 OTP screen should show after state updates');
@@ -227,7 +251,13 @@ const RegisterForm: React.FC = () => {
   };
 
   // Show OTP verification form if we're on the OTP step
-  console.log('🔍 Render check - step:', step, 'otpData:', !!otpData);
+  console.log('🔍 RENDER CHECK:');
+  console.log('🔍 step:', step);
+  console.log('🔍 otpData:', otpData);
+  console.log('🔍 hasOtpData:', !!otpData);
+  console.log('🔍 condition1 (step === otp && otpData):', step === 'otp' && otpData);
+  console.log('🔍 condition2 (otpData && step !== form):', otpData && step !== 'form');
+  console.log('🔍 shouldShowOtp:', (step === 'otp' && otpData) || (otpData && step !== 'form'));
   
   // More flexible condition - show OTP if we have otpData OR if step is 'otp'
   if ((step === 'otp' && otpData) || (otpData && step !== 'form')) {
