@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { flushSync } from 'react-dom';
 import { Link } from 'react-router-dom';
 import { Button, Input } from '@/components/ui';
 import { useAuth } from '@/hooks/useAuth';
@@ -9,8 +10,8 @@ import RegistrationDebug from '@/components/debug/RegistrationDebug';
 
 const RegisterForm: React.FC = () => {
   const [step, setStep] = useState<'form' | 'otp'>('form');
-  const [otpEmail, setOtpEmail] = useState<string>('');
-  const [signupData, setSignupData] = useState<{
+  const [otpData, setOtpData] = useState<{
+    email: string;
     password: string;
     fullName?: string;
   } | null>(null);
@@ -32,8 +33,13 @@ const RegisterForm: React.FC = () => {
 
   // Simple effect to log state changes for debugging
   useEffect(() => {
-    console.log('🔄 RegisterForm state changed:', { step, otpEmail, hasSignupData: !!signupData });
-  }, [step, otpEmail, signupData]);
+    console.log('🔄 RegisterForm state changed:', { step, otpData });
+    
+    // Force re-render when OTP data is set
+    if (step === 'otp' && otpData) {
+      console.log('🚀 OTP data is ready, component should re-render');
+    }
+  }, [step, otpData]);
 
   const validateForm = () => {
     const newErrors: typeof errors = {};
@@ -121,28 +127,23 @@ const RegisterForm: React.FC = () => {
       // SUCCESS: Switch to OTP screen
       console.log('✅ Email sent successfully! Switching to OTP screen...');
       
-      // Store signup data and email for OTP verification
-      const newSignupData = {
+      // Create complete OTP data object
+      const newOtpData = {
+        email: normalizedEmail,
         password: formData.password,
         fullName: formData.fullName?.trim() || undefined,
       };
       
-      console.log('🔄 Setting signup data:', newSignupData);
-      console.log('🔄 Setting OTP email:', normalizedEmail);
-      console.log('🔄 Setting step to otp...');
+      console.log('🔄 Setting OTP data:', newOtpData);
       
-      // Update state synchronously
-      setSignupData(newSignupData);
-      setOtpEmail(normalizedEmail);
-      setStep('otp');
+      // Update state synchronously using flushSync
+      flushSync(() => {
+        setOtpData(newOtpData);
+        setStep('otp');
+      });
       
       // Show success message
       showSuccess('Verification code sent to your email!', 'Check Your Email');
-      
-      // Force check after state update
-      setTimeout(() => {
-        console.log('🔍 State check - step:', step, 'otpEmail:', otpEmail, 'signupData:', signupData);
-      }, 100);
       
       console.log('🎯 OTP screen should now be visible with email:', normalizedEmail);
       
@@ -181,40 +182,23 @@ const RegisterForm: React.FC = () => {
   };
 
   // Show OTP verification form if we're on the OTP step
-  console.log('🔍 Render check - step:', step, 'otpEmail:', otpEmail, 'hasSignupData:', !!signupData);
+  console.log('🔍 Render check - step:', step, 'otpData:', otpData);
   
-  if (step === 'otp' && otpEmail && signupData) {
-    console.log('🎯 Rendering OTP screen for:', otpEmail);
+  if (step === 'otp' && otpData) {
+    console.log('🎯 Rendering OTP screen for:', otpData.email);
     return (
       <OTPVerificationForm
-        key={`otp-${otpEmail}`}
-        email={otpEmail}
+        key={`otp-${otpData.email}`}
+        email={otpData.email}
         type="signup"
-        signupData={signupData}
+        signupData={{
+          password: otpData.password,
+          fullName: otpData.fullName
+        }}
         onBack={() => {
           // Reset to form
           setStep('form');
-          setOtpEmail('');
-          setSignupData(null);
-          setErrors({});
-        }}
-      />
-    );
-  }
-  
-  // Force OTP screen if we have email but missing other conditions
-  if (step === 'otp' && otpEmail) {
-    console.log('🚨 Forcing OTP screen - missing signupData, using defaults');
-    return (
-      <OTPVerificationForm
-        key={`otp-${otpEmail}`}
-        email={otpEmail}
-        type="signup"
-        signupData={signupData || { password: '', fullName: '' }}
-        onBack={() => {
-          setStep('form');
-          setOtpEmail('');
-          setSignupData(null);
+          setOtpData(null);
           setErrors({});
         }}
       />
@@ -225,7 +209,7 @@ const RegisterForm: React.FC = () => {
     <>
       <RegistrationDebug 
         step={step} 
-        otpContext={{ email: otpEmail, ...signupData }} 
+        otpContext={otpData} 
         formData={formData} 
         errors={errors} 
       />
