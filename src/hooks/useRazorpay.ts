@@ -3,7 +3,7 @@ import { useAuth } from './useAuth';
 import { DatabaseService } from '@/services/database.service';
 
 const RAZORPAY_SCRIPT = 'https://checkout.razorpay.com/v1/checkout.js';
-const KEY_ID = 'rzp_test_S3jpsysZ3aqLiQ'; // Public key is safe here
+const RAZORPAY_SCRIPT = 'https://checkout.razorpay.com/v1/checkout.js';
 
 export const useRazorpay = () => {
     const { user } = useAuth();
