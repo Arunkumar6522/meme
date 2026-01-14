@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Search, Lock } from 'lucide-react';
 import { Button, Input, SkeletonCard } from '@/components/ui';
 import { SidebarAd } from '@/components/ads/AdBanner';
-import { HeaderAd, ContentAd, FooterAd } from '@/components/ads/UnifiedAds';
+import { SimpleAdBanner } from '@/components/ads/SimpleAds';
 import { useLibrary } from '@/hooks/useLibrary';
 import { useAuth } from '@/hooks/useAuth';
 import { useLanguage } from '@/hooks/useLanguage';
@@ -121,8 +121,10 @@ const LandingPage: React.FC = () => {
 
   return (
     <div className="bg-white">
-      {/* Header Ad */}
-      <HeaderAd className="mt-4" />
+      {/* Simple Header Banner Ad */}
+      <div className="mt-4 mb-6">
+        <SimpleAdBanner format="banner" className="max-w-4xl mx-auto" />
+      </div>
 
       {/* Side Ads (desktop only) */}
       <div className="hidden lg:block">
@@ -166,8 +168,10 @@ const LandingPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Content Ad */}
-      <ContentAd className="my-8" />
+      {/* Simple Content Banner Ad */}
+      <div className="my-8">
+        <SimpleAdBanner format="rectangle" className="max-w-md mx-auto" />
+      </div>
 
       {/* Preview rail */}
       <div className="bg-orange-50/60 border-t border-b border-orange-100">
@@ -191,8 +195,10 @@ const LandingPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Footer Ad */}
-      <FooterAd className="mb-8" />
+      {/* Simple Footer Banner Ad */}
+      <div className="mb-8">
+        <SimpleAdBanner format="banner" className="max-w-4xl mx-auto" />
+      </div>
     </div>
   );
 };

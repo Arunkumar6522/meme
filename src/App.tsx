@@ -2,8 +2,7 @@ import React, { useEffect } from 'react';
 import AppProviders from '@/app/providers/AppProviders';
 import AppRoutes from '@/app/routes/AppRoutes';
 import DatabaseSetupNotice from '@/components/DatabaseSetupNotice';
-import { MonetagPopup } from '@/components/ads/MonetagAds';
-import { PushNotificationAd } from '@/components/ads/AdditionalAds';
+// Removed intrusive ads for better UX
 import { DatabaseService } from '@/services/database.service';
 import { validateConfig, enableDebugLogs } from '@/config';
 import '@/styles/globals.css';
@@ -19,15 +18,7 @@ function App() {
           return;
         }
 
-        // Register service worker for ad networks
-        if ('serviceWorker' in navigator && import.meta.env.PROD) {
-          try {
-            const registration = await navigator.serviceWorker.register('/sw.js');
-            console.log('Service Worker registered:', registration);
-          } catch (error) {
-            console.warn('Service Worker registration failed:', error);
-          }
-        }
+        // Service worker removed for better UX (no push notifications)
 
         // Check database tables (and show helpful messages if missing)
         await DatabaseService.initializeDatabase();
@@ -43,9 +34,7 @@ function App() {
 
   return (
     <AppProviders>
-      {/* Ad Network Integrations */}
-      <MonetagPopup />
-      <PushNotificationAd />
+      {/* No intrusive ads - only banner ads in existing placements */}
       
       {/* Skip to main content link for accessibility */}
       <a

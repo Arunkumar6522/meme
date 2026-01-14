@@ -10,12 +10,12 @@ export {
   MonetagMobileBanner 
 } from './MonetagAds';
 
-// Additional Ad Networks
+// Simple Non-Intrusive Ads (recommended)
 export { 
-  Quge5Ad, 
-  PushNotificationAd, 
-  MultiNetworkAd 
-} from './AdditionalAds';
+  SimpleMonetagBanner, 
+  SimpleQuge5Banner, 
+  SimpleAdBanner 
+} from './SimpleAds';
 
 // Unified Ad Components (combines AdSense + Monetag)
 export { 
