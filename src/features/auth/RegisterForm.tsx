@@ -32,13 +32,24 @@ const RegisterForm: React.FC = () => {
   const { signUp, signInWithGoogle, loading } = useAuth();
   const { showSuccess, showError } = useToast();
 
-  // Simple effect to log state changes for debugging
+  // Enhanced effect to log state changes and ensure OTP screen shows
   useEffect(() => {
-    console.log('🔄 RegisterForm state changed:', { step, otpData });
+    console.log('🔄 RegisterForm state changed:', { 
+      step, 
+      hasOtpData: !!otpData, 
+      otpEmail: otpData?.email,
+      shouldShowOtp: (step === 'otp' && otpData) || (otpData && step !== 'form')
+    });
     
     // Force re-render when OTP data is set
     if (step === 'otp' && otpData) {
       console.log('🚀 OTP data is ready, component should re-render');
+    }
+    
+    // If we have OTP data but step is not 'otp', force it
+    if (otpData && step !== 'otp') {
+      console.log('🔧 Forcing step to otp because we have otpData');
+      setStep('otp');
     }
   }, [step, otpData]);
 
@@ -128,6 +139,9 @@ const RegisterForm: React.FC = () => {
       // SUCCESS: Switch to OTP screen
       console.log('✅ Email sent successfully! Switching to OTP screen...');
       
+      // Show success message FIRST (before state changes)
+      showSuccess('Verification code sent to your email!', 'Check Your Email');
+      
       // Create complete OTP data object
       const newOtpData = {
         email: normalizedEmail,
@@ -136,6 +150,7 @@ const RegisterForm: React.FC = () => {
       };
       
       console.log('🔄 Setting OTP data:', newOtpData);
+      console.log('🔄 Current step before change:', step);
       
       // Update state synchronously using flushSync
       flushSync(() => {
@@ -143,10 +158,14 @@ const RegisterForm: React.FC = () => {
         setStep('otp');
       });
       
-      // Show success message
-      showSuccess('Verification code sent to your email!', 'Check Your Email');
-      
+      console.log('🔄 Step after flushSync:', 'otp');
       console.log('🎯 OTP screen should now be visible with email:', normalizedEmail);
+      
+      // Force a small delay to ensure DOM updates
+      setTimeout(() => {
+        console.log('🔍 Final check - otpData:', otpData);
+        console.log('🔍 Final check - step:', step);
+      }, 100);
       
     } catch (err) {
       console.error('💥 Exception in handleSubmit:', err);
@@ -195,26 +214,52 @@ const RegisterForm: React.FC = () => {
   };
 
   // Show OTP verification form if we're on the OTP step
-  console.log('🔍 Render check - step:', step, 'otpData:', otpData);
+  console.log('🔍 Render check - step:', step, 'otpData:', !!otpData);
   
-  if (step === 'otp' && otpData) {
-    console.log('🎯 Rendering OTP screen for:', otpData.email);
+  // More flexible condition - show OTP if we have otpData OR if step is 'otp'
+  if ((step === 'otp' && otpData) || (otpData && step !== 'form')) {
+    console.log('🎯 Rendering OTP screen for:', otpData?.email || 'unknown email');
+    console.log('🎯 OTP screen props:', {
+      email: otpData?.email,
+      hasPassword: !!otpData?.password,
+      hasFullName: !!otpData?.fullName
+    });
+    
     return (
-      <OTPVerificationForm
-        key={`otp-${otpData.email}`}
-        email={otpData.email}
-        type="signup"
-        signupData={{
-          password: otpData.password,
-          fullName: otpData.fullName
-        }}
-        onBack={() => {
-          // Reset to form
-          setStep('form');
-          setOtpData(null);
-          setErrors({});
-        }}
-      />
+      <div>
+        {/* Debug info - remove this after testing */}
+        <div style={{ 
+          position: 'fixed', 
+          top: '10px', 
+          right: '10px', 
+          background: 'green', 
+          color: 'white', 
+          padding: '10px', 
+          borderRadius: '5px',
+          fontSize: '12px',
+          zIndex: 9999
+        }}>
+          ✅ OTP Screen Active<br/>
+          📧 Email: {otpData?.email}<br/>
+          🔄 Step: {step}
+        </div>
+        
+        <OTPVerificationForm
+          key={`otp-${otpData.email}`}
+          email={otpData.email}
+          type="signup"
+          signupData={{
+            password: otpData.password,
+            fullName: otpData.fullName
+          }}
+          onBack={() => {
+            // Reset to form
+            setStep('form');
+            setOtpData(null);
+            setErrors({});
+          }}
+        />
+      </div>
     );
   }
 
