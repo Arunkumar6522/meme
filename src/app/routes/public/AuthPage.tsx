@@ -12,14 +12,6 @@ const AuthPage: React.FC = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
 
-  if (loading) {
-    return (
-      <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
-        <LoadingSpinner size="lg" />
-      </div>
-    );
-  }
-
   // Redirect if already authenticated (except for reset-password)
   if (user && type !== 'reset-password') {
     return <Navigate to="/" replace />;
@@ -64,6 +56,12 @@ const AuthPage: React.FC = () => {
             />
           </svg>
         </button>
+        {/* Keep forms mounted during auth operations; show an overlay spinner instead of unmounting */}
+        {loading && (
+          <div className="absolute inset-0 z-10 flex items-center justify-center rounded-xl bg-white/70 backdrop-blur-sm">
+            <LoadingSpinner size="lg" />
+          </div>
+        )}
         {renderForm()}
       </div>
     </div>
