@@ -1,4 +1,4 @@
-const Razorpay = require('razorpay');
+import Razorpay from 'razorpay';
 
 // These should be in process.env
 const KEY_ID = 'rzp_test_S3jpsysZ3aqLiQ';
