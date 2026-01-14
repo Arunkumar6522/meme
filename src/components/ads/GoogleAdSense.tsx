@@ -1,4 +1,6 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { useAuth } from '@/hooks/useAuth';
+import { DatabaseService } from '@/services/database.service';
 
 type AdType = 'horizontal' | 'vertical' | 'square';
 
@@ -17,8 +19,23 @@ const AD_SLOTS: Record<AdType, string> = {
 const CLIENT_ID = 'ca-pub-9385541671046952';
 
 const GoogleAdSense: React.FC<GoogleAdSenseProps> = ({ type, className, style }) => {
+    const { user } = useAuth();
+    const [isAdmin, setIsAdmin] = useState(false);
+
+    useEffect(() => {
+        if (!user) {
+            setIsAdmin(false);
+            return;
+        }
+        // Only check role if user exists
+        DatabaseService.isUserAdmin(user.id).then(setIsAdmin);
+    }, [user]);
+
     const adRef = useRef<HTMLModElement>(null);
     const initialized = useRef(false);
+
+    // Don't render anything if user is admin/superadmin
+    if (isAdmin) return null;
 
     useEffect(() => {
         const element = adRef.current;
