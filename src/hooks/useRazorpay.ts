@@ -3,7 +3,6 @@ import { useAuth } from './useAuth';
 import { DatabaseService } from '@/services/database.service';
 
 const RAZORPAY_SCRIPT = 'https://checkout.razorpay.com/v1/checkout.js';
-const RAZORPAY_SCRIPT = 'https://checkout.razorpay.com/v1/checkout.js';
 
 export const useRazorpay = () => {
     const { user } = useAuth();
@@ -42,7 +41,6 @@ export const useRazorpay = () => {
             }
 
             // 2. Create Order
-            // 2. Create Order
             const response = await fetch('https://ilovememe.in/.netlify/functions/create-razorpay-order', {
                 method: 'POST',
             });
@@ -59,7 +57,7 @@ export const useRazorpay = () => {
 
             // 3. Open Modal
             const options = {
-                key: KEY_ID,
+                key: orderData.key,
                 amount: orderData.amount,
                 currency: orderData.currency,
                 name: 'I Love Meme Premium',

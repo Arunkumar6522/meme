@@ -19,6 +19,15 @@ exports.handler = async (event) => {
         return { statusCode: 405, headers, body: 'Method Not Allowed' };
     }
 
+    if (!KEY_ID || !KEY_SECRET) {
+        console.error('Missing Razorpay Environment Variables');
+        return {
+            statusCode: 500,
+            headers,
+            body: JSON.stringify({ error: 'Server Misconfigured: Missing Razorpay Keys' }),
+        };
+    }
+
     try {
         console.log('Initializing Razorpay with key:', KEY_ID);
 
@@ -39,6 +48,12 @@ exports.handler = async (event) => {
         console.log('Creating order with options:', options);
         const order = await razorpay.orders.create(options);
         console.log('Order created:', order);
+
+        return {
+            statusCode: 200,
+            headers,
+            body: JSON.stringify({ ...order, key: KEY_ID }),
+        };
 
         return {
             statusCode: 200,
