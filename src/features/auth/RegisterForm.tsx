@@ -122,15 +122,27 @@ const RegisterForm: React.FC = () => {
       console.log('✅ Email sent successfully! Switching to OTP screen...');
       
       // Store signup data and email for OTP verification
-      setSignupData({
+      const newSignupData = {
         password: formData.password,
         fullName: formData.fullName?.trim() || undefined,
-      });
+      };
+      
+      console.log('🔄 Setting signup data:', newSignupData);
+      console.log('🔄 Setting OTP email:', normalizedEmail);
+      console.log('🔄 Setting step to otp...');
+      
+      // Update state synchronously
+      setSignupData(newSignupData);
       setOtpEmail(normalizedEmail);
       setStep('otp');
       
       // Show success message
       showSuccess('Verification code sent to your email!', 'Check Your Email');
+      
+      // Force check after state update
+      setTimeout(() => {
+        console.log('🔍 State check - step:', step, 'otpEmail:', otpEmail, 'signupData:', signupData);
+      }, 100);
       
       console.log('🎯 OTP screen should now be visible with email:', normalizedEmail);
       
@@ -169,6 +181,8 @@ const RegisterForm: React.FC = () => {
   };
 
   // Show OTP verification form if we're on the OTP step
+  console.log('🔍 Render check - step:', step, 'otpEmail:', otpEmail, 'hasSignupData:', !!signupData);
+  
   if (step === 'otp' && otpEmail && signupData) {
     console.log('🎯 Rendering OTP screen for:', otpEmail);
     return (
@@ -179,6 +193,25 @@ const RegisterForm: React.FC = () => {
         signupData={signupData}
         onBack={() => {
           // Reset to form
+          setStep('form');
+          setOtpEmail('');
+          setSignupData(null);
+          setErrors({});
+        }}
+      />
+    );
+  }
+  
+  // Force OTP screen if we have email but missing other conditions
+  if (step === 'otp' && otpEmail) {
+    console.log('🚨 Forcing OTP screen - missing signupData, using defaults');
+    return (
+      <OTPVerificationForm
+        key={`otp-${otpEmail}`}
+        email={otpEmail}
+        type="signup"
+        signupData={signupData || { password: '', fullName: '' }}
+        onBack={() => {
           setStep('form');
           setOtpEmail('');
           setSignupData(null);

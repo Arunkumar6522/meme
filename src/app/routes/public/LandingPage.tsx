@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, Lock } from 'lucide-react';
 import { Button, Input, SkeletonCard } from '@/components/ui';
-import { SidebarAd } from '@/components/ads/AdBanner';
+// Removed old AdBanner import - using SimpleAds only
 import { SimpleAdBanner } from '@/components/ads/SimpleAds';
 import { useLibrary } from '@/hooks/useLibrary';
 import { useAuth } from '@/hooks/useAuth';
@@ -129,10 +129,10 @@ const LandingPage: React.FC = () => {
       {/* Side Ads (desktop only) */}
       <div className="hidden lg:block">
         <div className="fixed left-4 top-24 z-20">
-          <SidebarAd className="w-40" />
+          <SimpleAdBanner format="rectangle" className="w-40" />
         </div>
         <div className="fixed right-4 top-24 z-20">
-          <SidebarAd className="w-40" />
+          <SimpleAdBanner format="rectangle" className="w-40" />
         </div>
       </div>
 

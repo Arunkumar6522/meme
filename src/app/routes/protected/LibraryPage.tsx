@@ -4,7 +4,7 @@ import { Upload } from 'lucide-react';
 import LibraryFilters from '@/components/library/LibraryFilters';
 import LibraryGrid from '@/components/library/LibraryGrid';
 import Pagination from '@/components/library/Pagination';
-import { BannerAd, MobileAd } from '@/components/ads/AdBanner';
+// Removed old AdBanner imports - using SimpleAds only
 import { SimpleAdBanner } from '@/components/ads/SimpleAds';
 import { Button } from '@/components/ui';
 import { useLibrary } from '@/hooks/useLibrary';
@@ -161,7 +161,9 @@ const LibraryPage: React.FC = () => {
         </div>
 
         {/* Mobile Ad */}
-        <MobileAd className="mb-6" />
+        <div className="mb-6 md:hidden">
+          <SimpleAdBanner format="mobile" />
+        </div>
 
         {/* Media Tabs */}
         <div className="mb-4 flex gap-2">
@@ -235,7 +237,7 @@ const LibraryPage: React.FC = () => {
 
         {/* Bottom Banner Ad */}
         <div className="mt-12">
-          <BannerAd />
+          <SimpleAdBanner format="banner" className="max-w-4xl mx-auto" />
         </div>
       </div>
     </div>
