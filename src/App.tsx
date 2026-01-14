@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import AppProviders from '@/app/providers/AppProviders';
 import AppRoutes from '@/app/routes/AppRoutes';
 import DatabaseSetupNotice from '@/components/DatabaseSetupNotice';
+import AppDebug from '@/components/debug/AppDebug';
 // Removed intrusive ads for better UX
 import { DatabaseService } from '@/services/database.service';
 import { validateConfig, enableDebugLogs } from '@/config';
@@ -15,7 +16,7 @@ function App() {
         // Validate configuration
         if (!validateConfig()) {
           console.error('Invalid configuration. Please check your environment variables.');
-          return;
+          // Don't return - let app continue with error boundary
         }
 
         // Service worker removed for better UX (no push notifications)
@@ -34,6 +35,9 @@ function App() {
 
   return (
     <AppProviders>
+      {/* Debug info for troubleshooting */}
+      <AppDebug />
+      
       {/* No intrusive ads - only banner ads in existing placements */}
       
       {/* Skip to main content link for accessibility */}
