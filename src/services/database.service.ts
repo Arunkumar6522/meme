@@ -230,6 +230,34 @@ export class DatabaseService {
     }
   }
 
+  // Get dashboard analytics (Superadmin only)
+  static async getDashboardStats(): Promise<any> {
+    try {
+      const { data, error } = await supabase.rpc('get_dashboard_stats');
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      console.error('Error fetching dashboard stats:', error);
+      return null;
+    }
+  }
+
+  // Update subscription status
+  static async setPremiumStatus(userId: string, isPremium: boolean): Promise<boolean> {
+    try {
+      const { error } = await supabase
+        .from('users')
+        .update({
+          is_premium: isPremium,
+          subscription_end_date: isPremium ? new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString() : null // 1 year default
+        })
+        .eq('id', userId);
+      return !error;
+    } catch {
+      return false;
+    }
+  }
+
   // Make user admin (for initial setup)
   static async makeUserAdmin(userId: string): Promise<boolean> {
     try {

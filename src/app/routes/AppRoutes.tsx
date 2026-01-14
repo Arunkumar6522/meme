@@ -18,6 +18,8 @@ const FavoritesPage = React.lazy(() => import('./protected/FavoritesPage'));
 const UploadOnlyPage = React.lazy(() => import('./protected/UploadOnlyPage'));
 const ArtistsPage = React.lazy(() => import('./admin/ArtistsPage'));
 const AdminPage = React.lazy(() => import('./admin/AdminPage'));
+const DashboardPage = React.lazy(() => import('./admin/DashboardPage'));
+
 
 // Loading component
 const PageLoader: React.FC = () => (
@@ -35,26 +37,26 @@ const AppRoutes: React.FC = () => {
           <Route index element={<LandingPage />} />
           <Route path="auth/:type" element={<AuthPage />} />
           <Route path="auth/callback" element={<AuthCallbackPage />} />
-          
+
           {/* Protected Routes */}
           <Route path="home" element={
             <ProtectedRoute>
               <HomePage />
             </ProtectedRoute>
           } />
-          
+
           <Route path="library" element={
             <ProtectedRoute>
               <LibraryPage />
             </ProtectedRoute>
           } />
-          
+
           <Route path="create" element={
             <ProtectedRoute>
               <CreatePage />
             </ProtectedRoute>
           } />
-          
+
           <Route path="profile" element={
             <ProtectedRoute>
               <ProfilePage />
@@ -65,7 +67,7 @@ const AppRoutes: React.FC = () => {
               <FavoritesPage />
             </ProtectedRoute>
           } />
-          
+
           {/* Admin Upload (renamed, no /admin base) */}
           <Route path="upload" element={
             <ProtectedRoute requireAdmin>
@@ -82,7 +84,12 @@ const AppRoutes: React.FC = () => {
               <ArtistsPage />
             </ProtectedRoute>
           } />
-          
+          <Route path="admin/dashboard" element={
+            <ProtectedRoute requireAdmin>
+              <DashboardPage />
+            </ProtectedRoute>
+          } />
+
           {/* 404 Page */}
           <Route path="*" element={<NotFoundPage />} />
         </Route>
