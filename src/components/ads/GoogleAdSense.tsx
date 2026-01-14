@@ -18,36 +18,44 @@ const CLIENT_ID = 'ca-pub-9385541671046952';
 
 const GoogleAdSense: React.FC<GoogleAdSenseProps> = ({ type, className, style }) => {
     const adRef = useRef<HTMLModElement>(null);
+    const initialized = useRef(false);
 
     useEffect(() => {
-        // Delay initialization slightly to ensure layout is stable/calculated
-        const timer = setTimeout(() => {
-            const element = adRef.current;
-            if (!element) return;
+        const element = adRef.current;
+        if (!element) return;
 
-            // Check if element is truly visible in the DOM
-            // offsetParent is null if element or any ancestor is display: none
-            const isVisible = element.offsetParent !== null;
-            // Also check computed style as a backup
-            const style = window.getComputedStyle(element);
-            const isNotHidden = style.display !== 'none' && style.visibility !== 'hidden' && parseFloat(style.opacity || '1') > 0;
-            const hasWidth = element.offsetWidth > 0;
+        // Reset if type changes (unlikely but safe)
+        if (initialized.current) return;
 
-            if (isVisible && isNotHidden && hasWidth) {
-                try {
-                    // @ts-ignore
-                    (window.adsbygoogle = window.adsbygoogle || []).push({});
-                } catch (err) {
-                    console.error('AdSense error:', err);
+        // Use ResizeObserver to detect when the ad slot actually has size
+        // This handles:
+        // 1. Initial load (if visible)
+        // 2. CSS 'display: none' -> 'block' transitions (e.g. resizing desktop to mobile)
+        // 3. Late layout shifts
+        const observer = new ResizeObserver((entries) => {
+            for (const entry of entries) {
+                if (entry.contentRect.width > 0 && entry.contentRect.height > 0 && !initialized.current) {
+                    // Double check visibility
+                    const style = window.getComputedStyle(entry.target);
+                    if (style.display !== 'none' && style.visibility !== 'hidden') {
+                        try {
+                            initialized.current = true;
+                            // @ts-ignore
+                            (window.adsbygoogle = window.adsbygoogle || []).push({});
+                            // Once initialized, we don't need to observe anymore
+                            observer.disconnect();
+                        } catch (err) {
+                            console.error('AdSense error:', err);
+                            initialized.current = false; // Retry on next resize if failed?
+                        }
+                    }
                 }
-            } else {
-                // @ts-ignore
-                const width = element.offsetWidth;
-                // console.debug('AdSense: Skipping ad push for hidden/zero-width slot', { type, isVisible, isNotHidden, width });
             }
-        }, 100); // 100ms delay
+        });
 
-        return () => clearTimeout(timer);
+        observer.observe(element);
+
+        return () => observer.disconnect();
     }, [type]);
 
     return (
