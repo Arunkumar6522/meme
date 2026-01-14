@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { oauthConfig } from '@/config';
 import type { AuthUser } from '@/types';
 
 export class AuthService {
@@ -65,10 +66,19 @@ export class AuthService {
   // Sign in with Google
   static async signInWithGoogle() {
     try {
+      // Check if Google SSO is enabled
+      if (!oauthConfig.google.enabled) {
+        throw new Error('Google Sign-in is not enabled');
+      }
+
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
           redirectTo: `${window.location.origin}/auth/callback`,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          },
         },
       });
 

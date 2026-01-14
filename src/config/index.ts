@@ -9,6 +9,12 @@ interface AppConfig {
   googleAds?: {
     clientId: string;
   };
+  oauth: {
+    google: {
+      enabled: boolean;
+      clientId?: string;
+    };
+  };
   app: {
     name: string;
     version: string;
@@ -18,6 +24,7 @@ interface AppConfig {
     enableGoogleAds: boolean;
     enableAnalytics: boolean;
     enableUploads: boolean;
+    enableGoogleSSO: boolean;
   };
 }
 
@@ -53,6 +60,12 @@ export const config: AppConfig = {
   googleAds: import.meta.env.VITE_GOOGLE_ADS_CLIENT_ID ? {
     clientId: import.meta.env.VITE_GOOGLE_ADS_CLIENT_ID,
   } : undefined,
+  oauth: {
+    google: {
+      enabled: getEnvVar('VITE_ENABLE_GOOGLE_SSO', 'true') === 'true',
+      clientId: getEnvVar('VITE_GOOGLE_OAUTH_CLIENT_ID'),
+    },
+  },
   app: {
     name: getEnvVar('VITE_APP_NAME', 'ilovememe.in') || 'ilovememe.in',
     version: getEnvVar('VITE_APP_VERSION', '1.1.0') || '1.1.0',
@@ -63,12 +76,14 @@ export const config: AppConfig = {
     enableGoogleAds: !!import.meta.env.VITE_GOOGLE_ADS_CLIENT_ID,
     enableAnalytics: getEnvVar('VITE_ENABLE_ANALYTICS', 'false') === 'true',
     enableUploads: getEnvVar('VITE_ENABLE_UPLOADS', 'true') === 'true',
+    enableGoogleSSO: getEnvVar('VITE_ENABLE_GOOGLE_SSO', 'true') === 'true',
   },
 };
 
 // Export individual config sections for convenience
 export const supabaseConfig = config.supabase;
 export const googleAdsConfig = config.googleAds;
+export const oauthConfig = config.oauth;
 export const appConfig = config.app;
 export const featureFlags = config.features;
 
