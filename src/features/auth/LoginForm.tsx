@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Button, Input } from '@/components/ui';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/useToast';
+import { validateEmail } from '@/utils/validation';
 
 const LoginForm: React.FC = () => {
   const [email, setEmail] = useState(() => {

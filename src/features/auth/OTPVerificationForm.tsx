@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/useToast';
+import { validateEmail, validateOTP } from '@/utils/validation';
 import { CustomAuthService } from '@/services/custom-auth.service';
 
 interface OTPVerificationFormProps {
@@ -78,19 +79,14 @@ const OTPVerificationForm: React.FC<OTPVerificationFormProps> = ({ email, type, 
     const otpCode = otp.join('');
     
     // Validate OTP format
-    if (otpCode.length !== 6) {
-      setError('Please enter all 6 digits');
+    const otpCheck = validateOTP(otpCode);
+    if (!otpCheck.ok) {
+      setError(otpCheck.error!);
       return;
     }
 
-    if (!/^\d{6}$/.test(otpCode)) {
-      setError('OTP code must contain only numbers');
-      return;
-    }
-
-    // Validate email format (use normalizedEmail from component scope)
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(normalizedEmail)) {
+    // Validate email format
+    if (!validateEmail(normalizedEmail)) {
       setError('Invalid email address');
       showError('Invalid email address', 'Validation Error');
       return;

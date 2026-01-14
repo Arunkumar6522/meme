@@ -4,6 +4,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { Button, Input } from '@/components/ui';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/useToast';
+import { validateEmail } from '@/utils/validation';
 import OTPVerificationForm from './OTPVerificationForm';
 
 const ForgotPasswordForm: React.FC = () => {

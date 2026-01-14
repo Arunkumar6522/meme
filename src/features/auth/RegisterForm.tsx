@@ -4,7 +4,9 @@ import { Link, useLocation } from 'react-router-dom';
 import { Button, Input } from '@/components/ui';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/useToast';
+import { validateEmail, validateFullName, validatePassword } from '@/utils/validation';
 import OTPVerificationForm from './OTPVerificationForm';
+import RegistrationDebug from '@/components/debug/RegistrationDebug';
 
 const RegisterForm: React.FC = () => {
   const location = useLocation();
@@ -87,26 +89,6 @@ const RegisterForm: React.FC = () => {
     }
   }, [otpContext, step]);
 
-  // Proper email validation regex (require TLD length >= 2)
-  const validateEmail = (email: string): boolean => {
-    const normalized = email.trim().toLowerCase();
-    // Allows subdomains, disallows single-char TLDs like ".c"
-    const emailRegex = /^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/i;
-    return normalized.length >= 6 && normalized.length <= 254 && emailRegex.test(normalized);
-  };
-
-  // Allow letters (any language), spaces, and common name punctuation.
-  const validateFullName = (name: string): { ok: boolean; error?: string } => {
-    const trimmed = name.trim();
-    if (!trimmed) return { ok: false, error: 'Full name is required' };
-    if (trimmed.length < 2) return { ok: false, error: 'Full name must be at least 2 characters' };
-    if (trimmed.length > 50) return { ok: false, error: 'Full name must be 50 characters or less' };
-    // Unicode letters + combining marks + spaces + . ' -
-    const re = /^\p{L}[\p{L}\p{M}\s.'-]*$/u;
-    if (!re.test(trimmed)) return { ok: false, error: 'Name can only contain letters, spaces, and . \' -' };
-    return { ok: true };
-  };
-
   const validateForm = () => {
     const newErrors: typeof errors = {};
 
@@ -114,26 +96,19 @@ const RegisterForm: React.FC = () => {
     const nameCheck = validateFullName(formData.fullName);
     if (!nameCheck.ok) newErrors.fullName = nameCheck.error;
 
-    // Validate email with proper regex
+    // Validate email
     if (!formData.email.trim()) {
       newErrors.email = 'Email is required';
     } else {
       const trimmedEmail = formData.email.trim().toLowerCase();
       if (!validateEmail(trimmedEmail)) {
         newErrors.email = 'Please enter a valid email address (e.g., name@example.com)';
-      } else if (trimmedEmail.length > 254) {
-        newErrors.email = 'Email address is too long';
       }
     }
 
     // Validate password
-    if (!formData.password) {
-      newErrors.password = 'Password is required';
-    } else if (formData.password.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters';
-    } else if (formData.password.length > 128) {
-      newErrors.password = 'Password is too long (maximum 128 characters)';
-    }
+    const passwordCheck = validatePassword(formData.password);
+    if (!passwordCheck.ok) newErrors.password = passwordCheck.error;
 
     // Validate confirm password
     if (!formData.confirmPassword) {
@@ -157,13 +132,7 @@ const RegisterForm: React.FC = () => {
     // Clear previous errors
     setErrors({});
     
-    // Ensure we're on form step (prevent showing OTP if there was an error before)
-    if (step !== 'form') {
-      flushSync(() => {
-        setStep('form');
-        stepRef.current = 'form';
-      });
-    }
+    console.log('🚀 Starting registration process...');
 
     try {
       // Normalize email before sending
@@ -176,25 +145,14 @@ const RegisterForm: React.FC = () => {
         return;
       }
 
+      console.log('📧 Sending OTP to:', normalizedEmail);
       const result = await signUp(normalizedEmail, formData.password, formData.fullName.trim());
+      
+      console.log('📨 SignUp result:', result);
       
       // Check for error - CRITICAL: Don't show OTP screen if there's an error
       if (result?.error) {
-        console.error('Registration error:', result.error);
-        
-        // Ensure we stay on form step
-        flushSync(() => {
-          setStep('form');
-          stepRef.current = 'form';
-        });
-        
-        // Clear any sessionStorage that might have been set
-        try {
-          sessionStorage.removeItem('register-step');
-          sessionStorage.removeItem('register-email');
-        } catch (e) {
-          // Ignore
-        }
+        console.error('❌ Registration error:', result.error);
         
         // Provide user-friendly error messages
         let userFriendlyError = result.error;
@@ -207,10 +165,6 @@ const RegisterForm: React.FC = () => {
           userFriendlyError = 'Please enter a valid email address.';
         } else if (result.error.includes('Password') || result.error.includes('password')) {
           userFriendlyError = 'Password must be at least 6 characters long.';
-        } else if (result.error.includes('session expired') || result.error.includes('expired')) {
-          userFriendlyError = 'Registration session expired. Please try again.';
-        } else if (result.error.includes('Unable to verify') || result.error.includes('RLS')) {
-          userFriendlyError = 'Unable to verify account status. Please check your Supabase RLS policies or contact support.';
         }
         
         setErrors({ general: userFriendlyError });
@@ -218,37 +172,25 @@ const RegisterForm: React.FC = () => {
         return; // CRITICAL: Return here to prevent OTP screen
       }
 
-      // Only proceed to OTP screen if there's NO error
-      // Success - move to OTP step (keep signup data only in memory; never persist password)
-      flushSync(() => {
-        setOtpContext({
-          email: normalizedEmail,
-          password: formData.password,
-          fullName: formData.fullName?.trim() || undefined,
-        });
-        setFormData(prev => ({ ...prev, email: normalizedEmail }));
-        setStep('otp');
-        stepRef.current = 'otp';
+      // SUCCESS: Show OTP screen
+      console.log('✅ Email sent successfully! Showing OTP screen...');
+      
+      // Set OTP context and switch to OTP step
+      setOtpContext({
+        email: normalizedEmail,
+        password: formData.password,
+        fullName: formData.fullName?.trim() || undefined,
       });
-
-      // Show success message AFTER state update
+      
+      setStep('otp');
+      
+      // Show success message
       showSuccess('Verification code sent to your email!', 'Check Your Email');
+      
+      console.log('🎯 OTP screen should now be visible');
+      
     } catch (err) {
-      console.error('Exception in handleSubmit:', err);
-      
-      // Ensure we stay on form step on exception
-      flushSync(() => {
-        setStep('form');
-        stepRef.current = 'form';
-      });
-      
-      // Clear sessionStorage
-      try {
-        sessionStorage.removeItem('register-step');
-        sessionStorage.removeItem('register-email');
-      } catch (e) {
-        // Ignore
-      }
+      console.error('💥 Exception in handleSubmit:', err);
       
       const errorMessage = (err as Error).message || 'An unexpected error occurred';
       setErrors({ general: errorMessage });
@@ -281,16 +223,9 @@ const RegisterForm: React.FC = () => {
     }
   };
 
-  // Show OTP verification form ONLY if:
-  // 1. Step is 'otp'
-  // 2. We have the in-memory OTP context (email + password)
-  // 3. Email is valid
-  const shouldShowOTP =
-    step === 'otp' &&
-    !!otpContext?.email &&
-    validateEmail(otpContext.email);
-
-  if (shouldShowOTP) {
+  // Show OTP verification form if we're on the OTP step and have context
+  if (step === 'otp' && otpContext?.email) {
+    console.log('🎯 Rendering OTP screen for:', otpContext.email);
     return (
       <OTPVerificationForm
         key={`otp-${otpContext?.email}`}
@@ -326,7 +261,14 @@ const RegisterForm: React.FC = () => {
   }
 
   return (
-    <div className="w-full max-w-md space-y-4 sm:space-y-6 px-2 sm:px-0">
+    <>
+      <RegistrationDebug 
+        step={step} 
+        otpContext={otpContext} 
+        formData={formData} 
+        errors={errors} 
+      />
+      <div className="w-full max-w-md space-y-4 sm:space-y-6 px-2 sm:px-0">
       <div className="text-center">
         <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">Create Account</h1>
         <p className="mt-2 text-xs sm:text-sm text-gray-600">Join ilovememe.in today</p>
@@ -447,6 +389,7 @@ const RegisterForm: React.FC = () => {
         </Link>
       </p>
     </div>
+    </>
   );
 };
 
