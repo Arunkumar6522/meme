@@ -1,8 +1,8 @@
-const https = require('https');
-
-// Keys should be set in Netlify Environment Variables
 const KEY_ID = process.env.RAZORPAY_KEY_ID;
 const KEY_SECRET = process.env.RAZORPAY_KEY_SECRET;
+
+// SET THIS TO FALSE WHEN YOU HAVE VALID RAZORPAY KEYS
+const USE_MOCK_MODE = true;
 
 exports.handler = async (event) => {
     const headers = {
@@ -15,6 +15,26 @@ exports.handler = async (event) => {
         return { statusCode: 200, headers, body: '' };
     }
 
+    // MOCK MODE: Bypass Razorpay for testing
+    if (USE_MOCK_MODE) {
+        console.log('⚠️ MOCK MODE ENABLED - No real payment processing');
+        return {
+            statusCode: 200,
+            headers,
+            body: JSON.stringify({
+                id: `order_mock_${Date.now()}`,
+                entity: 'order',
+                amount: 100,
+                currency: 'INR',
+                receipt: `receipt_${Date.now()}`,
+                status: 'created',
+                key: 'rzp_test_MOCK_KEY_FOR_TESTING',
+                mock: true
+            })
+        };
+    }
+
+    // REAL MODE: Use actual Razorpay API
     if (!KEY_ID || !KEY_SECRET) {
         return {
             statusCode: 500,
@@ -23,17 +43,15 @@ exports.handler = async (event) => {
         };
     }
 
-    // Manual HTTP Request to bypass any SDK weirdness
-    // API: https://razorpay.com/docs/api/orders/#create-an-order
-
+    const https = require('https');
     const postData = JSON.stringify({
-        amount: 100, // 1 INR
+        amount: 100,
         currency: "INR",
         receipt: `receipt_${Date.now()}`,
         payment_capture: 1
     });
 
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
         const req = https.request({
             hostname: 'api.razorpay.com',
             port: 443,
@@ -48,7 +66,6 @@ exports.handler = async (event) => {
             let data = '';
             res.on('data', (chunk) => data += chunk);
             res.on('end', () => {
-                // If success or even application error, return it
                 resolve({
                     statusCode: res.statusCode === 201 || res.statusCode === 200 ? 200 : 500,
                     headers,
