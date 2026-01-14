@@ -1,4 +1,4 @@
-const Razorpay = require('razorpay');
+const https = require('https');
 
 // Keys should be set in Netlify Environment Variables
 const KEY_ID = process.env.RAZORPAY_KEY_ID;
@@ -15,77 +15,57 @@ exports.handler = async (event) => {
         return { statusCode: 200, headers, body: '' };
     }
 
-    if (event.httpMethod !== 'POST') {
-        return { statusCode: 405, headers, body: 'Method Not Allowed' };
-    }
-
     if (!KEY_ID || !KEY_SECRET) {
-        console.error('Missing Razorpay Env Vars:', {
-            hasKeyId: !!KEY_ID,
-            hasKeySecret: !!KEY_SECRET,
-            envKeys: Object.keys(process.env).filter(k => k.includes('RAZORPAY'))
-        });
         return {
             statusCode: 500,
             headers,
-            body: JSON.stringify({
-                error: 'Server Misconfigured: Missing Razorpay Keys',
-                debug: { hasKeyId: !!KEY_ID, hasKeySecret: !!KEY_SECRET }
-            }),
+            body: JSON.stringify({ error: 'Missing Razorpay Keys' }),
         };
     }
 
-    try {
-        console.log('Initializing Razorpay with key:', KEY_ID);
+    // Manual HTTP Request to bypass any SDK weirdness
+    // API: https://razorpay.com/docs/api/orders/#create-an-order
 
-        const razorpay = new Razorpay({
-            key_id: KEY_ID,
-            key_secret: KEY_SECRET,
+    const postData = JSON.stringify({
+        amount: 100, // 1 INR
+        currency: "INR",
+        receipt: `receipt_${Date.now()}`,
+        payment_capture: 1
+    });
+
+    return new Promise((resolve, reject) => {
+        const req = https.request({
+            hostname: 'api.razorpay.com',
+            port: 443,
+            path: '/v1/orders',
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Content-Length': postData.length,
+                'Authorization': `Basic ${Buffer.from(`${KEY_ID}:${KEY_SECRET}`).toString('base64')}`
+            }
+        }, (res) => {
+            let data = '';
+            res.on('data', (chunk) => data += chunk);
+            res.on('end', () => {
+                // If success or even application error, return it
+                resolve({
+                    statusCode: res.statusCode === 201 || res.statusCode === 200 ? 200 : 500,
+                    headers,
+                    body: JSON.stringify(res.statusCode === 200 || res.statusCode === 201 ? { ...JSON.parse(data), key: KEY_ID } : { error: 'Razorpay API Error', details: JSON.parse(data) })
+                });
+            });
         });
 
-        const amount = 100; // 1 INR in paise
+        req.on('error', (e) => {
+            resolve({
+                statusCode: 500,
+                headers,
+                body: JSON.stringify({ error: 'Network Error', details: e.message })
+            });
+        });
 
-        const options = {
-            amount: amount,
-            currency: 'INR',
-            receipt: `receipt_${Date.now()}`,
-            payment_capture: 1,
-        };
-
-        console.log('Creating order with options:', options);
-        // The SDK calls https://api.razorpay.com/v1/orders internally
-        const order = await razorpay.orders.create(options);
-        console.log('Order created:', order);
-
-        return {
-            statusCode: 200,
-            headers,
-            body: JSON.stringify({ ...order, key: KEY_ID }),
-        };
-
-        return {
-            statusCode: 200,
-            headers,
-            body: JSON.stringify(order),
-        };
-    } catch (error) {
-        console.error('Razorpay Error:', error);
-
-        // Extract error details safely
-        const errorDetails = {
-            message: error.message || 'Unknown error',
-            name: error.name,
-            stack: error.stack,
-            raw: JSON.stringify(error, Object.getOwnPropertyNames(error))
-        };
-
-        return {
-            statusCode: 500,
-            headers,
-            body: JSON.stringify({
-                error: 'Failed to create order',
-                details: errorDetails
-            }),
-        };
-    }
+        req.write(postData);
+        req.end();
+    });
 };
