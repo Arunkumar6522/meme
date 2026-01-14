@@ -2,8 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, Lock } from 'lucide-react';
 import { Button, Input, SkeletonCard } from '@/components/ui';
-// Removed old AdBanner import - using SimpleAds only
-import { ResponsiveLeaderboard, ResponsiveRectangle } from '@/components/ads/MobileResponsiveAds';
+import GoogleAdSense from '@/components/ads/GoogleAdSense';
 import { useLibrary } from '@/hooks/useLibrary';
 import { useAuth } from '@/hooks/useAuth';
 import { useLanguage } from '@/hooks/useLanguage';
@@ -121,20 +120,16 @@ const LandingPage: React.FC = () => {
 
   return (
     <div className="bg-white">
-      {/* Monetag Header Banner Ad */}
-      <div className="mt-4 mb-6">
-        <ResponsiveLeaderboard className="max-w-4xl mx-auto" />
-      </div>
+
 
       {/* Side Ads (desktop only) */}
-      <div className="hidden lg:block">
-        <div className="fixed left-4 top-24 z-20">
-          <ResponsiveRectangle className="w-40" />
-        </div>
-        <div className="fixed right-4 top-24 z-20">
-          <ResponsiveRectangle className="w-40" />
-        </div>
+      <div className="hidden lg:block fixed left-4 top-1/2 -translate-y-1/2 w-[160px]">
+        <GoogleAdSense type="vertical" className="w-full" />
       </div>
+      <div className="hidden lg:block fixed right-4 top-1/2 -translate-y-1/2 w-[160px]">
+        <GoogleAdSense type="vertical" className="w-full" />
+      </div>
+
 
       <div className="relative overflow-hidden">
         <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
@@ -168,11 +163,6 @@ const LandingPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Monetag Content Rectangle Ad */}
-      <div className="my-8">
-        <ResponsiveRectangle className="max-w-md mx-auto" />
-      </div>
-
       {/* Preview rail */}
       <div className="bg-orange-50/60 border-t border-b border-orange-100">
         <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-10 sm:py-14 space-y-10">
@@ -195,10 +185,7 @@ const LandingPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Monetag Footer Banner Ad */}
-      <div className="mb-8">
-        <ResponsiveLeaderboard className="max-w-4xl mx-auto" />
-      </div>
+
     </div>
   );
 };

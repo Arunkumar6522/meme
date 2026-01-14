@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { TrendingUp, Clock, Download, Play } from 'lucide-react';
 import { Button } from '@/components/ui';
-import { SidebarAd } from '@/components/ads/AdBanner';
+import GoogleAdSense from '@/components/ads/GoogleAdSense';
 import { useLibrary } from '@/hooks/useLibrary';
 import LibraryCard from '@/components/library/LibraryCard';
 import { SkeletonCard } from '@/components/ui';
@@ -30,15 +30,15 @@ const HomePage: React.FC = () => {
   }, [user?.id]);
 
   // Get trending memes
-  const { 
-    data: trendingItems, 
-    loading: trendingLoading 
+  const {
+    data: trendingItems,
+    loading: trendingLoading
   } = useLibrary({ sort_by: 'trending' }, 1, 8);
 
   // Get latest memes
-  const { 
-    data: latestItems, 
-    loading: latestLoading 
+  const {
+    data: latestItems,
+    loading: latestLoading
   } = useLibrary({ sort_by: 'latest' }, 1, 8);
 
   const quickStats = [
@@ -102,11 +102,10 @@ const HomePage: React.FC = () => {
                     <p className="text-lg font-semibold text-gray-900">
                       {stat.value}
                     </p>
-                    <span className={`ml-2 text-xs font-medium ${
-                      stat.changeType === 'positive' 
-                        ? 'text-green-600' 
+                    <span className={`ml-2 text-xs font-medium ${stat.changeType === 'positive'
+                        ? 'text-green-600'
                         : 'text-red-600'
-                    }`}>
+                      }`}>
                       {stat.change}
                     </span>
                   </div>
@@ -133,7 +132,7 @@ const HomePage: React.FC = () => {
                   </Link>
                 </Button>
               </div>
-              
+
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 {trendingLoading ? (
                   Array.from({ length: 4 }).map((_, i) => (
@@ -160,7 +159,7 @@ const HomePage: React.FC = () => {
                   </Link>
                 </Button>
               </div>
-              
+
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 {latestLoading ? (
                   Array.from({ length: 4 }).map((_, i) => (
@@ -203,7 +202,10 @@ const HomePage: React.FC = () => {
           <div className="mt-8 lg:mt-0 lg:col-span-1">
             <div className="sticky top-8 space-y-6">
               {/* Sidebar Ad */}
-              <SidebarAd />
+              <div className="hidden lg:block space-y-6">
+                <GoogleAdSense type="vertical" className="w-full" />
+                <GoogleAdSense type="square" className="w-full" />
+              </div>
 
               {/* Popular Emotions */}
               <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
@@ -251,7 +253,7 @@ const HomePage: React.FC = () => {
                   💡 Pro Tip
                 </h3>
                 <p className="text-sm text-primary-800">
-                  Use specific keywords in your search to find exactly what you need. 
+                  Use specific keywords in your search to find exactly what you need.
                   Try searching for dialogue or sound effects!
                 </p>
               </div>

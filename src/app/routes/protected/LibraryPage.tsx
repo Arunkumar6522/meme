@@ -1,11 +1,10 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Upload } from 'lucide-react';
 import LibraryFilters from '@/components/library/LibraryFilters';
 import LibraryGrid from '@/components/library/LibraryGrid';
 import Pagination from '@/components/library/Pagination';
-// Removed old AdBanner imports - using SimpleAds only
-import { ResponsiveLeaderboard, ResponsiveRectangle, ResponsiveMobile } from '@/components/ads/MobileResponsiveAds';
+import GoogleAdSense from '@/components/ads/GoogleAdSense';
 import { Button } from '@/components/ui';
 import { useLibrary } from '@/hooks/useLibrary';
 import { useAuth } from '@/hooks/useAuth';
@@ -126,11 +125,11 @@ const LibraryPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Monetag Header Banner Ad */}
-      <div className="mb-6 pt-4">
-        <ResponsiveLeaderboard className="max-w-4xl mx-auto" />
+      {/* Google Auto Ad (Horizontal) */}
+      <div className="mb-6 pt-4 flex justify-center">
+        <GoogleAdSense type="horizontal" className="w-full max-w-4xl" />
       </div>
-      
+
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
@@ -138,13 +137,13 @@ const LibraryPage: React.FC = () => {
             <div>
               <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">ilovememe.in Library</h1>
               <p className="mt-2 text-sm sm:text-base text-gray-600">
-            Discover and download the perfect memes for your content
-          </p>
-          {count > 0 && (
+                Discover and download the perfect memes for your content
+              </p>
+              {count > 0 && (
                 <p className="mt-1 text-xs sm:text-sm text-gray-500">
-              {count.toLocaleString()} memes available
-            </p>
-          )}
+                  {count.toLocaleString()} memes available
+                </p>
+              )}
             </div>
             <div className="flex items-center gap-3">
               {isAdmin && (
@@ -161,8 +160,8 @@ const LibraryPage: React.FC = () => {
         </div>
 
         {/* Mobile Ad */}
-        <div className="mb-6 md:hidden">
-          <ResponsiveMobile />
+        <div className="mb-6 md:hidden flex justify-center">
+          <GoogleAdSense type="square" className="w-full max-w-[300px]" />
         </div>
 
         {/* Media Tabs */}
@@ -212,32 +211,32 @@ const LibraryPage: React.FC = () => {
 
         {/* Main Content */}
         <div>
-            <LibraryGrid items={items} loading={loading} isAdmin={isAdmin} mediaType={mediaTab} />
-            
-            {/* Monetag Content Rectangle Ad between results and pagination */}
-            <div className="my-8">
-              <ResponsiveRectangle className="max-w-md mx-auto" />
+          <LibraryGrid items={items} loading={loading} isAdmin={isAdmin} mediaType={mediaTab} />
+
+          {/* Content Rectangle Ad between results and pagination */}
+          <div className="my-8 flex justify-center">
+            <GoogleAdSense type="square" className="w-full max-w-md" />
+          </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="mt-8">
+              <Pagination
+                currentPage={page}
+                totalPages={totalPages}
+                onPageChange={(next) => {
+                  // Stop any playing audio/video when navigating pages
+                  window.dispatchEvent(new CustomEvent('media:stopAll'));
+                  goToPage(next);
+                }}
+              />
             </div>
-            
-            {/* Pagination */}
-            {totalPages > 1 && (
-              <div className="mt-8">
-                <Pagination
-                  currentPage={page}
-                  totalPages={totalPages}
-                  onPageChange={(next) => {
-                    // Stop any playing audio/video when navigating pages
-                    window.dispatchEvent(new CustomEvent('media:stopAll'));
-                    goToPage(next);
-                  }}
-                />
-              </div>
-            )}
+          )}
         </div>
 
         {/* Bottom Banner Ad */}
-        <div className="mt-12">
-          <ResponsiveLeaderboard className="max-w-4xl mx-auto" />
+        <div className="mt-12 flex justify-center">
+          <GoogleAdSense type="horizontal" className="w-full max-w-4xl" />
         </div>
       </div>
     </div>
