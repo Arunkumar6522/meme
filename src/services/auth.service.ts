@@ -71,10 +71,33 @@ export class AuthService {
         throw new Error('Google Sign-in is not enabled');
       }
 
+      // Determine the correct redirect URL based on environment
+      const getRedirectUrl = () => {
+        const origin = window.location.origin;
+        
+        // For production domain
+        if (origin.includes('ilovememe.in')) {
+          return `${origin}/auth/callback`;
+        }
+        
+        // For Netlify preview/deploy
+        if (origin.includes('netlify.app')) {
+          return `${origin}/auth/callback`;
+        }
+        
+        // For local development
+        if (origin.includes('localhost')) {
+          return `${origin}/auth/callback`;
+        }
+        
+        // Fallback
+        return `${origin}/auth/callback`;
+      };
+
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo: getRedirectUrl(),
           queryParams: {
             access_type: 'offline',
             prompt: 'consent',
