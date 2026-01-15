@@ -233,14 +233,43 @@ export class DatabaseService {
   }
 
   // Get dashboard analytics (Superadmin only)
+  // Get dashboard analytics
   static async getDashboardStats(): Promise<any> {
     try {
-      const { data, error } = await supabase.rpc('get_dashboard_stats');
-      if (error) throw error;
-      return data;
+      // Execute queries in parallel for better performance
+      const [
+        { count: totalUsers },
+        { count: totalMemes },
+        { count: audioCount },
+        { count: videoCount },
+        { data: downloadsData }
+      ] = await Promise.all([
+        supabase.from('users').select('*', { count: 'exact', head: true }),
+        supabase.from('library_items').select('*', { count: 'exact', head: true }),
+        supabase.from('library_items').select('*', { count: 'exact', head: true }).eq('media_type', 'audio'),
+        supabase.from('library_items').select('*', { count: 'exact', head: true }).eq('media_type', 'video'),
+        supabase.from('library_items').select('download_count')
+      ]);
+
+      // Calculate total downloads
+      const totalDownloads = downloadsData?.reduce((sum, item) => sum + (item.download_count || 0), 0) || 0;
+
+      return {
+        total_users: totalUsers || 0,
+        total_memes: totalMemes || 0,
+        total_downloads: totalDownloads,
+        audio_count: audioCount || 0,
+        video_count: videoCount || 0
+      };
     } catch (error) {
       console.error('Error fetching dashboard stats:', error);
-      return null;
+      return {
+        total_users: 0,
+        total_memes: 0,
+        total_downloads: 0,
+        audio_count: 0,
+        video_count: 0
+      };
     }
   }
 
