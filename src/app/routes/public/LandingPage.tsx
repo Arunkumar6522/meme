@@ -39,7 +39,7 @@ const LanguageSection: React.FC<{
       <div className="flex gap-4 overflow-x-auto no-scrollbar pb-2 -mx-4 px-4 sm:mx-0 sm:px-0">
         {items.map((item: any, idx: number) => (
           <div key={item.id} className="flex-none w-40 sm:w-44">
-            <LibraryCard item={item} locked={!canPlayAll && idx >= 5} isAdmin={isAdmin} />
+            <LibraryCard item={item} locked={!canPlayAll} isAdmin={isAdmin} />
           </div>
         ))}
       </div>
@@ -67,14 +67,14 @@ const LanguageSection: React.FC<{
 
       <div className="space-y-2">
         <div className="flex items-center gap-2 text-sm font-semibold text-gray-900">
-          Audio {!canPlayAll && <Lock className="h-4 w-4 text-orange-600" />}
+          Audio
         </div>
         {renderRail(audioQuery.data, audioQuery.loading, 'audio')}
       </div>
 
       <div className="space-y-2">
         <div className="flex items-center gap-2 text-sm font-semibold text-gray-900">
-          Video {!canPlayAll && <Lock className="h-4 w-4 text-orange-600" />}
+          Video
         </div>
         {renderRail(videoQuery.data, videoQuery.loading, 'video')}
       </div>
@@ -175,13 +175,10 @@ const LandingPage: React.FC = () => {
             <LanguageSection
               key={lang}
               lang={lang}
-              canPlayAll={!!user}
+              canPlayAll={!!user} // Locked state checks this
               isAdmin={isAdmin}
               onSeeAll={() => {
-                if (!user) {
-                  navigate('/auth/login');
-                  return;
-                }
+                // If user clicks "See All", they go to library which is public now
                 setSelectedLanguages([lang]);
                 navigate('/library');
               }}
