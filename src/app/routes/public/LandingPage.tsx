@@ -130,6 +130,11 @@ const LandingPage: React.FC = () => {
         <GoogleAdSense type="vertical" className="w-full" />
       </div>
 
+      {/* Top Banner Ad - Mobile/Tablet */}
+      <div className="lg:hidden bg-gray-50 py-4 flex justify-center border-b border-gray-100">
+        <GoogleAdSense type="horizontal" className="w-full max-w-[320px] sm:max-w-[468px]" />
+      </div>
+
 
       <div className="relative overflow-hidden">
         <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
@@ -182,6 +187,41 @@ const LandingPage: React.FC = () => {
               }}
             />
           ))}
+        </div>
+      </div>
+
+      {/* Features Section - SEO & Credibility */}
+      <div className="bg-white py-12 border-t border-gray-100">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+          <div className="grid md:grid-cols-3 gap-8 text-center">
+            <div className="p-6 bg-gray-50 rounded-xl">
+              <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-2xl">⚡</span>
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Instant Downloads</h3>
+              <p className="text-gray-600 text-sm">
+                No waiting, no captcha. Get high-quality MP3 and MP4 files instantly for your edits.
+              </p>
+            </div>
+            <div className="p-6 bg-gray-50 rounded-xl">
+              <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-2xl">🔍</span>
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Smart Search</h3>
+              <p className="text-gray-600 text-sm">
+                Find exactly what you need by searching for dialogues, emotions, movies, or actors.
+              </p>
+            </div>
+            <div className="p-6 bg-gray-50 rounded-xl">
+              <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-2xl">📱</span>
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Creator Ready</h3>
+              <p className="text-gray-600 text-sm">
+                Optimized for Instagram Reels, YouTube Shorts, and TikTok creators.
+              </p>
+            </div>
+          </div>
         </div>
       </div>
 

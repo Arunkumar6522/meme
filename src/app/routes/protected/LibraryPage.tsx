@@ -232,6 +232,44 @@ const LibraryPage: React.FC = () => {
           )}
         </div>
 
+        {/* SEO Content Section - Helps with AdSense "Low Value Content" */}
+        <div className="mt-12 bg-white rounded-xl p-6 sm:p-8 shadow-sm border border-gray-100">
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">About Our Meme Audio & Video Library</h2>
+          <div className="prose prose-orange max-w-none text-gray-600">
+            <p className="mb-4">
+              Welcome to the internet's most comprehensive collection of trending meme sounds, audio clips, and video templates.
+              Our library is updated daily with viral content from Instagram Reels, TikTok, YouTube Shorts, and classic internet culture.
+            </p>
+
+            <div className="grid md:grid-cols-2 gap-8 mt-6">
+              <div>
+                <h3 className="text-lg font-semibold text-gray-800 mb-2">🎵 For Content Creators</h3>
+                <p className="text-sm">
+                  Whether you're editing a vlog, a gaming video, or a social media skit, finding the right sound effect can make your content go viral.
+                  Browse our "Funny", "Thug Life", and "Dramatic" categories to find the perfect audio punchline.
+                  All files are available in high-quality MP3 (audio) or MP4 (video) formats.
+                </p>
+              </div>
+
+              <div>
+                <h3 className="text-lg font-semibold text-gray-800 mb-2">📥 Easy Download & Sharing</h3>
+                <p className="text-sm">
+                  We offer direct downloads with no waiting time. Simply click the download button to save the meme to your device.
+                  You can also share specific memes directly to WhatsApp, Telegram, or other platforms using our share feature.
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-6 border-t border-gray-100 pt-6">
+              <h3 className="text-lg font-semibold text-gray-800 mb-2">Supported Languages</h3>
+              <p className="text-sm">
+                Our library features trending Tamil, Malayalam, Telugu, Kannada, and English meme templates.
+                Use the language filter to find regional content that resonates with your specific audience.
+              </p>
+            </div>
+          </div>
+        </div>
+
         {/* Bottom Banner Ad */}
         <div className="mt-12 flex justify-center">
           <GoogleAdSense type="horizontal" className="w-full max-w-4xl" />
