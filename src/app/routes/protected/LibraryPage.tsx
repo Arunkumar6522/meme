@@ -209,7 +209,7 @@ const LibraryPage: React.FC = () => {
 
         {/* Main Content */}
         <div>
-          <LibraryGrid items={items} loading={loading} isAdmin={isAdmin} mediaType={mediaTab} />
+          <LibraryGrid items={items} loading={loading} isAdmin={isAdmin} mediaType={mediaTab} locked={!user} />
 
           {/* Content Rectangle Ad between results and pagination */}
           <div className="my-8 flex justify-center">

@@ -10,9 +10,10 @@ interface LibraryGridProps {
   className?: string;
   isAdmin?: boolean;
   mediaType?: 'audio' | 'video';
+  locked?: boolean;
 }
 
-const LibraryGrid: React.FC<LibraryGridProps> = memo(({ items, loading = false, className, isAdmin = false, mediaType }) => {
+const LibraryGrid: React.FC<LibraryGridProps> = memo(({ items, loading = false, className, isAdmin = false, mediaType, locked = false }) => {
   const isVideoGrid =
     mediaType === 'video' ||
     (mediaType == null && items.length > 0 && items.every((i) => i.media_type === 'video'));
@@ -80,7 +81,7 @@ const LibraryGrid: React.FC<LibraryGridProps> = memo(({ items, loading = false, 
       >
         {items.map((item) => (
           <div key={item.id} role="gridcell" className={cn('flex', isVideoGrid ? 'justify-stretch' : 'justify-center')}>
-            <LibraryCard item={item} isAdmin={isAdmin} />
+            <LibraryCard item={item} isAdmin={isAdmin} locked={locked} />
           </div>
         ))}
       </div>

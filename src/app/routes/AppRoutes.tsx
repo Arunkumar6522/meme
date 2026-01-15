@@ -41,6 +41,7 @@ const AppRoutes: React.FC = () => {
           <Route index element={<LandingPage />} />
           <Route path="auth/:type" element={<AuthPage />} />
           <Route path="auth/callback" element={<AuthCallbackPage />} />
+          <Route path="library" element={<LibraryPage />} />
 
           {/* Policy Routes */}
           <Route path="contact-us" element={<ContactUsPage />} />
@@ -56,11 +57,7 @@ const AppRoutes: React.FC = () => {
             </ProtectedRoute>
           } />
 
-          <Route path="library" element={
-            <ProtectedRoute>
-              <LibraryPage />
-            </ProtectedRoute>
-          } />
+
 
           <Route path="create" element={
             <ProtectedRoute>
