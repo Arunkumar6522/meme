@@ -357,232 +357,232 @@ const ProfilePage: React.FC = () => {
           </div>
         </div>
       </div>
-    </div >
 
-  {/* Delete account modal (validated, no unwanted API calls) */ }
-  < Modal
-    open={deleteModalOpen}
-    onClose={() => {
-      if (deleting) return;
-      setDeleteModalOpen(false);
-    }}
-    title="Delete account"
-  >
-    <div className="space-y-3">
-      <p className="text-sm text-gray-600">
-        This will submit a deletion request and sign you out. Enter your current password to confirm.
-      </p>
 
-      {deleteErrors.general && (
-        <div className="rounded-md bg-red-50 p-3 border border-red-200">
-          <p className="text-sm text-red-800">{deleteErrors.general}</p>
-        </div>
-      )}
-
-      <Input
-        label="Reason (optional)"
-        value={deleteReason}
-        onChange={(e) => {
-          setDeleteReason(e.target.value);
-          if (deleteErrors.reason) setDeleteErrors((p) => ({ ...p, reason: undefined }));
+      {/* Delete account modal (validated, no unwanted API calls) */}
+      < Modal
+        open={deleteModalOpen}
+        onClose={() => {
+          if (deleting) return;
+          setDeleteModalOpen(false);
         }}
-        placeholder="Why are you closing the account?"
-      />
-
-      {/* Only show password field for email/password users */}
-      {!isOAuthUser(user) && (
-        <Input
-          label="Current password *"
-          type="password"
-          value={deletePwd}
-          onChange={(e) => {
-            setDeletePwd(e.target.value);
-            if (deleteErrors.password) setDeleteErrors((p) => ({ ...p, password: undefined }));
-          }}
-          error={deleteErrors.password}
-          placeholder="Enter your password"
-          autoComplete="current-password"
-          required
-        />
-      )}
-
-      {/* Show OAuth info for OAuth users */}
-      {isOAuthUser(user) && (
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-          <p className="text-yellow-800 text-sm">
-            <strong>Note:</strong> Your account is linked to {getUserProvider(user)}.
-            Account deletion will remove your data from our platform but won't affect your {getUserProvider(user)} account.
+        title="Delete account"
+      >
+        <div className="space-y-3">
+          <p className="text-sm text-gray-600">
+            This will submit a deletion request and sign you out. Enter your current password to confirm.
           </p>
+
+          {deleteErrors.general && (
+            <div className="rounded-md bg-red-50 p-3 border border-red-200">
+              <p className="text-sm text-red-800">{deleteErrors.general}</p>
+            </div>
+          )}
+
+          <Input
+            label="Reason (optional)"
+            value={deleteReason}
+            onChange={(e) => {
+              setDeleteReason(e.target.value);
+              if (deleteErrors.reason) setDeleteErrors((p) => ({ ...p, reason: undefined }));
+            }}
+            placeholder="Why are you closing the account?"
+          />
+
+          {/* Only show password field for email/password users */}
+          {!isOAuthUser(user) && (
+            <Input
+              label="Current password *"
+              type="password"
+              value={deletePwd}
+              onChange={(e) => {
+                setDeletePwd(e.target.value);
+                if (deleteErrors.password) setDeleteErrors((p) => ({ ...p, password: undefined }));
+              }}
+              error={deleteErrors.password}
+              placeholder="Enter your password"
+              autoComplete="current-password"
+              required
+            />
+          )}
+
+          {/* Show OAuth info for OAuth users */}
+          {isOAuthUser(user) && (
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+              <p className="text-yellow-800 text-sm">
+                <strong>Note:</strong> Your account is linked to {getUserProvider(user)}.
+                Account deletion will remove your data from our platform but won't affect your {getUserProvider(user)} account.
+              </p>
+            </div>
+          )}
+
+          <div className="pt-2 flex justify-end gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setDeleteModalOpen(false)}
+              disabled={deleting}
+            >
+              Cancel
+            </Button>
+            <Button
+              className="bg-red-600 hover:bg-red-700"
+              loading={deleting}
+              onClick={async () => {
+                if (!user?.email) {
+                  setDeleteErrors({ general: 'Not signed in.' });
+                  return;
+                }
+
+                // Only require password for email/password users
+                if (!isOAuthUser(user) && !deletePwd) {
+                  setDeleteErrors({ password: 'Password is required.' });
+                  return;
+                }
+
+                setDeleting(true);
+                setDeleteErrors({});
+                try {
+                  // Only re-authenticate for email/password users
+                  if (!isOAuthUser(user)) {
+                    const { error: signErr } = await supabase.auth.signInWithPassword({
+                      email: user.email,
+                      password: deletePwd,
+                    });
+                    if (signErr) throw signErr;
+                  }
+
+                  // Record request (server-side deletion should be implemented later)
+                  await supabase.from('create_interest').insert({
+                    email: user.email,
+                    name: user.user_metadata?.full_name || user.email,
+                    message: `Account deletion request. Reason: ${deleteReason?.trim() || 'No reason provided.'}`,
+                  });
+
+                  await signOut();
+                  showSuccess('Deletion request submitted. You have been signed out.', 'Account');
+                  setDeleteModalOpen(false);
+                  navigate('/');
+                } catch (e: any) {
+                  const msg = String(e?.message || 'Failed to submit deletion request');
+                  const pretty = msg.includes('Invalid login credentials') ? 'Password is incorrect.' : msg;
+                  setDeleteErrors({ general: pretty });
+                } finally {
+                  setDeleting(false);
+                }
+              }}
+            >
+              Confirm delete
+            </Button>
+          </div>
         </div>
-      )}
+      </Modal >
 
-      <div className="pt-2 flex justify-end gap-2">
-        <Button
-          variant="outline"
-          onClick={() => setDeleteModalOpen(false)}
-          disabled={deleting}
-        >
-          Cancel
-        </Button>
-        <Button
-          className="bg-red-600 hover:bg-red-700"
-          loading={deleting}
-          onClick={async () => {
-            if (!user?.email) {
-              setDeleteErrors({ general: 'Not signed in.' });
-              return;
-            }
+      {/* Change password modal (validated, no unwanted API calls) */}
+      < Modal
+        open={pwdModalOpen}
+        onClose={() => {
+          if (changingPwd) return;
+          setPwdModalOpen(false);
+        }}
+        title="Change password"
+      >
+        <div className="space-y-3">
+          {pwdErrors.general && (
+            <div className="rounded-md bg-red-50 p-3 border border-red-200">
+              <p className="text-sm text-red-800">{pwdErrors.general}</p>
+            </div>
+          )}
 
-            // Only require password for email/password users
-            if (!isOAuthUser(user) && !deletePwd) {
-              setDeleteErrors({ password: 'Password is required.' });
-              return;
-            }
+          <Input
+            label="Current password *"
+            type="password"
+            value={currentPwd}
+            onChange={(e) => {
+              setCurrentPwd(e.target.value);
+              if (pwdErrors.current) setPwdErrors((p) => ({ ...p, current: undefined }));
+            }}
+            error={pwdErrors.current}
+            autoComplete="current-password"
+            required
+          />
+          <Input
+            label="New password *"
+            type="password"
+            value={newPwd}
+            onChange={(e) => {
+              setNewPwd(e.target.value);
+              if (pwdErrors.next) setPwdErrors((p) => ({ ...p, next: undefined }));
+            }}
+            error={pwdErrors.next}
+            autoComplete="new-password"
+            required
+          />
+          <Input
+            label="Confirm new password *"
+            type="password"
+            value={confirmPwd}
+            onChange={(e) => {
+              setConfirmPwd(e.target.value);
+              if (pwdErrors.confirm) setPwdErrors((p) => ({ ...p, confirm: undefined }));
+            }}
+            error={pwdErrors.confirm}
+            autoComplete="new-password"
+            required
+          />
 
-            setDeleting(true);
-            setDeleteErrors({});
-            try {
-              // Only re-authenticate for email/password users
-              if (!isOAuthUser(user)) {
-                const { error: signErr } = await supabase.auth.signInWithPassword({
-                  email: user.email,
-                  password: deletePwd,
-                });
-                if (signErr) throw signErr;
-              }
+          <div className="pt-2 flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setPwdModalOpen(false)} disabled={changingPwd}>
+              Cancel
+            </Button>
+            <Button
+              loading={changingPwd}
+              onClick={async () => {
+                if (!user?.email) {
+                  setPwdErrors({ general: 'Not signed in.' });
+                  return;
+                }
+                const nextErrors: typeof pwdErrors = {};
+                if (!currentPwd) nextErrors.current = 'Current password is required.';
+                if (!newPwd) nextErrors.next = 'New password is required.';
+                if (newPwd && newPwd.length < 6) nextErrors.next = 'Password must be at least 6 characters.';
+                if (!confirmPwd) nextErrors.confirm = 'Please confirm your new password.';
+                if (newPwd && confirmPwd && newPwd !== confirmPwd) nextErrors.confirm = 'Passwords do not match.';
+                if (Object.keys(nextErrors).length) {
+                  setPwdErrors(nextErrors);
+                  return;
+                }
 
-              // Record request (server-side deletion should be implemented later)
-              await supabase.from('create_interest').insert({
-                email: user.email,
-                name: user.user_metadata?.full_name || user.email,
-                message: `Account deletion request. Reason: ${deleteReason?.trim() || 'No reason provided.'}`,
-              });
+                setChangingPwd(true);
+                setPwdErrors({});
+                try {
+                  const { error: signErr } = await supabase.auth.signInWithPassword({
+                    email: user.email,
+                    password: currentPwd,
+                  });
+                  if (signErr) throw signErr;
 
-              await signOut();
-              showSuccess('Deletion request submitted. You have been signed out.', 'Account');
-              setDeleteModalOpen(false);
-              navigate('/');
-            } catch (e: any) {
-              const msg = String(e?.message || 'Failed to submit deletion request');
-              const pretty = msg.includes('Invalid login credentials') ? 'Password is incorrect.' : msg;
-              setDeleteErrors({ general: pretty });
-            } finally {
-              setDeleting(false);
-            }
-          }}
-        >
-          Confirm delete
-        </Button>
-      </div>
-    </div>
-  </Modal >
+                  const { error } = await supabase.auth.updateUser({ password: newPwd });
+                  if (error) throw error;
 
-  {/* Change password modal (validated, no unwanted API calls) */ }
-  < Modal
-    open={pwdModalOpen}
-    onClose={() => {
-      if (changingPwd) return;
-      setPwdModalOpen(false);
-    }}
-    title="Change password"
-  >
-    <div className="space-y-3">
-      {pwdErrors.general && (
-        <div className="rounded-md bg-red-50 p-3 border border-red-200">
-          <p className="text-sm text-red-800">{pwdErrors.general}</p>
+                  showSuccess('Password changed', 'Security');
+                  setPwdModalOpen(false);
+                  setCurrentPwd('');
+                  setNewPwd('');
+                  setConfirmPwd('');
+                } catch (e: any) {
+                  const msg = String(e?.message || 'Failed to change password');
+                  const pretty = msg.includes('Invalid login credentials') ? 'Current password is incorrect.' : msg;
+                  setPwdErrors({ general: pretty });
+                } finally {
+                  setChangingPwd(false);
+                }
+              }}
+            >
+              Save
+            </Button>
+          </div>
         </div>
-      )}
-
-      <Input
-        label="Current password *"
-        type="password"
-        value={currentPwd}
-        onChange={(e) => {
-          setCurrentPwd(e.target.value);
-          if (pwdErrors.current) setPwdErrors((p) => ({ ...p, current: undefined }));
-        }}
-        error={pwdErrors.current}
-        autoComplete="current-password"
-        required
-      />
-      <Input
-        label="New password *"
-        type="password"
-        value={newPwd}
-        onChange={(e) => {
-          setNewPwd(e.target.value);
-          if (pwdErrors.next) setPwdErrors((p) => ({ ...p, next: undefined }));
-        }}
-        error={pwdErrors.next}
-        autoComplete="new-password"
-        required
-      />
-      <Input
-        label="Confirm new password *"
-        type="password"
-        value={confirmPwd}
-        onChange={(e) => {
-          setConfirmPwd(e.target.value);
-          if (pwdErrors.confirm) setPwdErrors((p) => ({ ...p, confirm: undefined }));
-        }}
-        error={pwdErrors.confirm}
-        autoComplete="new-password"
-        required
-      />
-
-      <div className="pt-2 flex justify-end gap-2">
-        <Button variant="outline" onClick={() => setPwdModalOpen(false)} disabled={changingPwd}>
-          Cancel
-        </Button>
-        <Button
-          loading={changingPwd}
-          onClick={async () => {
-            if (!user?.email) {
-              setPwdErrors({ general: 'Not signed in.' });
-              return;
-            }
-            const nextErrors: typeof pwdErrors = {};
-            if (!currentPwd) nextErrors.current = 'Current password is required.';
-            if (!newPwd) nextErrors.next = 'New password is required.';
-            if (newPwd && newPwd.length < 6) nextErrors.next = 'Password must be at least 6 characters.';
-            if (!confirmPwd) nextErrors.confirm = 'Please confirm your new password.';
-            if (newPwd && confirmPwd && newPwd !== confirmPwd) nextErrors.confirm = 'Passwords do not match.';
-            if (Object.keys(nextErrors).length) {
-              setPwdErrors(nextErrors);
-              return;
-            }
-
-            setChangingPwd(true);
-            setPwdErrors({});
-            try {
-              const { error: signErr } = await supabase.auth.signInWithPassword({
-                email: user.email,
-                password: currentPwd,
-              });
-              if (signErr) throw signErr;
-
-              const { error } = await supabase.auth.updateUser({ password: newPwd });
-              if (error) throw error;
-
-              showSuccess('Password changed', 'Security');
-              setPwdModalOpen(false);
-              setCurrentPwd('');
-              setNewPwd('');
-              setConfirmPwd('');
-            } catch (e: any) {
-              const msg = String(e?.message || 'Failed to change password');
-              const pretty = msg.includes('Invalid login credentials') ? 'Current password is incorrect.' : msg;
-              setPwdErrors({ general: pretty });
-            } finally {
-              setChangingPwd(false);
-            }
-          }}
-        >
-          Save
-        </Button>
-      </div>
-    </div>
-  </Modal >
+      </Modal >
     </div >
   );
 };
