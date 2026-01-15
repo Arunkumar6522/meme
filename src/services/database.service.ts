@@ -251,7 +251,7 @@ export class DatabaseService {
         .from('users')
         .update({
           is_premium: isPremium,
-          subscription_end_date: isPremium ? new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString() : null // 1 year default
+          subscription_end_date: isPremium ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() : null // 30 days validity
         })
         .eq('id', userId);
       return !error;
