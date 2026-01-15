@@ -5,6 +5,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useFavorites } from '@/hooks/useFavorites';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/services/supabase';
+import { DatabaseService } from '@/services/database.service';
 import { useToast } from '@/hooks/useToast';
 import { isOAuthUser, getUserProvider, getUserDisplayName, getUserAvatarUrl } from '@/utils/auth';
 import Modal from '@/components/ui/Modal';
@@ -30,6 +31,7 @@ const ProfilePage: React.FC = () => {
   const [isPremium, setIsPremium] = useState(false);
   const [subscriptionEndDate, setSubscriptionEndDate] = useState<string | null>(null);
   const [payments, setPayments] = useState<any[]>([]);
+  const [downloadCount, setDownloadCount] = useState(0);
 
   React.useEffect(() => {
     if (user) {
@@ -51,6 +53,10 @@ const ProfilePage: React.FC = () => {
         if (paymentData) {
           setPayments(paymentData);
         }
+
+        // Fetch Total Downloads
+        const count = await DatabaseService.getUserTotalDownloads(user.id);
+        setDownloadCount(count);
       };
 
       fetchData();
@@ -58,7 +64,7 @@ const ProfilePage: React.FC = () => {
   }, [user]);
 
   const stats = [
-    { label: 'Downloads', value: '—', icon: Download },
+    { label: 'Downloads', value: downloadCount.toString(), icon: Download },
     { label: 'Favorites', value: favorites.length.toString(), icon: Heart },
   ];
 
