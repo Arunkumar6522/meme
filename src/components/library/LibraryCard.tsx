@@ -148,6 +148,8 @@ const LibraryCard: React.FC<LibraryCardProps> = memo(({ item, className, isAdmin
     const padding = 8;
     const assumedWidth = 200; // close to w-44 (176px) + padding
 
+
+
     // Default: align menu's right edge to button's right edge
     let left = r.right - assumedWidth;
     left = Math.max(padding, Math.min(left, window.innerWidth - assumedWidth - padding));
@@ -160,6 +162,8 @@ const LibraryCard: React.FC<LibraryCardProps> = memo(({ item, className, isAdmin
 
     setMenuPos({ top, left });
   }, []);
+
+
 
   // Keep the portal menu positioned correctly
   useLayoutEffect(() => {
