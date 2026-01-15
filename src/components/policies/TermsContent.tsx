@@ -193,7 +193,7 @@ export const TermsContent: React.FC = () => (
 
         <h3>SECTION 18 - GOVERNING LAW</h3>
         <p>
-            These Terms of Service and any separate agreements whereby we provide you Services shall be governed by and construed in accordance with the laws of India and jurisdiction of Jaipur, Rajasthan.
+            These Terms of Service and any separate agreements whereby we provide you Services shall be governed by and construed in accordance with the laws of India and jurisdiction of Avadi, Chennai, Tamil Nadu.
         </p>
 
         <h3>SECTION 19 - CHANGES TO TERMS OF SERVICE</h3>

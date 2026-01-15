@@ -101,7 +101,8 @@ const LibraryFilters: React.FC<LibraryFiltersProps> = ({
           type="text"
           placeholder="Search memes by title, description, or keywords..."
           value={searchInput}
-          onChange={(e) => setSearchInput(e.target.value)}
+          onChange={(e) => setSearchInput(e.target.value.slice(0, 40))}
+          maxLength={40}
           className="pl-10 pr-4"
           aria-label="Search memes"
         />
@@ -189,9 +190,8 @@ const LibraryFilters: React.FC<LibraryFiltersProps> = ({
       {/* Filter Options */}
       <div
         id="filter-options"
-        className={`mt-4 space-y-4 md:space-y-0 md:grid md:grid-cols-4 md:gap-4 ${
-          isExpanded ? 'block' : 'hidden md:grid'
-        }`}
+        className={`mt-4 space-y-4 md:space-y-0 md:grid md:grid-cols-4 md:gap-4 ${isExpanded ? 'block' : 'hidden md:grid'
+          }`}
       >
         <Select
           label="Emotion"

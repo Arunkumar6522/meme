@@ -23,7 +23,7 @@ export const PrivacyContent: React.FC = () => (
         </p>
         <p><strong>How do I withdraw my consent?</strong></p>
         <p>
-            If after you opt-in, you change your mind, you may withdraw your consent for us to contact you, for the continued collection, use or disclosure of your information, at anytime, by contacting us at info@ilovememe.in or mailing us at: 622 Manglam Electronic Market Jaipur Rajasthan India 302001.
+            If after you opt-in, you change your mind, you may withdraw your consent for us to contact you, for the continued collection, use or disclosure of your information, at anytime, by contacting us at info@ilovememe.in or mailing us at: 312 KVS Nagar, Kollumedu, Avadi, Chennai, Tamil Nadu 600055.
         </p>
 
         <h3>SECTION 3 - DISCLOSURE</h3>
@@ -91,11 +91,11 @@ export const PrivacyContent: React.FC = () => (
 
         <h3>QUESTIONS AND CONTACT INFORMATION</h3>
         <p>
-            If you would like to: access, correct, amend or delete any personal information we have about you, register a complaint, or simply want more information contact our Privacy Compliance Officer at info@ilovememe.in or by mail at 622 Manglam Electronic Market Jaipur Rajasthan India 302001.
+            If you would like to: access, correct, amend or delete any personal information we have about you, register a complaint, or simply want more information contact our Privacy Compliance Officer at info@ilovememe.in or by mail at 312 KVS Nagar, Kollumedu, Avadi, Chennai, Tamil Nadu 600055.
         </p>
         <p>
             [Re: Privacy Compliance Officer]<br />
-            [622 Manglam Electronic Market Jaipur Rajasthan India 302001]
+            [312 KVS Nagar, Kollumedu, Avadi, Chennai, Tamil Nadu 600055]
         </p>
     </div>
 );

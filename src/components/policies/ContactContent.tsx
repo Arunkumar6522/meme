@@ -10,10 +10,10 @@ export const ContactContent: React.FC = () => (
                         You may contact us using the information below:
                     </p>
                     <div className="mt-4 text-left">
-                        <p><strong>Merchant Legal entity name:</strong> ARUNKUMAR</p>
-                        <p><strong>Registered Address:</strong> 622 Manglam Electronic Market Jaipur Rajasthan India 302001</p>
-                        <p><strong>Operational Address:</strong> 622 Manglam Electronic Market Jaipur Rajasthan India 302001</p>
-                        <p><strong>Telephone No:</strong> 9610086208</p>
+                        <p><strong>Merchant Legal entity name:</strong> ARUN KUMAR K</p>
+                        <p><strong>Registered Address:</strong> 312 KVS Nagar, Kollumedu, Avadi, Chennai, Tamil Nadu 600055</p>
+                        <p><strong>Operational Address:</strong> 312 KVS Nagar, Kollumedu, Avadi, Chennai, Tamil Nadu 600055</p>
+                        <p><strong>Telephone No:</strong> 8825560471</p>
                         <p><strong>E-Mail ID:</strong> info@ilovememe.in</p>
                     </div>
                 </div>

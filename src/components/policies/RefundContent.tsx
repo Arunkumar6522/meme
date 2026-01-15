@@ -55,7 +55,7 @@ export const RefundContent: React.FC = () => (
 
         <h3>Exchanges (if applicable)</h3>
         <p>
-            We only replace items if they are defective or damaged. If you need to exchange it for the same item, send us an email at info@ilovememe.in and send your item to: 622 Manglam Electronic Market Jaipur Rajasthan India 302001.
+            We only replace items if they are defective or damaged. If you need to exchange it for the same item, send us an email at info@ilovememe.in and send your item to: 312 KVS Nagar, Kollumedu, Avadi, Chennai, Tamil Nadu 600055.
         </p>
 
         <h3>Gifts</h3>
@@ -68,7 +68,7 @@ export const RefundContent: React.FC = () => (
 
         <h3>Shipping</h3>
         <p>
-            To return your product, you should mail your product to: 622 Manglam Electronic Market Jaipur Rajasthan India 302001.
+            To return your product, you should mail your product to: 312 KVS Nagar, Kollumedu, Avadi, Chennai, Tamil Nadu 600055.
         </p>
         <p>
             You will be responsible for paying for your own shipping costs for returning your item. Shipping costs are non-refundable. If you receive a refund, the cost of return shipping will be deducted from your refund.
