@@ -236,6 +236,7 @@ export class LibraryService {
     const payload = text ? JSON.parse(text) : {};
 
     if (!res.ok) {
+      console.error('Upload URL fetch failed:', payload);
       throw new Error(payload?.error || 'Failed to start upload');
     }
 
