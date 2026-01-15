@@ -27,28 +27,28 @@ const Footer: React.FC = () => {
             <div className="flex flex-col space-y-3">
               <h3 className="text-sm font-semibold text-gray-900">Legal</h3>
               <a
-                href="/policies/terms"
+                href="/terms-and-conditions"
                 onClick={(e) => handlePolicyClick(e, 'terms')}
                 className="text-sm text-gray-600 hover:text-gray-900"
               >
                 Terms & Conditions
               </a>
               <a
-                href="/policies/privacy"
+                href="/privacy-policy"
                 onClick={(e) => handlePolicyClick(e, 'privacy')}
                 className="text-sm text-gray-600 hover:text-gray-900"
               >
                 Privacy Policy
               </a>
               <a
-                href="/policies/refunds"
+                href="/cancellation-refund-policy"
                 onClick={(e) => handlePolicyClick(e, 'refunds')}
                 className="text-sm text-gray-600 hover:text-gray-900"
               >
-                Refund Policy
+                Cancellation & Refund
               </a>
               <a
-                href="/policies/shipping"
+                href="/shipping-policy"
                 onClick={(e) => handlePolicyClick(e, 'shipping')}
                 className="text-sm text-gray-600 hover:text-gray-900"
               >

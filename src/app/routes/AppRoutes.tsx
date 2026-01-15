@@ -47,10 +47,10 @@ const AppRoutes: React.FC = () => {
 
           {/* Policy Routes */}
           <Route path="contact-us" element={<ContactUsPage />} />
-          <Route path="policies/terms" element={<TermsPage />} />
-          <Route path="policies/privacy" element={<PrivacyPage />} />
-          <Route path="policies/refunds" element={<RefundsPage />} />
-          <Route path="policies/shipping" element={<ShippingPage />} />
+          <Route path="terms-and-conditions" element={<TermsPage />} />
+          <Route path="privacy-policy" element={<PrivacyPage />} />
+          <Route path="cancellation-refund-policy" element={<RefundsPage />} />
+          <Route path="shipping-policy" element={<ShippingPage />} />
 
           {/* Protected Routes */}
           <Route path="home" element={
