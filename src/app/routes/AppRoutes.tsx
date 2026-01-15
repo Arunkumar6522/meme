@@ -23,6 +23,7 @@ const TermsPage = React.lazy(() => import('./policies/TermsPage'));
 const PrivacyPage = React.lazy(() => import('./policies/PrivacyPage'));
 const RefundsPage = React.lazy(() => import('./policies/RefundsPage'));
 const ShippingPage = React.lazy(() => import('./policies/ShippingPage'));
+const ProPage = React.lazy(() => import('./protected/ProPage'));
 
 
 // Loading component
@@ -74,6 +75,10 @@ const AppRoutes: React.FC = () => {
             <ProtectedRoute>
               <FavoritesPage />
             </ProtectedRoute>
+          } />
+
+          <Route path="pro" element={
+            <ProPage />
           } />
 
           {/* Admin Upload (renamed, no /admin base) */}

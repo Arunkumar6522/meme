@@ -21,14 +21,26 @@ const CLIENT_ID = 'ca-pub-9385541671046952';
 const GoogleAdSense: React.FC<GoogleAdSenseProps> = ({ type, className, style }) => {
     const { user } = useAuth();
     const [isAdmin, setIsAdmin] = useState(false);
+    const [isPremium, setIsPremium] = useState(false);
 
     useEffect(() => {
         if (!user) {
             setIsAdmin(false);
+            setIsPremium(false);
             return;
         }
-        // Only check role if user exists
-        DatabaseService.isUserAdmin(user.id).then(setIsAdmin);
+
+        const checkStatus = async () => {
+            // Parallel check
+            const [adminStatus, userData] = await Promise.all([
+                DatabaseService.isUserAdmin(user.id),
+                DatabaseService.supabase.from('users').select('is_premium').eq('id', user.id).single()
+            ]);
+
+            setIsAdmin(adminStatus);
+            setIsPremium(userData.data?.is_premium || false);
+        };
+        checkStatus();
     }, [user]);
 
     const adRef = useRef<HTMLModElement>(null);
@@ -74,7 +86,7 @@ const GoogleAdSense: React.FC<GoogleAdSenseProps> = ({ type, className, style })
         return () => observer.disconnect();
     }, [type]);
 
-    if (isAdmin) return null;
+    if (isAdmin || isPremium) return null;
 
     return (
         <div className={className} style={{ minHeight: '50px', ...style }}>
