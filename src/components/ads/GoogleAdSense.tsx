@@ -86,7 +86,10 @@ const GoogleAdSense: React.FC<GoogleAdSenseProps> = ({ type, className, style })
         return () => observer.disconnect();
     }, [type]);
 
-    if (isAdmin || isPremium) return null;
+    if (isAdmin || isPremium) {
+        // console.debug('Ads hidden: User is Admin or Premium');
+        return null;
+    }
 
     return (
         <div className={className} style={{ minHeight: '50px', ...style }}>
