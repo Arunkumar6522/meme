@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Menu, X, LogOut, Heart, User, Languages } from 'lucide-react';
+import { Menu, X, LogOut, Heart, User, Languages, Zap } from 'lucide-react';
 import { Button } from '@/components/ui';
 import { useAuth } from '@/hooks/useAuth';
 import { DatabaseService } from '@/services/database.service';
@@ -78,6 +78,7 @@ const Header: React.FC = () => {
   const userNavigation = [
     { name: 'Profile', href: '/profile', icon: User },
     { name: 'Wishlist', href: '/favorites', icon: Heart },
+    { name: 'Upgrade to Pro', href: '/pro', icon: Zap },
   ];
 
   const selectedLabel = useMemo(() => {
