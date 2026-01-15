@@ -1,10 +1,17 @@
 import React from 'react';
-import { Outlet } from 'react-router-dom';
+import { Outlet, useLocation } from 'react-router-dom';
 import Header from '@/components/navigation/Header';
 import Footer from '@/components/navigation/Footer';
 
 
 const AppLayout: React.FC = () => {
+  const location = useLocation();
+
+  // Stop all media playback on route change
+  React.useEffect(() => {
+    window.dispatchEvent(new Event('media:stopAll'));
+  }, [location.pathname]);
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />

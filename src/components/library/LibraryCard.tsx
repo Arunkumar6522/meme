@@ -657,6 +657,7 @@ const LibraryCard: React.FC<LibraryCardProps> = memo(({ item, className, isAdmin
             <Volume2 className="h-6 w-6 sm:h-8 sm:w-8 md:h-10 md:w-10 text-white" aria-hidden="true" />
           </div>
         )}
+
         <div className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/30 transition-all duration-200 rounded-full">
           {isPlaying ? (
             <Pause className="h-5 w-5 sm:h-6 sm:w-6 md:h-8 md:w-8 text-white opacity-100 transition-opacity" />
@@ -667,7 +668,7 @@ const LibraryCard: React.FC<LibraryCardProps> = memo(({ item, className, isAdmin
 
       </button>
       {!locked && (
-        <div className="absolute -right-2 -top-2">
+        <div className="absolute -right-3 -top-2 z-10 w-9 h-9">
           {renderActionsMenu()}
         </div>
       )}
