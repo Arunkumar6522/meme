@@ -43,6 +43,7 @@ const AppRoutes: React.FC = () => {
           <Route path="auth/:type" element={<AuthPage />} />
           <Route path="auth/callback" element={<AuthCallbackPage />} />
           <Route path="library" element={<LibraryPage />} />
+          <Route path="pro" element={<ProPage />} />
 
           {/* Policy Routes */}
           <Route path="contact-us" element={<ContactUsPage />} />
@@ -77,9 +78,7 @@ const AppRoutes: React.FC = () => {
             </ProtectedRoute>
           } />
 
-          <Route path="pro" element={
-            <ProPage />
-          } />
+
 
           {/* Admin Upload (renamed, no /admin base) */}
           <Route path="upload" element={

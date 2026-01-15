@@ -74,6 +74,15 @@ export const useRazorpay = () => {
                 order_id: orderData.id,
                 handler: async function (response: any) {
                     await DatabaseService.setPremiumStatus(user.id, true);
+                    // Record successful payment (standardized logging)
+                    await DatabaseService.recordPayment({
+                        userId: user.id,
+                        amount: orderData.amount / 100, // Convert paise to whole currency
+                        currency: orderData.currency,
+                        orderId: response.razorpay_order_id,
+                        paymentId: response.razorpay_payment_id,
+                        status: 'captured'
+                    });
                     onSuccess();
                 },
                 prefill: {

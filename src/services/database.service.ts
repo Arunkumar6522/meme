@@ -273,4 +273,39 @@ export class DatabaseService {
       return false;
     }
   }
+
+  // Record a successful payment
+  static async recordPayment(paymentData: {
+    userId: string;
+    amount: number;
+    currency: string;
+    orderId: string;
+    paymentId: string;
+    status: string;
+  }): Promise<boolean> {
+    try {
+      // First ensure table exists (simple check)
+      const { error: tableError } = await supabase.from('payments').select('id').limit(1);
+      if (tableError && tableError.code === '42P01') {
+        // Table doesn't exist, try to create it via SQL rpc if possible, or fail gracefully
+        console.warn('Payments table missing. Payment not recorded in history.');
+        return false;
+      }
+
+      const { error } = await supabase.from('payments').insert({
+        user_id: paymentData.userId,
+        amount: paymentData.amount,
+        currency: paymentData.currency,
+        order_id: paymentData.orderId,
+        payment_id: paymentData.paymentId,
+        status: paymentData.status,
+        created_at: new Date().toISOString()
+      });
+
+      return !error;
+    } catch (e) {
+      console.error('Error recording payment:', e);
+      return false;
+    }
+  }
 }
