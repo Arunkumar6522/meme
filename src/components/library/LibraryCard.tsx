@@ -10,6 +10,8 @@ import { cn } from '@/utils/cn';
 import { useNavigate } from 'react-router-dom';
 import { Input } from '@/components/ui';
 import Modal from '@/components/ui/Modal';
+import { useAuth } from '@/hooks/useAuth';
+import { DatabaseService } from '@/services/database.service';
 
 interface LibraryCardProps {
   item: LibraryItem;
@@ -303,6 +305,8 @@ const LibraryCard: React.FC<LibraryCardProps> = memo(({ item, className, isAdmin
     }
   }, [ensureSignedUrls, item.media_type, isPlaying, locked, navigate, showError]);
 
+  const { user } = useAuth();
+
   const handleDownload = useCallback(async () => {
     if (downloading) return;
     if (locked) {
@@ -313,10 +317,25 @@ const LibraryCard: React.FC<LibraryCardProps> = memo(({ item, className, isAdmin
 
     setDownloading(true);
     try {
-      // Increment download count (non-blocking)
-      LibraryService.incrementDownloadCount(item.id).catch(() => {
-        // Silently fail - not critical
-      });
+      // Check download limits for authenticated users
+      if (user) {
+        const eligibility = await DatabaseService.checkDownloadEligibility(user.id);
+        if (!eligibility.allowed) {
+          if (eligibility.reason === 'limit_reached') {
+            showError('Daily download limit reached (5/5). Upgrade to Pro for unlimited downloads!', 'Limit Reached');
+            navigate('/pro');
+            return;
+          }
+        }
+      }
+
+      // Increment download count (global stats)
+      LibraryService.incrementDownloadCount(item.id).catch(() => { });
+
+      // Record user download (personal stats & limit tracking)
+      if (user) {
+        DatabaseService.recordUserDownload(user.id, item.id).catch(() => { });
+      }
 
       const signed = await LibraryService.getSignedItemUrl(item.id, 'file');
       const downloadUrl = signed || resolvedFileUrl || item.file_url;
@@ -355,7 +374,7 @@ const LibraryCard: React.FC<LibraryCardProps> = memo(({ item, className, isAdmin
     } finally {
       setDownloading(false);
     }
-  }, [item.id, item.file_url, item.title, item.media_type, resolvedFileUrl, downloading, showSuccess, showError]);
+  }, [item.id, item.file_url, item.title, item.media_type, resolvedFileUrl, downloading, showSuccess, showError, user, locked, navigate]);
 
   const handleLike = useCallback(async () => {
     if (locked) {

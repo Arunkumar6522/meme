@@ -337,4 +337,76 @@ export class DatabaseService {
       return false;
     }
   }
+  // Check download eligibility
+  static async checkDownloadEligibility(userId: string): Promise<{ allowed: boolean; reason?: 'limit_reached' | 'error'; remaining?: number }> {
+    try {
+      // 1. Check if user is premium
+      const { data: user, error: userError } = await supabase
+        .from('users')
+        .select('is_premium')
+        .eq('id', userId)
+        .single();
+
+      if (userError || !user) return { allowed: false, reason: 'error' };
+      if (user.is_premium) return { allowed: true };
+
+      // 2. Check daily download count for free users
+      const today = new Date();
+      today.setHours(0, 0, 0, 0); // Start of today
+
+      const { count, error: countError } = await supabase
+        .from('user_downloads')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', userId)
+        .gte('created_at', today.toISOString());
+
+      if (countError) {
+        // If table doesn't exist, we might default to allowed or log error
+        if (countError.code === '42P01') {
+          console.warn('user_downloads table missing. Allowing download.');
+          return { allowed: true };
+        }
+        return { allowed: false, reason: 'error' };
+      }
+
+      const LIMIT = 5;
+      const downloadCount = count || 0;
+
+      if (downloadCount >= LIMIT) {
+        return { allowed: false, reason: 'limit_reached', remaining: 0 };
+      }
+
+      return { allowed: true, remaining: LIMIT - downloadCount };
+    } catch (e) {
+      console.error('Error checking download eligibility:', e);
+      return { allowed: false, reason: 'error' };
+    }
+  }
+
+  // Record a user download
+  static async recordUserDownload(userId: string, itemId: string): Promise<boolean> {
+    try {
+      const { error } = await supabase.from('user_downloads').insert({
+        user_id: userId,
+        item_id: itemId,
+        created_at: new Date().toISOString()
+      });
+      return !error;
+    } catch {
+      return false;
+    }
+  }
+
+  // Get total user downloads (for profile stats)
+  static async getUserTotalDownloads(userId: string): Promise<number> {
+    try {
+      const { count } = await supabase
+        .from('user_downloads')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', userId);
+      return count || 0;
+    } catch {
+      return 0;
+    }
+  }
 }
