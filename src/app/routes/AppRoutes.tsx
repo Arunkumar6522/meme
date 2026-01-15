@@ -17,8 +17,12 @@ const ProfilePage = React.lazy(() => import('./protected/ProfilePage'));
 const FavoritesPage = React.lazy(() => import('./protected/FavoritesPage'));
 const UploadOnlyPage = React.lazy(() => import('./protected/UploadOnlyPage'));
 const ArtistsPage = React.lazy(() => import('./admin/ArtistsPage'));
-const AdminPage = React.lazy(() => import('./admin/AdminPage'));
 const DashboardPage = React.lazy(() => import('./admin/DashboardPage'));
+const ContactUsPage = React.lazy(() => import('./policies/ContactUsPage'));
+const TermsPage = React.lazy(() => import('./policies/TermsPage'));
+const PrivacyPage = React.lazy(() => import('./policies/PrivacyPage'));
+const RefundsPage = React.lazy(() => import('./policies/RefundsPage'));
+const ShippingPage = React.lazy(() => import('./policies/ShippingPage'));
 
 
 // Loading component
@@ -37,6 +41,13 @@ const AppRoutes: React.FC = () => {
           <Route index element={<LandingPage />} />
           <Route path="auth/:type" element={<AuthPage />} />
           <Route path="auth/callback" element={<AuthCallbackPage />} />
+
+          {/* Policy Routes */}
+          <Route path="contact-us" element={<ContactUsPage />} />
+          <Route path="policies/terms" element={<TermsPage />} />
+          <Route path="policies/privacy" element={<PrivacyPage />} />
+          <Route path="policies/refunds" element={<RefundsPage />} />
+          <Route path="policies/shipping" element={<ShippingPage />} />
 
           {/* Protected Routes */}
           <Route path="home" element={
