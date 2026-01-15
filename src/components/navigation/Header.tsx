@@ -60,11 +60,11 @@ const Header: React.FC = () => {
   // language persistence handled by LanguageProvider
 
   const navigation = useMemo(() => {
-    const base = [{ name: 'Home', href: '/' }];
-    // Library should be visible to any signed-in user
-    if (user) {
-      base.push({ name: 'Library', href: '/library' });
-    }
+    const base = [
+      { name: 'Home', href: '/' },
+      { name: 'Library', href: '/library' },
+    ];
+    // Admin-only links
     // Admin-only links
     if (isAdmin) {
       base.push({ name: 'Upload', href: '/upload' });
