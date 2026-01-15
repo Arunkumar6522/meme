@@ -24,7 +24,7 @@ exports.handler = async (event) => {
             body: JSON.stringify({
                 id: `order_mock_${Date.now()}`,
                 entity: 'order',
-                amount: 100,
+                amount: 9900,
                 currency: 'INR',
                 receipt: `receipt_${Date.now()}`,
                 status: 'created',
@@ -45,7 +45,7 @@ exports.handler = async (event) => {
 
     const https = require('https');
     const postData = JSON.stringify({
-        amount: 100,
+        amount: 9900,
         currency: "INR",
         receipt: `receipt_${Date.now()}`,
         payment_capture: 1

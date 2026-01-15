@@ -51,7 +51,7 @@ const ProPage: React.FC = () => {
                     <div className="mt-4 flex justify-center text-6xl font-extrabold text-gray-900">
                         <span className="ml-1 mr-3 text-xl font-medium text-gray-500 self-start mt-2">₹</span>
                         99
-                        <span className="ml-1 text-xl font-medium text-gray-500 self-end mb-2">/year</span>
+                        <span className="ml-1 text-xl font-medium text-gray-500 self-end mb-2">/month</span>
                     </div>
                 </div>
                 <div className="flex flex-col flex-1 px-6 pt-6 pb-8 bg-gray-50 sm:p-10 sm:pt-6">
