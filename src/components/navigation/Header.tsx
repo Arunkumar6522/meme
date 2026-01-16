@@ -98,7 +98,7 @@ const Header: React.FC = () => {
               to="/"
               className="flex items-center space-x-2 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 rounded"
             >
-              <img src={logo} alt="ilovememe.in" className="h-8 w-8 rounded object-contain" />
+              <img src={logo} alt="ilovememe.in" className="h-14 w-auto rounded object-contain" />
             </Link>
           </div>
 

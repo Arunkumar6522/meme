@@ -8,7 +8,7 @@ const Footer: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div className="col-span-1 md:col-span-2">
             <div className="flex items-center space-x-2 mb-2">
-              <img src={logo} alt="ilovememe.in" className="h-8 w-8 rounded object-contain" />
+              <img src={logo} alt="ilovememe.in" className="h-14 w-auto rounded object-contain" />
             </div>
             <p className="text-sm text-gray-600 mt-2">Trending meme audios & short-ready videos.</p>
             <div className="mt-4 text-xs text-gray-500">
