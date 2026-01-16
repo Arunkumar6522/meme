@@ -88,6 +88,34 @@ const LibraryFilters: React.FC<LibraryFiltersProps> = ({
     recognition.start();
   };
 
+  const [artistQuery, setArtistQuery] = React.useState('');
+  const artists = filters.artist || [];
+
+  const handleEmotionChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    onFiltersChange({
+      ...filters,
+      emotion: e.target.value as EmotionType | undefined,
+    });
+  };
+
+  const handleSortChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    onFiltersChange({
+      ...filters,
+      sort_by: e.target.value as 'trending' | 'latest' | 'title',
+    });
+  };
+
+  const clearFilters = () => {
+    onFiltersChange({
+      search: '',
+      artist: [],
+      emotion: undefined,
+      sort_by: 'latest',
+    });
+  };
+
+  const hasActiveFilters = filters.search || (filters.artist && filters.artist.length > 0) || filters.emotion;
+
   return (
     <div className={className}>
       {/* Search Bar - Always Visible */}
