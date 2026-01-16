@@ -56,10 +56,15 @@ const LibraryGrid: React.FC<LibraryGridProps> = memo(({ items, loading = false, 
               d="M9.172 16.172a4 4 0 015.656 0M9 12h6m-6-4h6m2 5.291A7.962 7.962 0 0112 20a7.962 7.962 0 01-5.657-2.343m0-11.314A7.962 7.962 0 0112 4a7.962 7.962 0 015.657 2.343M15 11a3 3 0 11-6 0 3 3 0 016 0z"
             />
           </svg>
-          <h3 className="mt-2 text-sm font-medium text-gray-900">No memes found</h3>
+          <h3 className="mt-2 text-sm font-medium text-gray-900">No exact matches found</h3>
           <p className="mt-1 text-sm text-gray-500">
-            Try adjusting your search or filter criteria.
+            We couldn't find exactly what you're looking for. Try:
           </p>
+          <ul className="mt-2 text-sm text-gray-500 list-disc list-inside">
+            <li>Checking for typos</li>
+            <li>Using fewer keywords</li>
+            <li>Clearing some filters</li>
+          </ul>
         </div>
       </div>
     );
