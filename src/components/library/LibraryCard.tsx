@@ -99,6 +99,13 @@ const LibraryCard: React.FC<LibraryCardProps> = memo(({ item, className, isAdmin
     return () => window.removeEventListener('media:play', handler as EventListener);
   }, [mediaId]);
 
+  // Ensure video plays when isPlaying becomes true (fixes double-tap without using autoPlay attribute)
+  useEffect(() => {
+    if (isPlaying && videoRef.current) {
+      videoRef.current.play().catch(err => console.error("Auto-play failed:", err));
+    }
+  }, [isPlaying]);
+
   // Stop playback on global navigation/pagination changes
   useEffect(() => {
     const handler = () => {
@@ -602,7 +609,6 @@ const LibraryCard: React.FC<LibraryCardProps> = memo(({ item, className, isAdmin
             ref={videoRef}
             className="w-full h-full object-cover"
             src={resolvedFileUrl || item.file_url}
-            autoPlay
             playsInline
             onError={async (e) => {
               const target = e.currentTarget;
@@ -662,48 +668,47 @@ const LibraryCard: React.FC<LibraryCardProps> = memo(({ item, className, isAdmin
   );
 
   const renderAudio = () => (
-    <div className="w-full">
-      {!locked && (
-        <div className="flex justify-end mb-2">
-          {renderActionsMenu()}
-        </div>
-      )}
-
-      <div className="relative w-full overflow-hidden rounded-lg shadow-sm border border-gray-200 bg-gray-100 aspect-video group">
+    <div className="relative inline-block">
+      <button
+        onClick={handlePlay}
+        className={cn(
+          'relative w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-full shadow-lg hover:shadow-xl',
+          'transition-all duration-200 transform hover:scale-105 active:scale-95',
+          'focus:outline-none focus:ring-4 focus:ring-orange-300 focus:ring-offset-2',
+          'overflow-hidden border-2 sm:border-4 border-white',
+          'touch-manipulation',
+          getThumbnailColor()
+        )}
+        aria-label={`Play ${item.title}`}
+      >
         {resolvedThumbUrl ? (
           <img
             src={resolvedThumbUrl}
             alt={`Thumbnail for ${item.title}`}
-            className="w-full h-full object-cover"
+            className="w-full h-full object-cover rounded-full"
             loading="lazy"
             decoding="async"
           />
         ) : (
-          <div className={cn("w-full h-full flex items-center justify-center", getThumbnailColor())}>
-            <Volume2 className="h-10 w-10 text-gray-700/50" aria-hidden="true" />
+          <div className="flex items-center justify-center w-full h-full">
+            <Volume2 className="h-6 w-6 sm:h-8 sm:w-8 md:h-10 md:w-10 text-white" aria-hidden="true" />
           </div>
         )}
 
-        <button
-          onClick={handlePlay}
-          className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/10 transition-colors focus:outline-none"
-          aria-label={isPlaying ? "Pause" : "Play"}
-        >
-          <div className="h-12 w-12 rounded-full bg-white/90 flex items-center justify-center shadow-lg transition-transform transform group-hover:scale-110">
-            {isPlaying ? (
-              <Pause className="h-6 w-6 text-orange-600" />
-            ) : (
-              <Play className="h-6 w-6 text-orange-600 ml-0.5" />
-            )}
-          </div>
-        </button>
+        <div className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/30 transition-all duration-200 rounded-full">
+          {isPlaying ? (
+            <Pause className="h-5 w-5 sm:h-6 sm:w-6 md:h-8 md:w-8 text-white opacity-100 transition-opacity" />
+          ) : (
+            <Play className="h-5 w-5 sm:h-6 sm:w-6 md:h-8 md:w-8 text-white ml-0.5 opacity-0 group-hover:opacity-100 transition-opacity" />
+          )}
+        </div>
 
-        {item.duration && (
-          <div className="absolute bottom-2 right-2 px-2 py-1 rounded bg-black/70 text-white text-xs pointer-events-none">
-            {formatDuration(item.duration)}
-          </div>
-        )}
-      </div>
+      </button>
+      {!locked && (
+        <div className="absolute top-0 right-0 z-20 w-8 h-8">
+          {renderActionsMenu()}
+        </div>
+      )}
     </div>
   );
 
