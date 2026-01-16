@@ -6,6 +6,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { DatabaseService } from '@/services/database.service';
 import { cn } from '@/utils/cn';
 import { ALL_LANGUAGES, useLanguage } from '@/hooks/useLanguage';
+import logo from '@/app/logo.png';
 
 // Cache admin status to avoid repeated API calls
 const adminStatusCache = new Map<string, { status: boolean; timestamp: number }>();
@@ -97,9 +98,7 @@ const Header: React.FC = () => {
               to="/"
               className="flex items-center space-x-2 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 rounded"
             >
-              <div className="h-8 w-8 bg-orange-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-lg">M</span>
-              </div>
+              <img src={logo} alt="ilovememe.in" className="h-8 w-8 rounded object-contain" />
               <span className="text-xl font-bold text-gray-900">ilovememe.in</span>
             </Link>
           </div>

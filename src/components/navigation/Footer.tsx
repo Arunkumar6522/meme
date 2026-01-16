@@ -1,4 +1,5 @@
 import React from 'react';
+import logo from '@/app/logo.png';
 
 const Footer: React.FC = () => {
   return (
@@ -6,7 +7,10 @@ const Footer: React.FC = () => {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div className="col-span-1 md:col-span-2">
-            <p className="text-sm font-semibold text-gray-900">ilovememe.in</p>
+            <div className="flex items-center space-x-2 mb-2">
+              <img src={logo} alt="ilovememe.in" className="h-8 w-8 rounded object-contain" />
+              <span className="text-sm font-bold text-gray-900">ilovememe.in</span>
+            </div>
             <p className="text-sm text-gray-600 mt-2">Trending meme audios & short-ready videos.</p>
             <div className="mt-4 text-xs text-gray-500">
               © {new Date().getFullYear()} ilovememe.in. All rights reserved.
