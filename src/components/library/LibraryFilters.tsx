@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, Filter } from 'lucide-react';
+import { Search, Filter, Mic } from 'lucide-react';
 import { Input, Select, Button } from '@/components/ui';
 import type { LibraryFilters, EmotionType } from '@/types';
 
@@ -40,6 +40,7 @@ const LibraryFilters: React.FC<LibraryFiltersProps> = ({
 }) => {
   const [isExpanded, setIsExpanded] = React.useState(false);
   const [searchInput, setSearchInput] = React.useState(filters.search || '');
+  const [isListening, setIsListening] = React.useState(false);
   const searchTimer = React.useRef<number | null>(null);
 
   // Keep local input in sync if filters are changed externally (e.g. URL search)
@@ -62,33 +63,30 @@ const LibraryFilters: React.FC<LibraryFiltersProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchInput]);
 
-  const [artistQuery, setArtistQuery] = React.useState('');
-  const artists = filters.artist || [];
+  const startListening = () => {
+    if (!('webkitSpeechRecognition' in window)) {
+      alert('Voice search is not supported in this browser.');
+      return;
+    }
 
-  const handleEmotionChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    onFiltersChange({
-      ...filters,
-      emotion: e.target.value as EmotionType | undefined,
-    });
+    const SpeechRecognition = (window as any).webkitSpeechRecognition;
+    const recognition = new SpeechRecognition();
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.lang = 'en-US';
+
+    recognition.onstart = () => setIsListening(true);
+    recognition.onend = () => setIsListening(false);
+    recognition.onerror = () => setIsListening(false);
+
+    recognition.onresult = (event: any) => {
+      const transcript = event.results[0][0].transcript;
+      setSearchInput(transcript); // Set input
+      onFiltersChange({ ...filters, search: transcript }); // Trigger search
+    };
+
+    recognition.start();
   };
-
-  const handleSortChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    onFiltersChange({
-      ...filters,
-      sort_by: e.target.value as 'trending' | 'latest' | 'title',
-    });
-  };
-
-  const clearFilters = () => {
-    onFiltersChange({
-      search: '',
-      artist: [],
-      emotion: undefined,
-      sort_by: 'latest',
-    });
-  };
-
-  const hasActiveFilters = filters.search || (filters.artist && filters.artist.length > 0) || filters.emotion;
 
   return (
     <div className={className}>
@@ -99,14 +97,23 @@ const LibraryFilters: React.FC<LibraryFiltersProps> = ({
         </div>
         <Input
           type="text"
-          placeholder="Search memes by title, description, or keywords..."
+          placeholder={isListening ? "Listening..." : "Search memes by title, description, or keywords..."}
           value={searchInput}
           onChange={(e) => setSearchInput(e.target.value.slice(0, 40))}
           maxLength={40}
-          className="pl-10 pr-4"
+          className="pl-10 pr-10" // Added right padding for Mic
           aria-label="Search memes"
         />
+        <button
+          type="button"
+          onClick={startListening}
+          className="absolute inset-y-0 right-0 pr-3 flex items-center cursor-pointer text-gray-400 hover:text-orange-600"
+          title="Voice Search"
+        >
+          <Mic className={`h-5 w-5 ${isListening ? 'text-red-500 animate-pulse' : ''}`} />
+        </button>
       </div>
+// ... rest of the file
 
       {/* Artist filter (multi) */}
       <div className="mt-4">
