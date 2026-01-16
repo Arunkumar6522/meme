@@ -267,7 +267,20 @@ const LibraryCard: React.FC<LibraryCardProps> = memo(({ item, className, isAdmin
             const audio = new Audio(fileUrl);
             audio.preload = 'auto';
             audio.addEventListener('ended', () => setIsPlaying(false));
-            audio.addEventListener('error', () => {
+            audio.addEventListener('error', async () => {
+              // Attempt to recover from 403/expired links by fetching a fresh signed URL
+              console.warn('Audio playback failed, attempting to refresh URL...');
+              try {
+                const fresh = await LibraryService.getSignedItemUrl(item.id, 'file');
+                if (fresh && fresh !== audio.src) {
+                  setResolvedFileUrl(fresh);
+                  audio.src = fresh;
+                  await audio.play();
+                  return;
+                }
+              } catch (e) {
+                console.error('Retry failed:', e);
+              }
               setIsPlaying(false);
               showError('Failed to play audio', 'Playback Error');
             });
@@ -590,6 +603,19 @@ const LibraryCard: React.FC<LibraryCardProps> = memo(({ item, className, isAdmin
             className="w-full h-full object-cover"
             src={resolvedFileUrl || item.file_url}
             playsInline
+            onError={async (e) => {
+              const target = e.currentTarget;
+              if (target.getAttribute('data-retried')) return;
+
+              console.warn('Video error, refreshing URL...');
+              const fresh = await LibraryService.getSignedItemUrl(item.id, 'file');
+              if (fresh) {
+                setResolvedFileUrl(fresh);
+                target.setAttribute('data-retried', 'true');
+                target.src = fresh;
+                try { await target.play(); } catch { }
+              }
+            }}
             controls
             onPlay={() => {
               emitPlay();
