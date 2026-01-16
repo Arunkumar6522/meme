@@ -698,7 +698,7 @@ const LibraryCard: React.FC<LibraryCardProps> = memo(({ item, className, isAdmin
 
       </button>
       {!locked && (
-        <div className="absolute -right-3 -top-2 z-10 w-9 h-9">
+        <div className="absolute top-0 right-0 z-20 w-8 h-8">
           {renderActionsMenu()}
         </div>
       )}
