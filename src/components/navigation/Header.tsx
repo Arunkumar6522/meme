@@ -6,7 +6,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { DatabaseService } from '@/services/database.service';
 import { cn } from '@/utils/cn';
 import { ALL_LANGUAGES, useLanguage } from '@/hooks/useLanguage';
-import logo from '@/app/logo.png';
+import logo from '@/app/logo2.png';
 
 // Cache admin status to avoid repeated API calls
 const adminStatusCache = new Map<string, { status: boolean; timestamp: number }>();
