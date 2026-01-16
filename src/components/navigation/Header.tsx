@@ -99,7 +99,6 @@ const Header: React.FC = () => {
               className="flex items-center space-x-2 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 rounded"
             >
               <img src={logo} alt="ilovememe.in" className="h-8 w-8 rounded object-contain" />
-              <span className="text-xl font-bold text-gray-900">ilovememe.in</span>
             </Link>
           </div>
 
@@ -272,6 +271,29 @@ const Header: React.FC = () => {
 
               {/* Admin upload link is already included in navigation for admins */}
 
+              {!user && (
+                <div className="border-t border-gray-200 pt-4 mt-4 space-y-2 px-3">
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                    onClick={() => {
+                      navigate('/auth/login');
+                      setIsMobileMenuOpen(false);
+                    }}
+                  >
+                    Sign In
+                  </Button>
+                  <Button
+                    className="w-full justify-start bg-orange-600 hover:bg-orange-700 text-white"
+                    onClick={() => {
+                      navigate('/auth/register');
+                      setIsMobileMenuOpen(false);
+                    }}
+                  >
+                    Sign Up
+                  </Button>
+                </div>
+              )}
               {user && (
                 <>
                   <div className="border-t border-gray-200 pt-4 mt-4">

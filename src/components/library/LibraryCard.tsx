@@ -715,7 +715,7 @@ const LibraryCard: React.FC<LibraryCardProps> = memo(({ item, className, isAdmin
   return (
     <div
       className={cn(
-        'w-full space-y-2 group',
+        'w-full space-y-2 group flex flex-col items-center',
         item.media_type === 'video' ? 'max-w-full' : 'max-w-[240px] sm:max-w-sm',
         className
       )}
