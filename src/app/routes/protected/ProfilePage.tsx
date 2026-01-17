@@ -84,7 +84,7 @@ const ProfilePage: React.FC = () => {
           <div className="lg:col-span-1">
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
               <div className="text-center">
-                <div className="mx-auto h-20 w-20 bg-orange-100 rounded-full flex items-center justify-center mb-4">
+                <div className="mx-auto h-20 w-20 bg-primary-100 rounded-full flex items-center justify-center mb-4">
                   {user?.user_metadata?.avatar_url ? (
                     <img
                       src={user.user_metadata.avatar_url}
@@ -92,7 +92,7 @@ const ProfilePage: React.FC = () => {
                       className="h-20 w-20 rounded-full"
                     />
                   ) : (
-                    <User className="h-10 w-10 text-orange-600" />
+                    <User className="h-10 w-10 text-primary-600" />
                   )}
                 </div>
                 <h2 className="text-xl font-semibold text-gray-900">
@@ -164,7 +164,7 @@ const ProfilePage: React.FC = () => {
                 {favorites.slice(-4).reverse().map((id) => (
                   <div key={id} className="flex items-center justify-between py-2">
                     <div className="flex items-center gap-2">
-                      <Heart className="h-4 w-4 text-orange-500" />
+                      <Heart className="h-4 w-4 text-primary-500" />
                       <span className="text-gray-900 font-medium">Favorited</span>
                       <span className="text-gray-600 ml-1">Item {id.slice(0, 6)}…</span>
                     </div>

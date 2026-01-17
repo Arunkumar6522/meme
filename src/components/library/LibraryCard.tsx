@@ -47,7 +47,7 @@ const LibraryCard: React.FC<LibraryCardProps> = memo(({ item, className, isAdmin
     thug: 'bg-gray-100 text-gray-800 border-gray-200',
     angry: 'bg-red-100 text-red-800 border-red-200',
     surprised: 'bg-purple-100 text-purple-800 border-purple-200',
-    confused: 'bg-orange-100 text-orange-800 border-orange-200',
+    confused: 'bg-primary-100 text-primary-800 border-primary-200',
     excited: 'bg-pink-100 text-pink-800 border-pink-200',
     dramatic: 'bg-indigo-100 text-indigo-800 border-indigo-200',
     sarcastic: 'bg-teal-100 text-teal-800 border-teal-200',
@@ -449,7 +449,7 @@ const LibraryCard: React.FC<LibraryCardProps> = memo(({ item, className, isAdmin
       thug: 'bg-gray-600',
       angry: 'bg-red-500',
       surprised: 'bg-purple-400',
-      confused: 'bg-orange-400',
+      confused: 'bg-primary-400',
       excited: 'bg-pink-400',
       dramatic: 'bg-indigo-500',
       sarcastic: 'bg-teal-400',
@@ -473,7 +473,7 @@ const LibraryCard: React.FC<LibraryCardProps> = memo(({ item, className, isAdmin
           }
           setMenuOpen((prev) => !prev);
         }}
-        className="w-9 h-9 rounded-full bg-white/95 hover:bg-orange-50 flex items-center justify-center transition-all focus:outline-none focus:ring-2 focus:ring-orange-300 active:scale-95 shadow-sm hover:shadow touch-manipulation border border-gray-200"
+        className="w-9 h-9 rounded-full bg-white/95 hover:bg-primary-50 flex items-center justify-center transition-all focus:outline-none focus:ring-2 focus:ring-primary-300 active:scale-95 shadow-sm hover:shadow touch-manipulation border border-gray-200"
         aria-label="More actions"
         aria-expanded={menuOpen}
         aria-haspopup="menu"
@@ -639,7 +639,7 @@ const LibraryCard: React.FC<LibraryCardProps> = memo(({ item, className, isAdmin
             aria-label={`Play ${item.title}`}
           >
             <div className="h-12 w-12 rounded-full bg-white/90 flex items-center justify-center shadow-lg">
-              <Play className="h-6 w-6 text-orange-600 ml-0.5" />
+              <Play className="h-6 w-6 text-primary-600 ml-0.5" />
             </div>
           </button>
         )}
@@ -674,7 +674,7 @@ const LibraryCard: React.FC<LibraryCardProps> = memo(({ item, className, isAdmin
         className={cn(
           'relative w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-full shadow-lg hover:shadow-xl',
           'transition-all duration-200 transform hover:scale-105 active:scale-95',
-          'focus:outline-none focus:ring-4 focus:ring-orange-300 focus:ring-offset-2',
+          'focus:outline-none focus:ring-4 focus:ring-primary-300 focus:ring-offset-2',
           'overflow-hidden border-2 sm:border-4 border-white',
           'touch-manipulation',
           getThumbnailColor()

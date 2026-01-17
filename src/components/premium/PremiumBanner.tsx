@@ -28,7 +28,7 @@ export const PremiumBanner: React.FC = () => {
     if (!user || isPremium || hidden) return null;
 
     return (
-        <div className="bg-gradient-to-r from-orange-500 to-pink-600 rounded-lg shadow-lg p-6 mb-8 text-white relative overflow-hidden">
+        <div className="bg-gradient-to-r from-primary-500 to-pink-600 rounded-lg shadow-lg p-6 mb-8 text-white relative overflow-hidden">
             <div className="absolute top-0 right-0 p-2">
                 <button onClick={() => setHidden(true)} className="text-white/80 hover:text-white">
                     <X className="h-5 w-5" />
@@ -42,7 +42,7 @@ export const PremiumBanner: React.FC = () => {
                         <span className="font-bold text-yellow-300 uppercase tracking-wider text-sm">Limited Time Offer</span>
                     </div>
                     <h2 className="text-2xl font-bold mb-2">Upgrade to Premium</h2>
-                    <p className="text-orange-50 max-w-xl">
+                    <p className="text-primary-50 max-w-xl">
                         Get <strong>Unlimited Downloads</strong>, <strong>Ad-Free Experience</strong>, and support the community.
                         <br />
                         <span className="text-xl font-bold mt-2 block">
@@ -57,7 +57,7 @@ export const PremiumBanner: React.FC = () => {
                             alert('Welcome to Premium! Enjoy your ad-free experience.');
                         })}
                         loading={loading}
-                        className="bg-white text-orange-600 hover:bg-orange-50 border-transparent px-8 py-3 text-lg h-auto shadow-xl"
+                        className="bg-white text-primary-600 hover:bg-primary-50 border-transparent px-8 py-3 text-lg h-auto shadow-xl"
                     >
                         Upgrade Now
                     </Button>

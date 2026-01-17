@@ -132,7 +132,7 @@ const ArtistsPage: React.FC = () => {
                     className={cn(
                       'px-3 py-1 rounded-full text-sm border transition-colors',
                       active
-                        ? 'bg-orange-100 text-orange-700 border-orange-200'
+                        ? 'bg-primary-100 text-primary-700 border-primary-200'
                         : 'bg-white text-gray-700 border-gray-200 hover:border-gray-300'
                     )}
                     aria-pressed={active}

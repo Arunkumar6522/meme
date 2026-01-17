@@ -38,8 +38,8 @@ const CreatePage: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
       <div className="max-w-xl w-full bg-white rounded-lg shadow-lg border border-gray-200 p-8">
-        <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-orange-100 mb-6">
-          <Sparkles className="h-8 w-8 text-orange-600" />
+        <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-primary-100 mb-6">
+          <Sparkles className="h-8 w-8 text-primary-600" />
         </div>
         <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-4 text-center">
           Create (beta) coming soon
@@ -68,11 +68,11 @@ const CreatePage: React.FC = () => {
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               rows={4}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
               placeholder="Describe your use-case or features you want"
             />
           </div>
-          <Button type="submit" loading={loading} className="w-full bg-orange-600 hover:bg-orange-700 text-white border-orange-600">
+          <Button type="submit" loading={loading} className="w-full bg-primary-600 hover:bg-primary-700 text-white border-primary-600">
             <Send className="h-4 w-4 mr-2" />
             Notify Me
           </Button>

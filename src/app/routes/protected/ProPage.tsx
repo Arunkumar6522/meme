@@ -34,17 +34,17 @@ const ProPage: React.FC = () => {
         <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
             <div className="max-w-7xl mx-auto text-center">
                 <h2 className="text-3xl font-extrabold text-gray-900 sm:text-4xl">
-                    Upgrade to <span className="text-orange-600">Pro</span>
+                    Upgrade to <span className="text-primary-600">Pro</span>
                 </h2>
                 <p className="mt-4 text-xl text-gray-500">
                     Get an ad-free experience and exclusive features.
                 </p>
             </div>
 
-            <div className="mt-12 max-w-lg mx-auto bg-white rounded-2xl shadow-xl overflow-hidden border border-orange-100">
+            <div className="mt-12 max-w-lg mx-auto bg-white rounded-2xl shadow-xl overflow-hidden border border-primary-100">
                 <div className="px-6 py-8 sm:p-10 sm:pb-6">
                     <div className="flex justify-center">
-                        <span className="inline-flex px-4 py-1 rounded-full text-sm font-semibold tracking-wide uppercase bg-orange-100 text-orange-600">
+                        <span className="inline-flex px-4 py-1 rounded-full text-sm font-semibold tracking-wide uppercase bg-primary-100 text-primary-600">
                             Pro Plan
                         </span>
                     </div>
@@ -74,7 +74,7 @@ const ProPage: React.FC = () => {
                         <Button
                             onClick={handleUpgrade}
                             disabled={loading || processing}
-                            className="w-full flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-white bg-orange-600 hover:bg-orange-700 md:text-lg"
+                            className="w-full flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 md:text-lg"
                         >
                             {loading || processing ? 'Processing...' : 'Upgrade Now'}
                         </Button>

@@ -135,7 +135,7 @@ const LibraryFilters: React.FC<LibraryFiltersProps> = ({
         <button
           type="button"
           onClick={startListening}
-          className="absolute inset-y-0 right-0 pr-3 flex items-center cursor-pointer text-gray-400 hover:text-orange-600"
+          className="absolute inset-y-0 right-0 pr-3 flex items-center cursor-pointer text-gray-400 hover:text-primary-600"
           title="Voice Search"
         >
           <Mic className={`h-5 w-5 ${isListening ? 'text-red-500 animate-pulse' : ''}`} />
@@ -150,12 +150,12 @@ const LibraryFilters: React.FC<LibraryFiltersProps> = ({
           {artists.map((artist) => (
             <span
               key={artist}
-              className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800"
+              className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-primary-100 text-primary-800"
             >
               {artist}
               <button
                 type="button"
-                className="ml-1 text-orange-700 hover:text-orange-900"
+                className="ml-1 text-primary-700 hover:text-primary-900"
                 onClick={() =>
                   onFiltersChange({
                     ...filters,
@@ -187,7 +187,7 @@ const LibraryFilters: React.FC<LibraryFiltersProps> = ({
             }
           }}
           placeholder="Type and press Enter to add (e.g., Unknown artist)"
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
           aria-label="Add artist filter"
         />
       </div>
@@ -204,7 +204,7 @@ const LibraryFilters: React.FC<LibraryFiltersProps> = ({
           <Filter className="h-4 w-4 mr-2" aria-hidden="true" />
           Filters
           {hasActiveFilters && (
-            <span className="ml-2 bg-orange-100 text-orange-800 text-xs px-2 py-0.5 rounded-full">
+            <span className="ml-2 bg-primary-100 text-primary-800 text-xs px-2 py-0.5 rounded-full">
               Active
             </span>
           )}
@@ -262,22 +262,22 @@ const LibraryFilters: React.FC<LibraryFiltersProps> = ({
         <div className="mt-4 flex flex-wrap gap-2" role="status" aria-live="polite">
           <span className="text-sm text-gray-600">Active filters:</span>
           {filters.search && (
-            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-primary-100 text-primary-800">
               Search: "{filters.search}"
             </span>
           )}
           {filters.artist && filters.artist.length > 0 && (
-            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-primary-100 text-primary-800">
               Artist: "{filters.artist.join(', ')}"
             </span>
           )}
           {filters.emotion && (
-            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-primary-100 text-primary-800">
               Emotion: {filters.emotion}
             </span>
           )}
           {filters.media_type && (
-            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-primary-100 text-primary-800">
               Type: {filters.media_type}
             </span>
           )}

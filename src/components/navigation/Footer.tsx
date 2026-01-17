@@ -54,7 +54,7 @@ const Footer: React.FC = () => {
             </a>
             <a
               href="mailto:info@ilovememe.in"
-              className="text-sm text-orange-700 hover:text-orange-800"
+              className="text-sm text-primary-700 hover:text-primary-800"
             >
               info@ilovememe.in
             </a>

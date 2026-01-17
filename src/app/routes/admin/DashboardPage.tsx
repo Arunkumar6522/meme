@@ -61,7 +61,7 @@ const DashboardPage: React.FC = () => {
                     <div className="flex gap-4">
                         {/* Language Filter */}
                         <select
-                            className="rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500"
+                            className="rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
                             value={selectedLang}
                             onChange={(e) => setSelectedLang(e.target.value)}
                         >
@@ -71,7 +71,7 @@ const DashboardPage: React.FC = () => {
 
                         {/* Media Filter */}
                         <select
-                            className="rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500"
+                            className="rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
                             value={selectedMedia}
                             onChange={(e) => setSelectedMedia(e.target.value)}
                         >

@@ -9,8 +9,8 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     if (asChild && React.isValidElement(children)) {
       return React.cloneElement(children as React.ReactElement<any>, {
         className: cn(
-          'inline-flex items-center justify-center rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
-          variant === 'primary' && 'bg-orange-600 text-white hover:bg-orange-700',
+          'inline-flex items-center justify-center rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
+          variant === 'primary' && 'bg-primary-600 text-white hover:bg-primary-700',
           variant === 'outline' && 'border border-gray-300 bg-white text-gray-700 hover:bg-gray-50',
           variant === 'secondary' && 'bg-gray-100 text-gray-900 hover:bg-gray-200',
           variant === 'ghost' && 'text-gray-700 hover:bg-gray-100',
@@ -22,10 +22,10 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         ),
       });
     }
-    const baseStyles = 'inline-flex items-center justify-center rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50';
+    const baseStyles = 'inline-flex items-center justify-center rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50';
     
     const variants = {
-      primary: 'bg-orange-600 text-white hover:bg-orange-700 active:bg-orange-800',
+      primary: 'bg-primary-600 text-white hover:bg-primary-700 active:bg-primary-800',
       secondary: 'bg-gray-100 text-gray-900 hover:bg-gray-200 active:bg-gray-300',
       outline: 'border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 active:bg-gray-100',
       ghost: 'text-gray-700 hover:bg-gray-100 active:bg-gray-200',

@@ -490,7 +490,7 @@ const UploadForm: React.FC<UploadFormProps> = ({ onSuccess, onCancel }) => {
                   className={cn(
                     'px-3 py-1 rounded-full text-sm border transition-colors',
                     active
-                      ? 'bg-orange-100 text-orange-700 border-orange-200'
+                      ? 'bg-primary-100 text-primary-700 border-primary-200'
                       : 'bg-white text-gray-700 border-gray-200 hover:border-gray-300'
                   )}
                   aria-pressed={active}
@@ -512,12 +512,12 @@ const UploadForm: React.FC<UploadFormProps> = ({ onSuccess, onCancel }) => {
               {formData.artists.map((artist) => (
                 <span
                   key={artist}
-                  className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800"
+                  className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-primary-100 text-primary-800"
                 >
                   {artist}
                   <button
                     type="button"
-                    className="text-orange-700 hover:text-orange-900"
+                    className="text-primary-700 hover:text-primary-900"
                     onClick={() => {
                       setFormData(prev => ({
                         ...prev,
@@ -537,7 +537,7 @@ const UploadForm: React.FC<UploadFormProps> = ({ onSuccess, onCancel }) => {
                 value={artistQuery}
                 onChange={(e) => setArtistQuery(e.target.value)}
                 placeholder="Type to add or select"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
                     e.preventDefault();

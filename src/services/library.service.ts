@@ -57,7 +57,7 @@ export class LibraryService {
       }
 
       if (filters.artist && filters.artist.length > 0) {
-        query = query.contains('keywords', filters.artist);
+        query = query.overlaps('keywords', filters.artist);
       }
       if (filters.languages && filters.languages.length > 0) {
         // Match items where languages overlap ANY selected language

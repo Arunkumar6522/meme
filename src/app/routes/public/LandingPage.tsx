@@ -58,7 +58,7 @@ const LanguageSection: React.FC<{
           )}
         </div>
         <Button
-          className="bg-orange-600 hover:bg-orange-700 text-white border-orange-600"
+          className="bg-primary-600 hover:bg-primary-700 text-white border-primary-600"
           onClick={onSeeAll}
         >
           See all
@@ -157,7 +157,7 @@ const LandingPage: React.FC = () => {
               />
               <Button
                 type="submit"
-                className="w-full sm:w-auto bg-orange-600 hover:bg-orange-700 text-white border-orange-600 h-12 sm:h-14 text-base sm:text-lg"
+                className="w-full sm:w-auto bg-primary-600 hover:bg-primary-700 text-white border-primary-600 h-12 sm:h-14 text-base sm:text-lg"
                 disabled={!searchTerm.trim()}
               >
                 <Search className="h-5 w-5 mr-2" />
@@ -169,7 +169,7 @@ const LandingPage: React.FC = () => {
       </div>
 
       {/* Preview rail */}
-      <div className="bg-orange-50/60 border-t border-b border-orange-100">
+      <div className="bg-primary-50/60 border-t border-b border-primary-100">
         <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-10 sm:py-14 space-y-10">
           {languagesToShow.map((lang) => (
             <LanguageSection
@@ -192,7 +192,7 @@ const LandingPage: React.FC = () => {
         <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
           <div className="grid md:grid-cols-3 gap-8 text-center">
             <div className="p-6 bg-gray-50 rounded-xl">
-              <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <div className="w-12 h-12 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <span className="text-2xl">⚡</span>
               </div>
               <h3 className="text-lg font-semibold text-gray-900 mb-2">Instant Downloads</h3>
@@ -201,7 +201,7 @@ const LandingPage: React.FC = () => {
               </p>
             </div>
             <div className="p-6 bg-gray-50 rounded-xl">
-              <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <div className="w-12 h-12 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <span className="text-2xl">🔍</span>
               </div>
               <h3 className="text-lg font-semibold text-gray-900 mb-2">Smart Search</h3>
@@ -210,7 +210,7 @@ const LandingPage: React.FC = () => {
               </p>
             </div>
             <div className="p-6 bg-gray-50 rounded-xl">
-              <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <div className="w-12 h-12 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <span className="text-2xl">📱</span>
               </div>
               <h3 className="text-lg font-semibold text-gray-900 mb-2">Creator Ready</h3>
