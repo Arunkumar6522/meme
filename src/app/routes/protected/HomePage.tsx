@@ -103,8 +103,8 @@ const HomePage: React.FC = () => {
                       {stat.value}
                     </p>
                     <span className={`ml-2 text-xs font-medium ${stat.changeType === 'positive'
-                        ? 'text-green-600'
-                        : 'text-red-600'
+                      ? 'text-green-600'
+                      : 'text-red-600'
                       }`}>
                       {stat.change}
                     </span>
@@ -133,17 +133,7 @@ const HomePage: React.FC = () => {
                 </Button>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                {trendingLoading ? (
-                  Array.from({ length: 4 }).map((_, i) => (
-                    <SkeletonCard key={i} />
-                  ))
-                ) : (
-                  trendingItems.slice(0, 4).map((item) => (
-                    <LibraryCard key={item.id} item={item} isAdmin={isAdmin} />
-                  ))
-                )}
-              </div>
+
             </section>
 
             {/* Latest Section */}
