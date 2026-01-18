@@ -242,6 +242,13 @@ const LibraryCard: React.FC<LibraryCardProps> = memo(({ item, className, isAdmin
     resolvedThumbUrl,
   ]);
 
+  // For images, we need to ensure signed URL is loaded immediately
+  useEffect(() => {
+    if (item.media_type === 'image' && !resolvedFileUrl) {
+      ensureSignedUrls();
+    }
+  }, [item.media_type, ensureSignedUrls, resolvedFileUrl]);
+
   const handlePlay = useCallback(async () => {
     // Playback allowed for everyone
     const { fileUrl } = await ensureSignedUrls();
