@@ -15,6 +15,7 @@ const ArtistsPage: React.FC = () => {
   const allLanguages = ['English', 'Tamil', 'Malayalam', 'Kannada', 'Hindi', 'Telugu'];
   const [langs, setLangs] = useState<string[]>(['English']);
   const [saving, setSaving] = useState(false);
+  const [showDrawer, setShowDrawer] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -40,6 +41,7 @@ const ArtistsPage: React.FC = () => {
     setEditing(artist || null);
     setName(artist?.name || '');
     setLangs(artist?.languages || ['English']);
+    setShowDrawer(true);
   };
 
   const save = async () => {
@@ -60,6 +62,7 @@ const ArtistsPage: React.FC = () => {
       setEditing(null);
       setName('');
       setLangs(['English']);
+      setShowDrawer(false);
       load();
     } catch (e: any) {
       showError(e.message || 'Save failed', 'Error');
@@ -133,13 +136,13 @@ const ArtistsPage: React.FC = () => {
 
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12">
         {/* Edit Drawer */}
-        {(editing || name) && (
+        {showDrawer && (
           <div className="mb-10 bg-gray-50 rounded-xl border border-gray-200 p-6 md:p-8 animate-fade-in">
             <div className="flex justify-between items-start mb-6">
               <h3 className="text-xl font-bold text-gray-900">
                 {editing ? 'Edit Artist Details' : 'Add New Artist'}
               </h3>
-              <button onClick={() => { setEditing(null); setName(''); }} className="text-gray-400 hover:text-gray-600">
+              <button onClick={() => { setEditing(null); setName(''); setShowDrawer(false); }} className="text-gray-400 hover:text-gray-600">
                 <span className="sr-only">Close</span>
                 <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
@@ -178,7 +181,7 @@ const ArtistsPage: React.FC = () => {
             </div>
 
             <div className="mt-8 flex justify-end gap-3 pt-6 border-t border-gray-200">
-              <Button variant="ghost" onClick={() => { setEditing(null); setName(''); }}>Cancel</Button>
+              <Button variant="ghost" onClick={() => { setEditing(null); setName(''); setShowDrawer(false); }}>Cancel</Button>
               <Button onClick={save} loading={saving} size="lg" className="min-w-[120px]">
                 {editing ? 'Save Changes' : 'Create Artist'}
               </Button>

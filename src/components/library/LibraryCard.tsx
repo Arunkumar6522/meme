@@ -614,7 +614,7 @@ const LibraryCard: React.FC<LibraryCardProps> = memo(({ item, className, isAdmin
               const target = e.currentTarget;
               if (target.getAttribute('data-retried')) return;
 
-              console.warn('Video error, refreshing URL...');
+              console.debug('Video error, refreshing URL...');
               const fresh = await LibraryService.getSignedItemUrl(item.id, 'file');
               if (fresh) {
                 setResolvedFileUrl(fresh);
