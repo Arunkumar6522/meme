@@ -133,7 +133,63 @@ const HomePage: React.FC = () => {
                 </Button>
               </div>
 
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                {trendingLoading ? (
+                  Array.from({ length: 4 }).map((_, i) => (
+                    <SkeletonCard key={i} />
+                  ))
+                ) : (
+                  trendingItems.slice(0, 4).map((item) => (
+                    <LibraryCard key={item.id} item={item} isAdmin={isAdmin} />
+                  ))
+                )}
+              </div>
+            </section>
 
+            {/* Premium Upgrade Card */}
+            <section className="bg-gradient-to-br from-primary-600 to-primary-700 rounded-2xl shadow-xl p-8 text-white relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-32 -mt-32" />
+              <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/10 rounded-full -ml-24 -mb-24" />
+              <div className="relative z-10">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <div className="inline-flex items-center px-3 py-1 rounded-full bg-white/20 text-sm font-medium mb-4">
+                      ⚡ Premium</div>
+                    <h3 className="text-3xl font-bold mb-3">Upgrade to Pro</h3>
+                    <p className="text-primary-100 text-lg mb-6 max-w-md">
+                      Get unlimited downloads, ad-free experience, and exclusive premium content
+                    </p>
+                    <ul className="space-y-2 mb-6">
+                      <li className="flex items-center text-primary-50">
+                        <svg className="h-5 w-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                        </svg>
+                        No Ads
+                      </li>
+                      <li className="flex items-center text-primary-50">
+                        <svg className="h-5 w-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                        </svg>
+                        Unlimited Downloads
+                      </li>
+                      <li className="flex items-center text-primary-50">
+                        <svg className="h-5 w-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                        </svg>
+                        Premium Content Access
+                      </li>
+                    </ul>
+                    <Button asChild size="lg" className="bg-white text-primary-700 hover:bg-gray-50 font-semibold shadow-lg">
+                      <Link to="/pro">
+                        Get Started →
+                      </Link>
+                    </Button>
+                  </div>
+                  <div className="hidden md:block">
+                    <div className="text-6xl">🚀</div>
+                  </div>
+                </div>
+              </div>
             </section>
 
             {/* Latest Section */}

@@ -74,7 +74,7 @@ const UploadForm: React.FC<UploadFormProps> = ({ onSuccess, onCancel }) => {
   const [artists, setArtists] = useState<string[]>([]);
   const [artistQuery, setArtistQuery] = useState('');
   const languages = ['English', 'Tamil', 'Malayalam', 'Kannada', 'Hindi', 'Telugu'];
-  
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   const thumbnailInputRef = useRef<HTMLInputElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -156,7 +156,7 @@ const UploadForm: React.FC<UploadFormProps> = ({ onSuccess, onCancel }) => {
     // Validate file type
     const isAudio = file.type.startsWith('audio/');
     const isVideo = file.type.startsWith('video/');
-    
+
     if (!isAudio && !isVideo) {
       setErrors(prev => ({ ...prev, file: 'Please select an audio or video file' }));
       return;
@@ -170,18 +170,18 @@ const UploadForm: React.FC<UploadFormProps> = ({ onSuccess, onCancel }) => {
 
     // Auto-detect media type
     const mediaType = isAudio ? 'audio' : 'video';
-    
-    setFormData(prev => ({ 
-      ...prev, 
-      file, 
+
+    setFormData(prev => ({
+      ...prev,
+      file,
       mediaType,
       title: prev.title || file.name.replace(/\.[^/.]+$/, '') // Auto-fill title from filename
     }));
-    
+
     // Create preview URL
     const url = URL.createObjectURL(file);
     setPreviewUrl(url);
-    
+
     // Clear file error
     setErrors(prev => ({ ...prev, file: '' }));
   };
@@ -259,7 +259,7 @@ const UploadForm: React.FC<UploadFormProps> = ({ onSuccess, onCancel }) => {
   // Handle form submission
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    
+
     if (!validateForm() || !user || !formData.file) return;
 
     setUploading(true);
@@ -326,7 +326,7 @@ const UploadForm: React.FC<UploadFormProps> = ({ onSuccess, onCancel }) => {
       }
 
       setUploadProgress(100);
-      
+
       // Success!
       setTimeout(() => {
         onSuccess?.();
@@ -579,7 +579,7 @@ const UploadForm: React.FC<UploadFormProps> = ({ onSuccess, onCancel }) => {
           </div>
         </div>
 
-        {/* Description */}
+        {/* Description - Hidden as requested
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Description
@@ -592,13 +592,14 @@ const UploadForm: React.FC<UploadFormProps> = ({ onSuccess, onCancel }) => {
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
           />
         </div>
+        */}
 
         {/* File Upload */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Upload {formData.mediaType === 'audio' ? 'Audio' : 'Video'} File *
           </label>
-          
+
           {!formData.file ? (
             <div
               onClick={() => fileInputRef.current?.click()}
@@ -638,7 +639,7 @@ const UploadForm: React.FC<UploadFormProps> = ({ onSuccess, onCancel }) => {
                   <X className="h-5 w-5" />
                 </button>
               </div>
-              
+
               {/* Audio Preview */}
               {formData.mediaType === 'audio' && previewUrl && (
                 <div className="flex items-center space-x-3">
@@ -664,7 +665,7 @@ const UploadForm: React.FC<UploadFormProps> = ({ onSuccess, onCancel }) => {
               )}
             </div>
           )}
-          
+
           <input
             ref={fileInputRef}
             type="file"
@@ -672,7 +673,7 @@ const UploadForm: React.FC<UploadFormProps> = ({ onSuccess, onCancel }) => {
             onChange={handleFileSelect}
             className="hidden"
           />
-          
+
           {errors.file && (
             <p className="mt-1 text-sm text-red-600">{errors.file}</p>
           )}
