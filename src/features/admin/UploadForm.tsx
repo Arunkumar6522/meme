@@ -35,23 +35,10 @@ const emotionOptions = [
   { value: 'surprised', label: 'Surprised 😱' },
   { value: 'confused', label: 'Confused 🤔' },
   { value: 'excited', label: 'Excited 🤩' },
-  { value: 'dramatic', label: 'Dramatic 🎭' },
-  { value: 'sarcastic', label: 'Sarcastic 🙄' },
+  { value: '18+', label: '18+ (Adult) 🔞' },
 ];
 
-const presetArtists = [
-  'Unknown artist',
-  'Vijay',
-  'Ajith',
-  'Rajini',
-  'Kamal',
-  'Suriya',
-  'Dhanush',
-  'Vikram',
-  'Samantha',
-  'Nayanthara',
-  'Yogi Babu',
-];
+
 
 const UploadForm: React.FC<UploadFormProps> = ({ onSuccess, onCancel }) => {
   const { user } = useAuth();
@@ -229,10 +216,6 @@ const UploadForm: React.FC<UploadFormProps> = ({ onSuccess, onCancel }) => {
   ) => {
     setFormData(prev => ({ ...prev, [field]: event.target.value }));
     setErrors(prev => ({ ...prev, [field]: '' }));
-
-    if (field === 'artist') {
-      setArtistQuery(event.target.value);
-    }
   };
 
   // Validate form

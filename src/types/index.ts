@@ -57,8 +57,7 @@ export type EmotionType =
   | 'surprised'
   | 'confused'
   | 'excited'
-  | 'dramatic'
-  | 'sarcastic';
+  | '18+';
 
 // Filter and Sort Types
 export interface LibraryFilters {
