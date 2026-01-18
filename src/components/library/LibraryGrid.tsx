@@ -9,7 +9,7 @@ interface LibraryGridProps {
   loading?: boolean;
   className?: string;
   isAdmin?: boolean;
-  mediaType?: 'audio' | 'video';
+  mediaType?: 'audio' | 'video' | 'image';
   locked?: boolean;
 }
 

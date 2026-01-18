@@ -30,7 +30,7 @@ const LibraryPage: React.FC = () => {
     artist: [],
     languages: selectedLanguages,
   });
-  const [mediaTab, setMediaTab] = useState<'audio' | 'video'>('audio');
+  const [mediaTab, setMediaTab] = useState<'audio' | 'video' | 'image'>('audio');
 
   const {
     data: items,
@@ -96,12 +96,14 @@ const LibraryPage: React.FC = () => {
   useEffect(() => {
     if (filters.media_type === 'video') {
       setMediaTab('video');
+    } else if (filters.media_type === 'image') {
+      setMediaTab('image');
     } else {
       setMediaTab('audio');
     }
   }, [filters.media_type]);
 
-  const handleTabChange = (tab: 'audio' | 'video') => {
+  const handleTabChange = (tab: 'audio' | 'video' | 'image') => {
     setMediaTab(tab);
     const nextFilters = {
       ...filters,
@@ -165,8 +167,9 @@ const LibraryPage: React.FC = () => {
         {/* Media Tabs */}
         <div className="mb-4 flex gap-2">
           {[
-            { key: 'audio', label: 'Audio' },
-            { key: 'video', label: 'Video' },
+            { key: 'audio', label: '🎵 Audio' },
+            { key: 'video', label: '🎥 Video' },
+            { key: 'image', label: '🖼️ Images' },
           ].map((tab) => (
             <button
               key={tab.key}
