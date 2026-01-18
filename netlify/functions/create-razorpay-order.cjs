@@ -2,7 +2,7 @@ const KEY_ID = process.env.RAZORPAY_KEY_ID;
 const KEY_SECRET = process.env.RAZORPAY_KEY_SECRET;
 
 // SET THIS TO FALSE WHEN YOU HAVE VALID RAZORPAY KEYS
-const USE_MOCK_MODE = true;
+const USE_MOCK_MODE = false;
 
 exports.handler = async (event) => {
     const headers = {
