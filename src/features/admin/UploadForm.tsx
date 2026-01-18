@@ -423,6 +423,11 @@ const UploadForm: React.FC<UploadFormProps> = ({ onSuccess, onCancel }) => {
               type="button"
               onClick={() => {
                 setMediaType('audio');
+                // Clear file if switching media type
+                if (formData.file && formData.mediaType !== 'audio') {
+                  setFormData(prev => ({ ...prev, file: null, thumbnail: null }));
+                  if (fileInputRef.current) fileInputRef.current.value = '';
+                }
               }}
               className={cn(
                 'p-4 border-2 rounded-lg transition-all',
@@ -438,6 +443,11 @@ const UploadForm: React.FC<UploadFormProps> = ({ onSuccess, onCancel }) => {
               type="button"
               onClick={() => {
                 setMediaType('video');
+                // Clear file if switching media type
+                if (formData.file && formData.mediaType !== 'video') {
+                  setFormData(prev => ({ ...prev, file: null, thumbnail: null }));
+                  if (fileInputRef.current) fileInputRef.current.value = '';
+                }
               }}
               className={cn(
                 'p-4 border-2 rounded-lg transition-all',
@@ -453,6 +463,11 @@ const UploadForm: React.FC<UploadFormProps> = ({ onSuccess, onCancel }) => {
               type="button"
               onClick={() => {
                 setMediaType('image');
+                // Clear file if switching media type
+                if (formData.file && formData.mediaType !== 'image') {
+                  setFormData(prev => ({ ...prev, file: null, thumbnail: null }));
+                  if (fileInputRef.current) fileInputRef.current.value = '';
+                }
               }}
               className={cn(
                 'p-4 border-2 rounded-lg transition-all',
