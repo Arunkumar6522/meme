@@ -46,7 +46,7 @@ export const PremiumBanner: React.FC = () => {
                         Get <strong>Unlimited Downloads</strong>, <strong>Ad-Free Experience</strong>, and support the community.
                         <br />
                         <span className="text-xl font-bold mt-2 block">
-                            It was only ₹1 for a limited time!
+                            Now only ₹49/month!
                         </span>
                     </p>
                 </div>
