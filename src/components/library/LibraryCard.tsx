@@ -40,30 +40,11 @@ const LibraryCard: React.FC<LibraryCardProps> = memo(({ item, className, isAdmin
   const [editKeywords, setEditKeywords] = useState(item.keywords?.join(', ') || '');
   const navigate = useNavigate();
 
-  const emotionColors = {
-    happy: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-    sad: 'bg-blue-100 text-blue-800 border-blue-200',
-    funny: 'bg-green-100 text-green-800 border-green-200',
-    thug: 'bg-gray-100 text-gray-800 border-gray-200',
-    angry: 'bg-red-100 text-red-800 border-red-200',
-    surprised: 'bg-purple-100 text-purple-800 border-purple-200',
-    confused: 'bg-primary-100 text-primary-800 border-primary-200',
-    excited: 'bg-pink-100 text-pink-800 border-pink-200',
-    dramatic: 'bg-indigo-100 text-indigo-800 border-indigo-200',
-    sarcastic: 'bg-teal-100 text-teal-800 border-teal-200',
-  };
-
   const formatDuration = (seconds?: number) => {
     if (!seconds) return '';
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
-
-  const formatFileSize = (bytes?: number) => {
-    if (!bytes) return '';
-    const mb = bytes / (1024 * 1024);
-    return `${mb.toFixed(1)} MB`;
   };
 
   // Cleanup media on unmount
@@ -384,7 +365,14 @@ const LibraryCard: React.FC<LibraryCardProps> = memo(({ item, className, isAdmin
       // Trigger download
       const link = document.createElement('a');
       link.href = blobUrl;
-      link.download = `${item.title.replace(/[^a-z0-9]/gi, '_')}.${item.media_type === 'audio' ? 'mp3' : 'mp4'}`;
+      const getExtension = () => {
+        if (item.media_type === 'audio') return 'mp3';
+        if (item.media_type === 'video') return 'mp4';
+        // Try to get extension from url or default to jpg
+        const urlExt = item.file_url?.split('.').pop()?.substring(0, 4);
+        return urlExt && ['png', 'jpg', 'jpeg', 'gif', 'webp'].includes(urlExt.toLowerCase()) ? urlExt : 'jpg';
+      };
+      link.download = `${item.title.replace(/[^a-z0-9]/gi, '_')}.${getExtension()}`;
       link.style.display = 'none';
       document.body.appendChild(link);
       link.click();
@@ -716,6 +704,45 @@ const LibraryCard: React.FC<LibraryCardProps> = memo(({ item, className, isAdmin
     </div>
   );
 
+  const renderImage = () => (
+    <div className="w-full">
+      {!locked && (
+        <div className="flex justify-end mb-2">
+          {renderActionsMenu()}
+        </div>
+      )}
+      <div
+        className="relative bg-gray-900 rounded-lg overflow-hidden border border-gray-200 shadow-sm aspect-square cursor-pointer hover:opacity-95 transition-opacity"
+        onClick={() => {
+          // Open full size on click
+          window.open(resolvedFileUrl, '_blank', 'noopener,noreferrer');
+        }}
+      >
+        <img
+          src={resolvedFileUrl}
+          alt={item.title}
+          className="w-full h-full object-cover"
+          loading="lazy"
+        />
+        <div className="absolute inset-0 bg-black/0 hover:bg-black/10 transition-colors flex items-center justify-center opacity-0 hover:opacity-100">
+          <Maximize className="w-8 h-8 text-white drop-shadow-lg" />
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderContent = () => {
+    switch (item.media_type) {
+      case 'video':
+        return renderVideo();
+      case 'image':
+        return renderImage();
+      case 'audio':
+      default:
+        return renderAudio();
+    }
+  };
+
   return (
     <div
       className={cn(
@@ -724,7 +751,7 @@ const LibraryCard: React.FC<LibraryCardProps> = memo(({ item, className, isAdmin
         className
       )}
     >
-      {item.media_type === 'video' ? renderVideo() : renderAudio()}
+      {renderContent()}
 
       <div className="space-y-1">
         <h3 className="text-sm font-semibold text-gray-900 line-clamp-2 text-center">
@@ -770,7 +797,7 @@ const LibraryCard: React.FC<LibraryCardProps> = memo(({ item, className, isAdmin
                     .filter(Boolean);
                   const updates: Partial<LibraryItem> = {
                     title: editTitle.trim(),
-                    description: editDescription.trim() || null,
+                    description: editDescription.trim() || undefined,
                     keywords: keywordsArray,
                   };
                   await LibraryService.updateLibraryItem(item.id, updates);

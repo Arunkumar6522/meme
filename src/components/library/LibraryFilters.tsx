@@ -23,12 +23,7 @@ const emotionOptions = [
   { value: 'sarcastic', label: 'Sarcastic' },
 ];
 
-const mediaTypeOptions = [
-  { value: '', label: 'All Types' },
-  { value: 'audio', label: '🎵 Audio' },
-  { value: 'video', label: '🎥 Video' },
-  { value: 'image', label: '🖼️ Image' },
-];
+
 
 const sortOptions = [
   { value: 'latest', label: 'Latest' },
@@ -239,16 +234,7 @@ const LibraryFilters: React.FC<LibraryFiltersProps> = ({
           aria-label="Filter by emotion"
         />
 
-        <Select
-          label="Media Type"
-          value={filters.media_type || ''}
-          onChange={(e) => {
-            const value = e.target.value;
-            onFiltersChange({ ...filters, media_type: value === '' ? undefined : value as 'audio' | 'video' | 'image' });
-          }}
-          options={mediaTypeOptions}
-          aria-label="Filter by media type"
-        />
+
 
         <Select
           label="Sort By"

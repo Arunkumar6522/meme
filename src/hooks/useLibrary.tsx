@@ -3,6 +3,7 @@ import { LibraryService } from '@/services/library.service';
 import type { LibraryItem, LibraryFilters, PaginatedResponse } from '@/types';
 
 export const useLibrary = (initialFilters: LibraryFilters = {}, initialPage = 1, perPage = 20) => {
+  const [items, setItems] = useState<LibraryItem[]>([]);
   const [data, setData] = useState<PaginatedResponse<LibraryItem>>({
     data: [],
     count: 0,
@@ -14,8 +15,9 @@ export const useLibrary = (initialFilters: LibraryFilters = {}, initialPage = 1,
   const [error, setError] = useState<string | null>(null);
   const [filters, setFilters] = useState<LibraryFilters>(initialFilters);
   const [page, setPage] = useState(initialPage);
-  const filtersKey = JSON.stringify(filters);
-  
+  // Track previous filters to detect when to reset list
+  const prevFiltersRef = useRef(JSON.stringify(initialFilters));
+
   // Use ref to always have latest filters without causing re-renders
   const filtersRef = useRef(filters);
   useEffect(() => {
@@ -25,11 +27,29 @@ export const useLibrary = (initialFilters: LibraryFilters = {}, initialPage = 1,
   const fetchLibraryItems = useCallback(async () => {
     setLoading(true);
     setError(null);
-    
+
     try {
+      const currentFiltersJson = JSON.stringify(filtersRef.current);
+      const isNewFilter = currentFiltersJson !== prevFiltersRef.current;
+
+      if (isNewFilter) {
+        setPage(1);
+        prevFiltersRef.current = currentFiltersJson;
+        // Don't reset items here if we want smoother transition, 
+        // but for correctness with new filters we should usually clear
+      }
+
       // Use ref to get latest filters
       const response = await LibraryService.getLibraryItems(filtersRef.current, page, perPage);
       setData(response);
+
+      setItems(prevItems => {
+        if (page === 1) return response.data;
+        // Filter out duplicates just in case
+        const existingIds = new Set(prevItems.map(i => i.id));
+        const newItems = response.data.filter(i => !existingIds.has(i.id));
+        return [...prevItems, ...newItems];
+      });
     } catch (err) {
       setError((err as Error).message);
     } finally {
@@ -37,9 +57,19 @@ export const useLibrary = (initialFilters: LibraryFilters = {}, initialPage = 1,
     }
   }, [page, perPage]);
 
+  // Reset page when filters change (detected via useEffect on filters)
+  useEffect(() => {
+    const currentFiltersJson = JSON.stringify(filters);
+    if (currentFiltersJson !== prevFiltersRef.current) {
+      setPage(1);
+      setItems([]); // Clear items immediately on filter change
+      // fetchLibraryItems will be called by the next useEffect due to filtersKey change logic or explicit call
+    }
+  }, [filters]);
+
   useEffect(() => {
     fetchLibraryItems();
-  }, [fetchLibraryItems, filtersKey]);
+  }, [fetchLibraryItems]);
 
   const updateFilters = useCallback((newFilters: LibraryFilters) => {
     setFilters(newFilters);
@@ -69,7 +99,7 @@ export const useLibrary = (initialFilters: LibraryFilters = {}, initialPage = 1,
   }, [fetchLibraryItems]);
 
   return {
-    data: data.data,
+    data: items,
     count: data.count,
     page,
     totalPages: data.total_pages,
@@ -93,7 +123,7 @@ export const useLibraryItem = (id: string) => {
     const fetchItem = async () => {
       setLoading(true);
       setError(null);
-      
+
       try {
         const data = await LibraryService.getLibraryItem(id);
         setItem(data);
@@ -119,10 +149,10 @@ export const useLibraryItem = (id: string) => {
       LibraryService.incrementDownloadCount(item.id).catch(err => {
         console.warn('Failed to increment download count:', err);
       });
-      
+
       // Use the file_url directly - it should be a public URL from Supabase storage
       const downloadUrl = item.file_url;
-      
+
       if (!downloadUrl) {
         throw new Error('File URL not available');
       }
@@ -133,10 +163,10 @@ export const useLibraryItem = (id: string) => {
         if (!response.ok) {
           throw new Error(`Failed to fetch file: ${response.statusText}`);
         }
-        
+
         const blob = await response.blob();
         const blobUrl = window.URL.createObjectURL(blob);
-        
+
         // Trigger download
         const link = document.createElement('a');
         link.href = blobUrl;
@@ -144,16 +174,16 @@ export const useLibraryItem = (id: string) => {
         link.style.display = 'none';
         document.body.appendChild(link);
         link.click();
-        
+
         // Cleanup
         setTimeout(() => {
           document.body.removeChild(link);
           window.URL.revokeObjectURL(blobUrl);
         }, 100);
-        
+
         // Update local state
         setItem(prev => prev ? { ...prev, download_count: prev.download_count + 1 } : null);
-        
+
         return downloadUrl;
       } catch (fetchError) {
         // Fallback: try direct download link
@@ -168,7 +198,7 @@ export const useLibraryItem = (id: string) => {
         setTimeout(() => {
           document.body.removeChild(link);
         }, 100);
-        
+
         return downloadUrl;
       }
     } catch (err) {

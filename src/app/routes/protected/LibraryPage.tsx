@@ -3,7 +3,6 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { Upload } from 'lucide-react';
 import LibraryFilters from '@/components/library/LibraryFilters';
 import LibraryGrid from '@/components/library/LibraryGrid';
-import Pagination from '@/components/library/Pagination';
 import GoogleAdSense from '@/components/ads/GoogleAdSense';
 import { PremiumBanner } from '@/components/premium/PremiumBanner';
 import { Button } from '@/components/ui';
@@ -219,18 +218,32 @@ const LibraryPage: React.FC = () => {
             <GoogleAdSense type="square" className="w-full max-w-md" />
           </div>
 
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="mt-8">
-              <Pagination
-                currentPage={page}
-                totalPages={totalPages}
-                onPageChange={(next) => {
-                  // Stop any playing audio/video when navigating pages
-                  window.dispatchEvent(new CustomEvent('media:stopAll'));
-                  goToPage(next);
-                }}
-              />
+          {/* Infinite Scroll Trigger */}
+          {totalPages > page && (
+            <div
+              ref={(node) => {
+                if (!node || loading) return;
+                const observer = new IntersectionObserver(
+                  (entries) => {
+                    if (entries[0].isIntersecting) {
+                      goToPage(page + 1);
+                    }
+                  },
+                  { threshold: 0.1 }
+                );
+                observer.observe(node);
+                return () => observer.disconnect();
+              }}
+              className="mt-8 flex justify-center py-4"
+            >
+              {loading ? (
+                <div className="flex items-center gap-2 text-gray-500">
+                  <div className="w-4 h-4 rounded-full border-2 border-primary-500 border-t-transparent animate-spin" />
+                  Loading more...
+                </div>
+              ) : (
+                <div className="h-4" />
+              )}
             </div>
           )}
         </div>
