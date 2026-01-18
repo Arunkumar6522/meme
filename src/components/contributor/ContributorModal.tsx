@@ -51,14 +51,14 @@ export const ContributorModal: React.FC<ContributorModalProps> = ({ isOpen, onCl
         setErrors({});
 
         try {
-            const result = await ContributorService.becomeContributor({
+            const result = await ContributorService.requestContributor({
                 name: formData.name.trim(),
                 email: formData.email.trim(),
                 mobile: formData.mobile.trim(),
             });
 
             if (result.success) {
-                setSuccessMessage(result.message || 'You are now a contributor!');
+                setSuccessMessage(result.message || 'Your request has been submitted!');
                 setTimeout(() => {
                     onSuccess();
                     onClose();

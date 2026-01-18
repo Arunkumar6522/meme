@@ -7,10 +7,13 @@ export interface User {
   role: 'user' | 'admin' | 'superadmin';
   is_premium?: boolean;
   is_contributor?: boolean;
+  contributor_status?: 'none' | 'pending' | 'active' | 'rejected';
   contributor_name?: string;
   contributor_email?: string;
   contributor_mobile?: string;
-  contributor_since?: string;
+  contributor_requested_at?: string;
+  contributor_approved_at?: string;
+  contributor_approved_by?: string;
   preferred_languages?: string[];
   created_at: string;
   updated_at: string;

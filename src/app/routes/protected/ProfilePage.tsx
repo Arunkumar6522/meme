@@ -34,7 +34,7 @@ const ProfilePage: React.FC = () => {
   const [payments, setPayments] = useState<any[]>([]);
   const [downloadCount, setDownloadCount] = useState(0);
   const [isContributor, setIsContributor] = useState(false);
-  const [contributorSince, setContributorSince] = useState<string | null>(null);
+  const [contributorStatus, setContributorStatus] = useState<'none' | 'pending' | 'active' | 'rejected'>('none');
   const [contributorModalOpen, setContributorModalOpen] = useState(false);
 
   React.useEffect(() => {
@@ -43,14 +43,14 @@ const ProfilePage: React.FC = () => {
         // Fetch User Data
         const { data: userData } = await supabase
           .from('users')
-          .select('is_premium, subscription_end_date, is_contributor, contributor_since')
+          .select('is_premium, subscription_end_date, is_contributor, contributor_status, contributor_approved_at')
           .eq('id', user.id)
           .single();
         if (userData) {
           setIsPremium(userData.is_premium || false);
           setSubscriptionEndDate(userData.subscription_end_date);
           setIsContributor(userData.is_contributor || false);
-          setContributorSince(userData.contributor_since);
+          setContributorStatus(userData.contributor_status || 'none');
         }
 
         // Fetch Payments
@@ -174,43 +174,57 @@ const ProfilePage: React.FC = () => {
                   <Award className="h-5 w-5 text-primary-600" />
                   Contributor Status
                 </h3>
-                {isContributor ? (
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary-100 text-primary-800">
+                {contributorStatus === 'active' ? (
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                     <CheckCircle className="h-3 w-3 mr-1" />
-                    Active Contributor
+                    Active
+                  </span>
+                ) : contributorStatus === 'pending' ? (
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                    ⏳ Pending Approval
+                  </span>
+                ) : contributorStatus === 'rejected' ? (
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                    ❌ Rejected
                   </span>
                 ) : (
                   <Button size="sm" onClick={() => setContributorModalOpen(true)}>
-                    Become Contributor
+                    Request Access
                   </Button>
                 )}
               </div>
               <div className="space-y-3">
-                {isContributor ? (
+                {contributorStatus === 'active' ? (
                   <>
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-600">Status</span>
-                      <span className="font-medium text-green-600">Active</span>
+                      <span className="font-medium text-green-600">Active Contributor</span>
                     </div>
-                    {contributorSince && (
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-600">Member Since</span>
-                        <span className="font-medium text-gray-900">
-                          {new Date(contributorSince).toLocaleDateString()}
-                        </span>
-                      </div>
-                    )}
                     <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
                       <p className="text-sm text-green-800">
-                        <strong>Thank you for being a contributor!</strong> You can now upload content to our platform.
+                        <strong>✅ You're an active contributor!</strong> You can now upload content to our platform.
                         Remember to only upload content you own or have permission to share.
                       </p>
                     </div>
                   </>
+                ) : contributorStatus === 'pending' ? (
+                  <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <p className="text-sm text-yellow-800">
+                      <strong>⏳ Request Pending</strong><br />
+                      Your contributor request is being reviewed by our admin team. You'll be notified once approved.
+                    </p>
+                  </div>
+                ) : contributorStatus === 'rejected' ? (
+                  <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                    <p className="text-sm text-red-800">
+                      <strong>❌ Request Rejected</strong><br />
+                      Your contributor request was not approved. Please contact support for more information.
+                    </p>
+                  </div>
                 ) : (
                   <div className="space-y-3">
                     <p className="text-sm text-gray-600">
-                      Become a contributor to upload and share your meme content with the community.
+                      Request contributor access to upload and share your meme content with the community.
                     </p>
                     <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
                       <p className="text-sm text-blue-800">
@@ -221,6 +235,9 @@ const ProfilePage: React.FC = () => {
                         <li>Share your content with thousands of users</li>
                         <li>Build your contributor profile</li>
                       </ul>
+                      <p className="text-xs text-blue-600 mt-2">
+                        <strong>Note:</strong> Your request will be reviewed by admin before approval.
+                      </p>
                     </div>
                   </div>
                 )}
@@ -665,9 +682,8 @@ const ProfilePage: React.FC = () => {
         isOpen={contributorModalOpen}
         onClose={() => setContributorModalOpen(false)}
         onSuccess={() => {
-          setIsContributor(true);
-          setContributorSince(new Date().toISOString());
-          showSuccess('You are now a contributor!');
+          setContributorStatus('pending');
+          showSuccess('Your request has been submitted for approval!');
         }}
       />
     </div >
