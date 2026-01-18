@@ -245,11 +245,16 @@ const LibraryCard: React.FC<LibraryCardProps> = memo(({ item, className, isAdmin
   ]);
 
   // For images, we need to ensure signed URL is loaded immediately
+  // Ensure signed URL is loaded immediately for images OR if a thumbnail exists
   useEffect(() => {
-    if (item.media_type === 'image' && !resolvedFileUrl) {
+    const hasThumbnail = !!(item.thumbnail_bucket && item.thumbnail_path) || !!item.thumbnail_url;
+    const isImage = item.media_type === 'image';
+
+    // If it's an image, we need the file URL. If it has a thumbnail, we need that too.
+    if ((isImage && !resolvedFileUrl) || (hasThumbnail && !resolvedThumbUrl)) {
       ensureSignedUrls();
     }
-  }, [item.media_type, ensureSignedUrls, resolvedFileUrl]);
+  }, [item.media_type, item.thumbnail_bucket, item.thumbnail_path, item.thumbnail_url, resolvedFileUrl, resolvedThumbUrl, ensureSignedUrls]);
 
   const handlePlay = useCallback(async () => {
     // Playback allowed for everyone
@@ -828,6 +833,7 @@ const LibraryCard: React.FC<LibraryCardProps> = memo(({ item, className, isAdmin
             </Button>
           </div>
         </Modal>
+      )}
 
 
       {/* Image Viewer Modal */}
