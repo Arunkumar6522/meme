@@ -87,8 +87,11 @@ const GoogleAdSense: React.FC<GoogleAdSenseProps> = ({ type, className, style })
     }, [type]);
 
     if (isAdmin || isPremium) {
-        // console.debug('Ads hidden: User is Admin or Premium');
-        return null;
+        return (
+            <div className={`${className} bg-gray-50 border border-dashed border-gray-300 flex items-center justify-center text-gray-400 text-xs p-2 text-center rounded`} style={{ minHeight: '100px', ...style }}>
+                AdSense Space ({type})<br />(Hidden for Admin/Premium)
+            </div>
+        );
     }
 
     return (
