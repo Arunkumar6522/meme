@@ -6,6 +6,11 @@ export interface User {
   avatar_url?: string;
   role: 'user' | 'admin' | 'superadmin';
   is_premium?: boolean;
+  is_contributor?: boolean;
+  contributor_name?: string;
+  contributor_email?: string;
+  contributor_mobile?: string;
+  contributor_since?: string;
   preferred_languages?: string[];
   created_at: string;
   updated_at: string;

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { User, Download, Heart, KeyRound, Trash2 } from 'lucide-react';
+import { User, Download, Heart, KeyRound, Trash2, Award, CheckCircle } from 'lucide-react';
 import { Button, Input } from '@/components/ui';
 import { useAuth } from '@/hooks/useAuth';
 import { useFavorites } from '@/hooks/useFavorites';
@@ -9,6 +9,7 @@ import { DatabaseService } from '@/services/database.service';
 import { useToast } from '@/hooks/useToast';
 import { isOAuthUser, getUserProvider, getUserDisplayName, getUserAvatarUrl } from '@/utils/auth';
 import Modal from '@/components/ui/Modal';
+import { ContributorModal } from '@/components/contributor';
 
 const ProfilePage: React.FC = () => {
   const { user, signOut } = useAuth();
@@ -32,15 +33,24 @@ const ProfilePage: React.FC = () => {
   const [subscriptionEndDate, setSubscriptionEndDate] = useState<string | null>(null);
   const [payments, setPayments] = useState<any[]>([]);
   const [downloadCount, setDownloadCount] = useState(0);
+  const [isContributor, setIsContributor] = useState(false);
+  const [contributorSince, setContributorSince] = useState<string | null>(null);
+  const [contributorModalOpen, setContributorModalOpen] = useState(false);
 
   React.useEffect(() => {
     if (user) {
       const fetchData = async () => {
         // Fetch User Data
-        const { data: userData } = await supabase.from('users').select('is_premium, subscription_end_date').eq('id', user.id).single();
+        const { data: userData } = await supabase
+          .from('users')
+          .select('is_premium, subscription_end_date, is_contributor, contributor_since')
+          .eq('id', user.id)
+          .single();
         if (userData) {
           setIsPremium(userData.is_premium || false);
           setSubscriptionEndDate(userData.subscription_end_date);
+          setIsContributor(userData.is_contributor || false);
+          setContributorSince(userData.contributor_since);
         }
 
         // Fetch Payments
@@ -153,6 +163,66 @@ const ProfilePage: React.FC = () => {
                   <p className="text-xs text-gray-500 mt-2">
                     Upgrade to remove ads and unlock unlimited downloads.
                   </p>
+                )}
+              </div>
+            </div>
+
+            {/* Contributor Status */}
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                  <Award className="h-5 w-5 text-primary-600" />
+                  Contributor Status
+                </h3>
+                {isContributor ? (
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary-100 text-primary-800">
+                    <CheckCircle className="h-3 w-3 mr-1" />
+                    Active Contributor
+                  </span>
+                ) : (
+                  <Button size="sm" onClick={() => setContributorModalOpen(true)}>
+                    Become Contributor
+                  </Button>
+                )}
+              </div>
+              <div className="space-y-3">
+                {isContributor ? (
+                  <>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Status</span>
+                      <span className="font-medium text-green-600">Active</span>
+                    </div>
+                    {contributorSince && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600">Member Since</span>
+                        <span className="font-medium text-gray-900">
+                          {new Date(contributorSince).toLocaleDateString()}
+                        </span>
+                      </div>
+                    )}
+                    <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+                      <p className="text-sm text-green-800">
+                        <strong>Thank you for being a contributor!</strong> You can now upload content to our platform.
+                        Remember to only upload content you own or have permission to share.
+                      </p>
+                    </div>
+                  </>
+                ) : (
+                  <div className="space-y-3">
+                    <p className="text-sm text-gray-600">
+                      Become a contributor to upload and share your meme content with the community.
+                    </p>
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                      <p className="text-sm text-blue-800">
+                        <strong>Benefits:</strong>
+                      </p>
+                      <ul className="text-sm text-blue-700 mt-2 space-y-1 ml-4 list-disc">
+                        <li>Upload memes, audio, videos, and images</li>
+                        <li>Share your content with thousands of users</li>
+                        <li>Build your contributor profile</li>
+                      </ul>
+                    </div>
+                  </div>
                 )}
               </div>
             </div>
@@ -589,6 +659,17 @@ const ProfilePage: React.FC = () => {
           </div>
         </div>
       </Modal >
+
+      {/* Contributor Modal */}
+      <ContributorModal
+        isOpen={contributorModalOpen}
+        onClose={() => setContributorModalOpen(false)}
+        onSuccess={() => {
+          setIsContributor(true);
+          setContributorSince(new Date().toISOString());
+          showSuccess('You are now a contributor!');
+        }}
+      />
     </div >
   );
 };
