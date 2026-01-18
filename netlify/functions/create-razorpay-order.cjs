@@ -1,5 +1,5 @@
-const KEY_ID = process.env.RAZORPAY_KEY_ID;
-const KEY_SECRET = process.env.RAZORPAY_KEY_SECRET;
+const KEY_ID = process.env.live_api_key || process.env.RAZORPAY_KEY_ID;
+const KEY_SECRET = process.env.live_key_secret || process.env.RAZORPAY_KEY_SECRET;
 
 // SET THIS TO FALSE WHEN YOU HAVE VALID RAZORPAY KEYS
 const USE_MOCK_MODE = false;
