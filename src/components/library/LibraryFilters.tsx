@@ -20,7 +20,6 @@ const emotionOptions = [
   { value: 'confused', label: 'Confused' },
   { value: 'excited', label: 'Excited' },
   { value: 'dark', label: 'Dark' },
-  { value: '18+', label: '18+ (Adult)' },
 ];
 
 
