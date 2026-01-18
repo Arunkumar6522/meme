@@ -188,9 +188,9 @@ const Header: React.FC = () => {
                 aria-label="Toggle mobile menu"
               >
                 {isMobileMenuOpen ? (
-                  <X className="h-6 w-6" aria-hidden="true" />
+                  <X className="h-9 w-9" aria-hidden="true" />
                 ) : (
-                  <Menu className="h-6 w-6" aria-hidden="true" />
+                  <Menu className="h-9 w-9" aria-hidden="true" />
                 )}
               </button>
             </div>
@@ -206,7 +206,7 @@ const Header: React.FC = () => {
                     aria-haspopup="true"
                     aria-label="User menu"
                   >
-                    <User className="h-5 w-5 text-primary-600" />
+                    <User className="h-8 w-8 text-primary-600" />
                   </button>
                   {isUserMenuOpen && (
                     <div className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
