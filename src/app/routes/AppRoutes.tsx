@@ -23,6 +23,7 @@ const TermsPage = React.lazy(() => import('./policies/TermsPage'));
 const PrivacyPage = React.lazy(() => import('./policies/PrivacyPage'));
 const RefundsPage = React.lazy(() => import('./policies/RefundsPage'));
 const ShippingPage = React.lazy(() => import('./policies/ShippingPage'));
+const CopyrightPage = React.lazy(() => import('./policies/CopyrightPage'));
 const ProPage = React.lazy(() => import('./protected/ProPage'));
 
 
@@ -51,6 +52,7 @@ const AppRoutes: React.FC = () => {
           <Route path="privacy-policy" element={<PrivacyPage />} />
           <Route path="cancellation-refund-policy" element={<RefundsPage />} />
           <Route path="shipping-policy" element={<ShippingPage />} />
+          <Route path="copyright" element={<CopyrightPage />} />
 
           {/* Protected Routes */}
           <Route path="home" element={

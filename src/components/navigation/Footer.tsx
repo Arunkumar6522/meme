@@ -42,6 +42,12 @@ const Footer: React.FC = () => {
             >
               Shipping Policy
             </a>
+            <a
+              href="/copyright"
+              className="text-sm text-gray-600 hover:text-gray-900 font-medium"
+            >
+              Copyright & DMCA
+            </a>
           </div>
 
           <div className="flex flex-col space-y-3">
