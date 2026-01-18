@@ -56,7 +56,7 @@ export type EmotionType =
 export interface LibraryFilters {
   search?: string;
   emotion?: EmotionType;
-  media_type?: 'audio' | 'video';
+  media_type?: 'audio' | 'video' | 'image';
   artist?: string[];
   languages?: string[];
   sort_by?: 'trending' | 'latest' | 'title';
