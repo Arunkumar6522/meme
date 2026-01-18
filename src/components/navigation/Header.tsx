@@ -71,7 +71,7 @@ const Header: React.FC = () => {
       base.push({ name: 'Upload', href: '/upload' });
       base.push({ name: 'Artists', href: '/admin/artists' });
       base.push({ name: 'Dashboard', href: '/admin/dashboard' });
-      base.push({ name: 'Create (beta)', href: '/create' });
+      // base.push({ name: 'Create (beta)', href: '/create' });
     }
     return base;
   }, [isAdmin, user]);
