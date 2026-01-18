@@ -37,7 +37,9 @@ const LibraryCard: React.FC<LibraryCardProps> = memo(({ item, className, isAdmin
   const [editOpen, setEditOpen] = useState(false);
   const [editTitle, setEditTitle] = useState(item.title);
   const [editDescription, setEditDescription] = useState(item.description || '');
+
   const [editKeywords, setEditKeywords] = useState(item.keywords?.join(', ') || '');
+  const [viewImageOpen, setViewImageOpen] = useState(false);
   const navigate = useNavigate();
 
   const formatDuration = (seconds?: number) => {
@@ -361,36 +363,46 @@ const LibraryCard: React.FC<LibraryCardProps> = memo(({ item, className, isAdmin
       }
 
       // Fetch the file and create a blob URL for download
-      const response = await fetch(downloadUrl);
-      if (!response.ok) {
-        throw new Error(`Failed to fetch file: ${response.statusText}`);
-      }
+      try {
+        const response = await fetch(downloadUrl);
+        if (!response.ok) {
+          throw new Error(`Failed to fetch file: ${response.statusText}`);
+        }
 
-      const blob = await response.blob();
-      const blobUrl = window.URL.createObjectURL(blob);
+        const blob = await response.blob();
+        const blobUrl = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = blobUrl;
 
-      // Trigger download
-      const link = document.createElement('a');
-      link.href = blobUrl;
-      const getExtension = () => {
-        if (item.media_type === 'audio') return 'mp3';
-        if (item.media_type === 'video') return 'mp4';
-        // Try to get extension from url or default to jpg
-        const urlExt = item.file_url?.split('.').pop()?.substring(0, 4);
-        return urlExt && ['png', 'jpg', 'jpeg', 'gif', 'webp'].includes(urlExt.toLowerCase()) ? urlExt : 'jpg';
-      };
-      link.download = `${item.title.replace(/[^a-z0-9]/gi, '_')}.${getExtension()}`;
-      link.style.display = 'none';
-      document.body.appendChild(link);
-      link.click();
+        const getExtension = () => {
+          if (item.media_type === 'audio') return 'mp3';
+          if (item.media_type === 'video') return 'mp4';
+          // Try to get extension from url or default to jpg
+          const urlExt = item.file_url?.split('.').pop()?.substring(0, 4);
+          return urlExt && ['png', 'jpg', 'jpeg', 'gif', 'webp'].includes(urlExt.toLowerCase()) ? urlExt : 'jpg';
+        };
 
-      // Cleanup
-      setTimeout(() => {
+        link.download = `${item.title.replace(/[^a-z0-9]/gi, '_')}.${getExtension()}`;
+        link.style.display = 'none';
+        document.body.appendChild(link);
+        link.click();
+
+        setTimeout(() => {
+          document.body.removeChild(link);
+          window.URL.revokeObjectURL(blobUrl);
+        }, 100);
+
+        showSuccess('Download started!', 'Download');
+      } catch (fetchError) {
+        // Fallback: simple download
+        const link = document.createElement('a');
+        link.href = downloadUrl;
+        link.target = '_blank';
+        link.download = item.title;
+        document.body.appendChild(link);
+        link.click();
         document.body.removeChild(link);
-        window.URL.revokeObjectURL(blobUrl);
-      }, 100);
-
-      showSuccess('Download started!', 'Download');
+      }
     } catch (error: any) {
       console.error('Download error:', error);
       showError(error?.message || 'Failed to download file. Please try again.', 'Download Error');
@@ -720,10 +732,7 @@ const LibraryCard: React.FC<LibraryCardProps> = memo(({ item, className, isAdmin
       )}
       <div
         className="relative bg-gray-900 rounded-lg overflow-hidden border border-gray-200 shadow-sm aspect-square cursor-pointer hover:opacity-95 transition-opacity"
-        onClick={() => {
-          // Open full size on click
-          window.open(resolvedFileUrl, '_blank', 'noopener,noreferrer');
-        }}
+        onClick={() => setViewImageOpen(true)}
       >
         <img
           src={resolvedFileUrl}
@@ -819,8 +828,35 @@ const LibraryCard: React.FC<LibraryCardProps> = memo(({ item, className, isAdmin
             </Button>
           </div>
         </Modal>
+
+
+      {/* Image Viewer Modal */}
+      {viewImageOpen && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 p-4"
+          onClick={() => setViewImageOpen(false)}
+        >
+          <div className="relative max-w-full max-h-full">
+            <button
+              className="absolute -top-10 right-0 text-white hover:text-gray-300"
+              onClick={() => setViewImageOpen(false)}
+            >
+              <Trash2 className="hidden" /> {/* Dummy to keep import, using X icon or just click outside */}
+              <span className="text-4xl">&times;</span>
+            </button>
+            <img
+              src={resolvedFileUrl}
+              alt={item.title}
+              className="max-w-full max-h-[90vh] object-contain rounded-md"
+              onClick={(e) => e.stopPropagation()} // Prevent closing when clicking image
+            />
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/50 px-4 py-2 rounded-full text-white text-sm">
+              {item.title}
+            </div>
+          </div>
+        </div>
       )}
-    </div>
+    </div >
   );
 }, (prevProps, nextProps) => {
   // Custom comparison function for React.memo
