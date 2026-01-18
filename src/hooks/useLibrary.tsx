@@ -25,27 +25,22 @@ export const useLibrary = (initialFilters: LibraryFilters = {}, initialPage = 1,
   }, [filters]);
 
   const fetchLibraryItems = useCallback(async () => {
+    // Determine effective page
+    // If filters changed recently, we might be in middle of reset, but page should be 1
+    // We rely on 'page' state.
+
     setLoading(true);
     setError(null);
 
     try {
-      const currentFiltersJson = JSON.stringify(filtersRef.current);
-      const isNewFilter = currentFiltersJson !== prevFiltersRef.current;
-
-      if (isNewFilter) {
-        setPage(1);
-        prevFiltersRef.current = currentFiltersJson;
-        // Don't reset items here if we want smoother transition, 
-        // but for correctness with new filters we should usually clear
-      }
-
       // Use ref to get latest filters
       const response = await LibraryService.getLibraryItems(filtersRef.current, page, perPage);
       setData(response);
 
       setItems(prevItems => {
         if (page === 1) return response.data;
-        // Filter out duplicates just in case
+
+        // Filter out duplicates
         const existingIds = new Set(prevItems.map(i => i.id));
         const newItems = response.data.filter(i => !existingIds.has(i.id));
         return [...prevItems, ...newItems];
@@ -55,15 +50,18 @@ export const useLibrary = (initialFilters: LibraryFilters = {}, initialPage = 1,
     } finally {
       setLoading(false);
     }
-  }, [page, perPage]);
+  }, [page, perPage, filters]); // Add filters dependency
 
-  // Reset page when filters change (detected via useEffect on filters)
+  // Reset page when filters change
   useEffect(() => {
     const currentFiltersJson = JSON.stringify(filters);
     if (currentFiltersJson !== prevFiltersRef.current) {
       setPage(1);
       setItems([]); // Clear items immediately on filter change
-      // fetchLibraryItems will be called by the next useEffect due to filtersKey change logic or explicit call
+      prevFiltersRef.current = currentFiltersJson;
+      // Note: If page was already 1, setPage(1) won't trigger re-render.
+      // But adding 'filters' to dependency of fetchLibraryItems ensures 
+      // the fetch effect below runs because fetchLibraryItems function identity changes.
     }
   }, [filters]);
 
