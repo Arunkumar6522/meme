@@ -1,5 +1,6 @@
 // Admin-only: mint signed upload URLs for Supabase Storage.
 // Frontend uploads directly to the signed URL; the bucket can remain private.
+// Updated: 2026-01-18 - Added image bucket support
 
 const { createClient } = require('@supabase/supabase-js');
 
