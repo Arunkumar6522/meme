@@ -57,7 +57,7 @@ exports.handler = async (event) => {
 
     const userId = userData.user.id;
     const { data: profile } = await supabase.from('users').select('role').eq('id', userId).maybeSingle();
-    if (profile?.role !== 'admin') {
+    if (profile?.role !== 'admin' && profile?.role !== 'superadmin') {
       return { statusCode: 403, headers, body: JSON.stringify({ error: 'Admin access required' }) };
     }
 
