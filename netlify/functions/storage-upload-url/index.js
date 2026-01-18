@@ -79,7 +79,7 @@ exports.handler = async (event) => {
       return { statusCode: 400, headers, body: JSON.stringify({ error: 'Invalid JSON in request body' }) };
     }
 
-    const mediaType = requestData.mediaType; // 'audio' | 'video' | 'thumbnail'
+    const mediaType = requestData.mediaType; // 'audio' | 'video' | 'image' | 'thumbnail'
     const originalName = requestData.originalName;
 
     if (!mediaType || !originalName) {
@@ -91,9 +91,11 @@ exports.handler = async (event) => {
         ? 'library-audio'
         : mediaType === 'video'
           ? 'library-video'
-          : mediaType === 'thumbnail'
-            ? 'thumbnails'
-            : null;
+          : mediaType === 'image'
+            ? 'library-images'
+            : mediaType === 'thumbnail'
+              ? 'thumbnails'
+              : null;
 
     if (!bucket) {
       return { statusCode: 400, headers, body: JSON.stringify({ error: 'Invalid mediaType' }) };
