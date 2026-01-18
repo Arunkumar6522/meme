@@ -261,10 +261,10 @@ const HomePage: React.FC = () => {
                 <div className="space-y-3">
                   {[
                     { emotion: 'funny', emoji: '😂', trend: 'up' },
-                    { emotion: 'dramatic', emoji: '🎭', trend: 'up' },
+                    { emotion: 'dark', emoji: '💀', trend: 'up' },
                     { emotion: 'thug', emoji: '😎', trend: 'same' },
                     { emotion: 'surprised', emoji: '😱', trend: 'up' },
-                    { emotion: 'sarcastic', emoji: '🙄', trend: 'down' },
+                    { emotion: 'excited', emoji: '🤩', trend: 'down' },
                   ].map((item) => (
                     <Link
                       key={item.emotion}
