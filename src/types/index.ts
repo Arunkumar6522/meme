@@ -17,7 +17,7 @@ export interface LibraryItem {
   description?: string;
   keywords: string[];
   emotion: EmotionType;
-  media_type: 'audio' | 'video';
+  media_type: 'audio' | 'video' | 'image';
   file_url: string;
   thumbnail_url?: string;
   // For private buckets + signed URLs
@@ -119,4 +119,18 @@ export interface UploadProgress {
   progress: number;
   status: 'idle' | 'uploading' | 'success' | 'error';
   error?: string;
+}
+
+// Search Analytics Types
+export interface SearchAnalytics {
+  id: string;
+  user_id?: string;
+  user_email?: string;
+  search_query: string;
+  filters: Record<string, any>;
+  results_count: number;
+  media_type?: string;
+  emotion?: string;
+  languages?: string[];
+  searched_at: string;
 }
