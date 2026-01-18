@@ -100,9 +100,13 @@ const LibraryCard: React.FC<LibraryCardProps> = memo(({ item, className, isAdmin
   }, [mediaId]);
 
   // Ensure video plays when isPlaying becomes true (fixes double-tap without using autoPlay attribute)
+  // Only play if user explicitly triggered it, not on mount
   useEffect(() => {
-    if (isPlaying && videoRef.current) {
-      videoRef.current.play().catch(err => console.error("Auto-play failed:", err));
+    if (isPlaying && videoRef.current && videoRef.current.paused) {
+      videoRef.current.play().catch(err => {
+        console.debug("Play failed (user interaction required):", err);
+        setIsPlaying(false); // Reset if play fails
+      });
     }
   }, [isPlaying]);
 
@@ -620,7 +624,7 @@ const LibraryCard: React.FC<LibraryCardProps> = memo(({ item, className, isAdmin
                 setResolvedFileUrl(fresh);
                 target.setAttribute('data-retried', 'true');
                 target.src = fresh;
-                try { await target.play(); } catch { }
+                // Don't auto-play after URL refresh - wait for user interaction
               }
             }}
             controls
