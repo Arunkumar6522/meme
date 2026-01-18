@@ -212,7 +212,7 @@ export class LibraryService {
    */
   static async uploadFileSigned(
     file: File,
-    mediaType: 'audio' | 'video' | 'thumbnail'
+    mediaType: 'audio' | 'video' | 'image' | 'thumbnail'
   ): Promise<{ bucket: string; path: string }> {
     const token = await this.getAccessToken();
     if (!token) {

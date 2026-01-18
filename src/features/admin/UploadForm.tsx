@@ -156,20 +156,23 @@ const UploadForm: React.FC<UploadFormProps> = ({ onSuccess, onCancel }) => {
     // Validate file type
     const isAudio = file.type.startsWith('audio/');
     const isVideo = file.type.startsWith('video/');
+    const isImage = file.type.startsWith('image/');
 
-    if (!isAudio && !isVideo) {
-      setErrors(prev => ({ ...prev, file: 'Please select an audio or video file' }));
+    if (!isAudio && !isVideo && !isImage) {
+      setErrors(prev => ({ ...prev, file: 'Please select an audio, video, or image file' }));
       return;
     }
 
-    // Validate file size (100MB max)
-    if (file.size > 100 * 1024 * 1024) {
-      setErrors(prev => ({ ...prev, file: 'File size must be less than 100MB' }));
+    // Validate file size (100MB for video/audio, 10MB for images)
+    const maxSize = isImage ? 10 * 1024 * 1024 : 100 * 1024 * 1024;
+    if (file.size > maxSize) {
+      const limit = isImage ? '10MB' : '100MB';
+      setErrors(prev => ({ ...prev, file: `File size must be less than ${limit}` }));
       return;
     }
 
     // Auto-detect media type
-    const mediaType = isAudio ? 'audio' : 'video';
+    const mediaType = isAudio ? 'audio' : isVideo ? 'video' : 'image';
 
     setFormData(prev => ({
       ...prev,
@@ -268,14 +271,15 @@ const UploadForm: React.FC<UploadFormProps> = ({ onSuccess, onCancel }) => {
     try {
       // Upload main file (secure: backend-minted signed upload URL)
       setUploadProgress(25);
+      const bucketType = formData.mediaType === 'audio' ? 'audio' : formData.mediaType === 'video' ? 'video' : 'image';
       const fileUpload = await LibraryService.uploadFileSigned(
         formData.file,
-        formData.mediaType === 'audio' ? 'audio' : 'video'
+        bucketType
       );
 
       setUploadProgress(50);
 
-      // Upload thumbnail if provided or auto-generate for video
+      // Upload thumbnail if provided or auto-generate for video (not needed for images)
       let thumbnailUpload: { bucket: string; path: string } | null = null;
       if (formData.thumbnail) {
         thumbnailUpload = await LibraryService.uploadFileSigned(formData.thumbnail, 'thumbnail');
@@ -286,6 +290,7 @@ const UploadForm: React.FC<UploadFormProps> = ({ onSuccess, onCancel }) => {
           thumbnailUpload = await LibraryService.uploadFileSigned(generatedThumb, 'thumbnail');
         }
       }
+      // For images, the image itself serves as the thumbnail
 
       setUploadProgress(75);
 
@@ -686,7 +691,7 @@ const UploadForm: React.FC<UploadFormProps> = ({ onSuccess, onCancel }) => {
           <input
             ref={fileInputRef}
             type="file"
-            accept="audio/*,video/*"
+            accept="audio/*,video/*,image/*"
             onChange={handleFileSelect}
             className="hidden"
           />
