@@ -10,6 +10,7 @@ const AuthPage = React.lazy(() => import('./public/AuthPage'));
 const AuthCallbackPage = React.lazy(() => import('./public/AuthCallbackPage'));
 const HomePage = React.lazy(() => import('./protected/HomePage'));
 const LibraryPage = React.lazy(() => import('./protected/LibraryPage'));
+const LibraryItemPage = React.lazy(() => import('./public/LibraryItemPage'));
 
 // Placeholder components for future implementation
 const CreatePage = React.lazy(() => import('./protected/CreatePage'));
@@ -44,6 +45,7 @@ const AppRoutes: React.FC = () => {
           <Route path="auth/:type" element={<AuthPage />} />
           <Route path="auth/callback" element={<AuthCallbackPage />} />
           <Route path="library" element={<LibraryPage />} />
+          <Route path="library/:id" element={<LibraryItemPage />} />
           <Route path="pro" element={<ProPage />} />
 
           {/* Policy Routes */}
