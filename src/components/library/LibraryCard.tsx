@@ -308,22 +308,15 @@ const LibraryCard: React.FC<LibraryCardProps> = memo(({ item, className, isAdmin
       }
     } else {
       // Inline video playback
-      if (!videoRef.current) return;
       if (isPlaying) {
-        videoRef.current.pause();
+        if (videoRef.current) {
+          videoRef.current.pause();
+        }
         setIsPlaying(false);
       } else {
-        try {
-          emitPlay();
-          if (videoRef.current.src !== fileUrl) {
-            videoRef.current.src = fileUrl;
-          }
-          await videoRef.current.play();
-          setIsPlaying(true);
-        } catch (error) {
-          console.error('Error playing video:', error);
-          showError('Failed to play video. Please try again.', 'Playback Error');
-        }
+        emitPlay();
+        setIsPlaying(true);
+        // Video element will mount with autoPlay
       }
     }
   }, [ensureSignedUrls, item.media_type, isPlaying, locked, navigate, showError]);
@@ -640,6 +633,7 @@ const LibraryCard: React.FC<LibraryCardProps> = memo(({ item, className, isAdmin
               }
             }}
             controls
+            autoPlay
             onPlay={() => {
               emitPlay();
               setIsPlaying(true);
