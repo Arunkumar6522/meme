@@ -101,7 +101,11 @@ exports.handler = async (event) => {
       return { statusCode: 500, headers, body: JSON.stringify({ error: 'Item storage path missing' }) };
     }
 
-    const { data, error } = await supabase.storage.from(bucket).createSignedUrl(path, expiresIn);
+    const options = kind === 'thumbnail'
+      ? { transform: { width: 400, height: 400, resize: 'cover', format: 'webp' } }
+      : undefined;
+
+    const { data, error } = await supabase.storage.from(bucket).createSignedUrl(path, expiresIn, options);
     if (error || !data?.signedUrl) {
       console.error('createSignedUrl error:', error);
       return { statusCode: 500, headers, body: JSON.stringify({ error: 'Failed to create signed URL' }) };

@@ -633,7 +633,6 @@ const LibraryCard: React.FC<LibraryCardProps> = memo(({ item, className, isAdmin
               }
             }}
             controls
-            autoPlay
             onPlay={() => {
               emitPlay();
               setIsPlaying(true);
