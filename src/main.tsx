@@ -5,7 +5,7 @@ import mixpanel from 'mixpanel-browser'
 
 // Initialize Mixpanel
 mixpanel.init('8900a36f4f00575be8a2ddf74926ef2b', {
-  debug: true,
+  debug: false,
   track_pageview: true,
   persistence: 'localStorage',
   autocapture: true,
