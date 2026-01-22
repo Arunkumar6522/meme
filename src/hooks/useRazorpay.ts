@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useAuth } from './useAuth';
 import { DatabaseService } from '@/services/database.service';
+import analytics from '@/utils/mixpanel';
 
 const RAZORPAY_SCRIPT = 'https://checkout.razorpay.com/v1/checkout.js';
 
@@ -60,6 +61,21 @@ export const useRazorpay = () => {
                 // MOCK MODE: Simulate instant payment success
                 alert('🎉 TEST MODE: Payment simulation successful!\n\nYou are now a Premium user (for testing).');
                 await DatabaseService.setPremiumStatus(user.id, true);
+
+                // Track mock purchase
+                analytics.track('Purchase', {
+                    user_id: user.id,
+                    transaction_id: 'MOCK_TEST',
+                    revenue: 0,
+                    currency: 'INR',
+                    plan: 'Premium',
+                    is_test: true,
+                });
+                analytics.track('Conversion', {
+                    'Conversion Type': 'Premium Upgrade',
+                    'Conversion Value': 0,
+                });
+
                 onSuccess();
                 setLoading(false);
                 return;
@@ -83,6 +99,24 @@ export const useRazorpay = () => {
                         paymentId: response.razorpay_payment_id,
                         status: 'captured'
                     });
+
+                    // Track purchase in Mixpanel
+                    analytics.track('Purchase', {
+                        user_id: user.id,
+                        transaction_id: response.razorpay_payment_id,
+                        revenue: orderData.amount / 100,
+                        currency: orderData.currency,
+                        plan: 'Premium',
+                    });
+                    analytics.track('Conversion', {
+                        'Conversion Type': 'Premium Upgrade',
+                        'Conversion Value': orderData.amount / 100,
+                    });
+                    analytics.setUserProperties({
+                        is_premium: true,
+                        plan: 'Premium',
+                    });
+
                     onSuccess();
                 },
                 prefill: {

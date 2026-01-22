@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { AuthService } from '@/services/auth.service';
 import { clearAdminCache } from '@/components/navigation/Header';
 import type { AuthUser, AuthState } from '@/types';
+import analytics from '@/utils/mixpanel';
 
 interface AuthContextType extends AuthState {
   signIn: (email: string, password: string) => Promise<{ error: string | null }>;
@@ -31,12 +32,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // We proactively try to read the session, and if it's invalid we clear it.
         const session = await AuthService.getCurrentSession();
         const user = session?.user ? (session.user as AuthUser) : await AuthService.getCurrentUser();
+
+        // Identify user in Mixpanel if logged in
+        if (user) {
+          analytics.identify(user.id);
+          analytics.setUserProperties({
+            $email: user.email,
+            $name: user.user_metadata?.full_name || user.email?.split('@')[0],
+            is_premium: (user.user_metadata as any)?.is_premium || false,
+          });
+        }
+
         setState(prev => ({ ...prev, user, loading: false, error: null }));
       } catch (error) {
-        setState(prev => ({ 
-          ...prev, 
-          error: (error as Error).message, 
-          loading: false 
+        setState(prev => ({
+          ...prev,
+          error: (error as Error).message,
+          loading: false
         }));
       }
     };
@@ -61,6 +73,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signIn = async (email: string, password: string) => {
     setState(prev => ({ ...prev, loading: true, error: null }));
     const { error } = await AuthService.signIn(email, password);
+
+    // Track sign in event
+    if (!error) {
+      const user = await AuthService.getCurrentUser();
+      if (user) {
+        analytics.identify(user.id);
+        analytics.track('Sign In', {
+          user_id: user.id,
+          login_method: 'email',
+          success: true,
+        });
+      }
+    } else {
+      analytics.track('Sign In', {
+        login_method: 'email',
+        success: false,
+      });
+    }
+
     setState(prev => ({ ...prev, loading: false, error }));
     return { error };
   };
@@ -68,6 +99,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signUp = async (email: string, password: string, fullName?: string) => {
     setState(prev => ({ ...prev, loading: true, error: null }));
     const { error } = await AuthService.signUp(email, password, fullName);
+
+    // Track sign up event
+    if (!error) {
+      analytics.track('Sign Up', {
+        email: email,
+        signup_method: 'email',
+      });
+    }
+
     setState(prev => ({ ...prev, loading: false, error }));
     return { error };
   };
@@ -75,18 +115,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signInWithGoogle = async () => {
     setState(prev => ({ ...prev, loading: true, error: null }));
     const { error } = await AuthService.signInWithGoogle();
+
+    // Track Google sign in
+    if (!error) {
+      analytics.track('Sign In', {
+        login_method: 'google',
+        success: true,
+      });
+    }
+
     setState(prev => ({ ...prev, loading: false, error }));
     return { error };
   };
 
   const signOut = async () => {
     setState(prev => ({ ...prev, loading: true, error: null }));
-    
+
     // Clear all local storage and session storage
     try {
       // Clear localStorage
       localStorage.clear();
-      
+
       // Clear sessionStorage (but keep it selective to avoid clearing other tabs' data)
       // Clear auth-related sessionStorage items
       const keysToRemove: string[] = [];
@@ -105,13 +154,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (e) {
       console.warn('Error clearing storage:', e);
     }
-    
+
     // Sign out from Supabase
     const { error } = await AuthService.signOut();
-    
+
     // Clear admin cache
     clearAdminCache();
-    
+
+    // Reset Mixpanel identity
+    analytics.reset();
+
     setState(prev => ({ ...prev, user: null, loading: false, error }));
     return { error };
   };
