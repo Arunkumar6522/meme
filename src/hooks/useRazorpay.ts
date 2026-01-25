@@ -117,6 +117,18 @@ export const useRazorpay = () => {
                         plan: 'Premium',
                     });
 
+                    // Send Receipt Email (Async, don't block UI)
+                    fetch('/.netlify/functions/send-receipt', {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            email: user.email,
+                            name: user.user_metadata?.full_name,
+                            amount: orderData.amount / 100,
+                            orderId: response.razorpay_order_id,
+                            paymentId: response.razorpay_payment_id
+                        })
+                    }).catch(err => console.error('Failed to send receipt:', err));
+
                     onSuccess();
                 },
                 prefill: {
