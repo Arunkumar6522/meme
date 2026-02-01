@@ -30,4 +30,29 @@
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
+  <url>
+    <loc>https://ilovememe.in/privacy-policy</loc>
+    <lastmod>2026-01-14</lastmod>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://ilovememe.in/terms-and-conditions</loc>
+    <lastmod>2026-01-14</lastmod>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://ilovememe.in/copyright</loc>
+    <lastmod>2026-01-14</lastmod>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://ilovememe.in/contact-us</loc>
+    <lastmod>2026-01-14</lastmod>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://ilovememe.in/cancellation-refund-policy</loc>
+    <lastmod>2026-01-14</lastmod>
+    <priority>0.5</priority>
+  </url>
 </urlset>

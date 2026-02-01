@@ -7,7 +7,7 @@ import { useToast } from '@/hooks/useToast';
 import { useFavorites } from '@/hooks/useFavorites';
 import type { LibraryItem } from '@/types';
 import { cn } from '@/utils/cn';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { Input } from '@/components/ui';
 import Modal from '@/components/ui/Modal';
 import { useAuth } from '@/hooks/useAuth';
@@ -768,9 +768,11 @@ const LibraryCard: React.FC<LibraryCardProps> = memo(({ item, className, isAdmin
       {renderContent()}
 
       <div className="space-y-1">
-        <h3 className="text-sm font-semibold text-gray-900 line-clamp-2 text-center">
-          {item.title}
-        </h3>
+        <Link to={`/library/${item.id}`} className="hover:underline">
+          <h3 className="text-sm font-semibold text-gray-900 line-clamp-2 text-center">
+            {item.title}
+          </h3>
+        </Link>
       </div>
 
       {isAdmin && item.users && (

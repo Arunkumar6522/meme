@@ -53,7 +53,7 @@ const LanguageSection: React.FC<{
           <h2 className="text-xl sm:text-2xl font-semibold text-gray-900">Trending in {lang}</h2>
           {!canPlayAll && (
             <p className="text-sm text-gray-600">
-              Showing 5 previews. <span className="font-medium">Login to unlock all 10.</span>
+              <span className="font-medium">Login to download and create your wishlist.</span>
             </p>
           )}
         </div>
@@ -122,13 +122,7 @@ const LandingPage: React.FC = () => {
     <div className="bg-white">
 
 
-      {/* Side Ads (desktop only) */}
-      <div className="hidden lg:block fixed left-4 top-1/2 -translate-y-1/2 w-[160px]">
-        <GoogleAdSense type="vertical" className="w-full" />
-      </div>
-      <div className="hidden lg:block fixed right-4 top-1/2 -translate-y-1/2 w-[160px]">
-        <GoogleAdSense type="vertical" className="w-full" />
-      </div>
+
 
       {/* Top Banner Ad - Mobile/Tablet */}
       <div className="lg:hidden bg-gray-50 py-4 flex justify-center border-b border-gray-100">

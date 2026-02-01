@@ -4,15 +4,20 @@ Allow: /
 # Sitemap
 Sitemap: https://ilovememe.in/sitemap.xml
 
-# Disallow admin areas
-Disallow: /admin/
-Disallow: /api/
-
-# Allow important pages for SEO
+# Allow important public pages for SEO
 Allow: /
 Allow: /library
 Allow: /auth/login
 Allow: /auth/register
+
+# Disallow protected routes (these create "no content" errors for crawlers)
+Disallow: /home
+Disallow: /profile
+Disallow: /create
+Disallow: /favorites
+Disallow: /upload
+Disallow: /admin/
+Disallow: /api/
 
 # Crawl-delay for respectful crawling
 Crawl-delay: 1
