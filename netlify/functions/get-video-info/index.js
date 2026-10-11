@@ -183,7 +183,7 @@ exports.handler = async (event) => {
     return { statusCode: 400, headers, body: JSON.stringify({ error: 'Please enter a valid HTTP/HTTPS URL.' }) };
   }
 
-  // Detect YouTube URLs so we can apply the iOS client workaround
+  // Detect YouTube URLs so we can apply cookies + appropriate args
   const isYouTube = /youtube\.com|youtu\.be/i.test(trimmedUrl);
 
   const args = [
@@ -195,9 +195,30 @@ exports.handler = async (event) => {
     '--no-check-certificates',
   ];
 
-  // iOS client bypasses YouTube's bot-detection for datacenter IPs
+  // For YouTube: write cookies to /tmp if configured, required to bypass bot detection
   if (isYouTube) {
-    args.push('--extractor-args', 'youtube:player_client=ios');
+    const cookiesB64 = process.env.YOUTUBE_COOKIES_B64;
+    if (cookiesB64) {
+      try {
+        const cookiesContent = Buffer.from(cookiesB64, 'base64').toString('utf-8');
+        const cookiesFile = '/tmp/yt-cookies.txt';
+        fs.writeFileSync(cookiesFile, cookiesContent);
+        args.push('--cookies', cookiesFile);
+        console.log('[get-video-info] Using YouTube cookies from env');
+      } catch (e) {
+        console.warn('[get-video-info] Failed to write cookies file:', e.message);
+      }
+    } else {
+      console.warn('[get-video-info] YOUTUBE_COOKIES_B64 not set. YouTube will likely be blocked.');
+      return {
+        statusCode: 422,
+        headers,
+        body: JSON.stringify({
+          error: 'YouTube downloads require cookie authentication. Please configure YOUTUBE_COOKIES_B64 in your Netlify environment variables.',
+          rawError: 'YOUTUBE_COOKIES_B64 environment variable is not configured.',
+        }),
+      };
+    }
   }
 
   args.push(trimmedUrl);
