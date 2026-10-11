@@ -26,6 +26,7 @@ const RefundsPage = React.lazy(() => import('./policies/RefundsPage'));
 const ShippingPage = React.lazy(() => import('./policies/ShippingPage'));
 const CopyrightPage = React.lazy(() => import('./policies/CopyrightPage'));
 const ProPage = React.lazy(() => import('./protected/ProPage'));
+const VideoDownloaderPage = React.lazy(() => import('./protected/VideoDownloaderPage'));
 
 
 // Loading component
@@ -79,6 +80,12 @@ const AppRoutes: React.FC = () => {
           <Route path="favorites" element={
             <ProtectedRoute>
               <FavoritesPage />
+            </ProtectedRoute>
+          } />
+
+          <Route path="downloader" element={
+            <ProtectedRoute>
+              <VideoDownloaderPage />
             </ProtectedRoute>
           } />
 

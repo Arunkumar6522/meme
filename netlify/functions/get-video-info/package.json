@@ -1,0 +1,7 @@
+{
+  "name": "get-video-info",
+  "version": "1.0.0",
+  "description": "Netlify function that uses yt-dlp to extract video info and downloadable format URLs",
+  "main": "index.js",
+  "dependencies": {}
+}

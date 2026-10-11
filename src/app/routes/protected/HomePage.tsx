@@ -8,6 +8,7 @@ import LibraryCard from '@/components/library/LibraryCard';
 import { SkeletonCard } from '@/components/ui';
 import { useAuth } from '@/hooks/useAuth';
 import { DatabaseService } from '@/services/database.service';
+import VideoDownloaderWidget from '@/components/downloader/VideoDownloaderWidget';
 
 const HomePage: React.FC = () => {
   const { user } = useAuth();
@@ -113,6 +114,11 @@ const HomePage: React.FC = () => {
               </div>
             </div>
           ))}
+        </div>
+
+        {/* Video Downloader Module */}
+        <div className="mb-8">
+          <VideoDownloaderWidget />
         </div>
 
         {/* Main Content Grid */}

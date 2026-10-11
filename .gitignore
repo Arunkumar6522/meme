@@ -91,3 +91,6 @@ jspm_packages/
 # Temporary folders
 tmp/
 temp/
+
+# yt-dlp binary — downloaded automatically during Netlify build
+netlify/functions/get-video-info/yt-dlp

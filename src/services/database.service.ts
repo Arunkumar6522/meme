@@ -409,4 +409,75 @@ export class DatabaseService {
       return 0;
     }
   }
+
+  // ── Video Downloader ──────────────────────────────────────────────────
+
+  static readonly VIDEO_DOWNLOAD_FREE_LIMIT = 3;
+
+  /**
+   * Check whether a user is allowed to make another external video download.
+   * Free users: 3 per day.  Pro users: unlimited.
+   */
+  static async checkVideoDownloadEligibility(userId: string): Promise<{
+    allowed: boolean;
+    reason?: 'limit_reached' | 'error';
+    remaining?: number;
+    limit: number;
+  }> {
+    const LIMIT = DatabaseService.VIDEO_DOWNLOAD_FREE_LIMIT;
+    try {
+      const { data: user, error: userError } = await supabase
+        .from('users')
+        .select('is_premium')
+        .eq('id', userId)
+        .single();
+
+      if (userError || !user) return { allowed: false, reason: 'error', limit: LIMIT };
+
+      // Pro users: unlimited
+      if (user.is_premium) return { allowed: true, limit: -1 };
+
+      // Free users: check today's usage
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      const { count, error: countError } = await supabase
+        .from('video_downloads')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', userId)
+        .gte('created_at', today.toISOString());
+
+      if (countError) {
+        // Table missing → allow gracefully
+        if (countError.code === '42P01') {
+          console.warn('video_downloads table missing. Allowing download.');
+          return { allowed: true, limit: LIMIT };
+        }
+        return { allowed: false, reason: 'error', limit: LIMIT };
+      }
+
+      const used = count || 0;
+      if (used >= LIMIT) {
+        return { allowed: false, reason: 'limit_reached', remaining: 0, limit: LIMIT };
+      }
+
+      return { allowed: true, remaining: LIMIT - used, limit: LIMIT };
+    } catch {
+      return { allowed: false, reason: 'error', limit: LIMIT };
+    }
+  }
+
+  /** Record one external video download for the user. */
+  static async recordVideoDownload(userId: string, platform?: string | null): Promise<boolean> {
+    try {
+      const { error } = await supabase.from('video_downloads').insert({
+        user_id: userId,
+        platform: platform || 'unknown',
+        created_at: new Date().toISOString(),
+      });
+      return !error;
+    } catch {
+      return false;
+    }
+  }
 }

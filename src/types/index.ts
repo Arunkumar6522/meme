@@ -128,6 +128,32 @@ export interface UploadProgress {
   error?: string;
 }
 
+// Video Downloader Types
+export interface VideoFormat {
+  format_id: string;
+  ext: string;
+  resolution: string;   // "1080p", "720p", "audio"
+  height: number;       // 0 for audio-only
+  filesize: number | null;
+  filesize_str: string | null;
+  fps?: number | null;
+  abr?: number | null;  // audio bitrate kbps
+  url: string;
+  format_note?: string;
+}
+
+export interface VideoInfo {
+  title: string;
+  thumbnail?: string | null;
+  duration?: number | null;   // seconds
+  uploader?: string | null;
+  platform?: string | null;   // yt-dlp extractor key e.g. "Youtube"
+  formats: {
+    video: VideoFormat[];   // combined video+audio streams
+    audio: VideoFormat[];   // audio-only streams
+  };
+}
+
 // Search Analytics Types
 export interface SearchAnalytics {
   id: string;

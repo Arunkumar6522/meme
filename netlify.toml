@@ -1,7 +1,11 @@
 [build]
-  command = "npm install && npm run build"
+  command = "npm install && curl -fsSL https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o netlify/functions/get-video-info/yt-dlp && chmod +x netlify/functions/get-video-info/yt-dlp && npm run build"
   publish = "dist"
   functions = "netlify/functions"
+
+# Extend timeout for the video-info function (requires Netlify paid plan; free plan caps at 10s)
+[functions.get-video-info]
+  timeout = 26
 
 [[redirects]]
   from = "/sitemap.xml"
