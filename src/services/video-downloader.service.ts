@@ -23,7 +23,9 @@ export class VideoDownloaderService {
     const data = await response.json();
 
     if (!response.ok) {
-      throw new Error(data.error || 'Failed to fetch video information.');
+      // Include rawError in the thrown message so the UI can show it
+      const detail = data.rawError ? ` (${data.rawError})` : '';
+      throw new Error((data.error || 'Failed to fetch video information.') + detail);
     }
 
     return data as VideoInfo;

@@ -3,12 +3,24 @@ const { spawn } = require('child_process');
 const path = require('path');
 const fs = require('fs');
 
-const BINARY_PATH = path.join(__dirname, 'yt-dlp');
+// Try multiple locations — Netlify's esbuild bundler may place the binary differently
+const BINARY_CANDIDATES = [
+  path.join(__dirname, 'yt-dlp'),
+  path.join(process.cwd(), 'netlify/functions/get-video-info/yt-dlp'),
+  '/tmp/yt-dlp',
+];
 
-// Spawn yt-dlp with the given args, resolve with stdout or reject with stderr
-function runYtDlp(args) {
+function getBinaryPath() {
+  for (const p of BINARY_CANDIDATES) {
+    if (fs.existsSync(p)) return p;
+  }
+  return null;
+}
+
+// Spawn yt-dlp, resolve with stdout or reject with stderr
+function runYtDlp(binaryPath, args) {
   return new Promise((resolve, reject) => {
-    const proc = spawn(BINARY_PATH, args, {
+    const proc = spawn(binaryPath, args, {
       timeout: 20000,
       env: { ...process.env, HOME: '/tmp' },
     });
@@ -24,7 +36,7 @@ function runYtDlp(args) {
       else reject(new Error(stderr.trim() || `yt-dlp exited with code ${code}`));
     });
 
-    proc.on('error', reject);
+    proc.on('error', (err) => reject(new Error(`Failed to start yt-dlp: ${err.message}`)));
   });
 }
 
@@ -46,14 +58,13 @@ function formatBytes(bytes) {
 }
 
 function normalizeFormats(formats) {
-  const videoMap = {};   // keyed by height for dedup
-  const audioMap = {};   // keyed by ext for dedup
+  const videoMap = {};
+  const audioMap = {};
 
   for (const f of (formats || [])) {
     if (!f.url) continue;
     if (!f.vcodec && !f.acodec) continue;
     if ((f.format_note || '').includes('storyboard')) continue;
-    // Skip manifest/streaming-only formats — browser can't download them directly
     if (['m3u8', 'm3u8_native', 'dash', 'frag_urls'].includes(f.protocol)) continue;
     if (f.has_drm) continue;
 
@@ -65,7 +76,6 @@ function normalizeFormats(formats) {
       const existing = videoMap[height];
       const thisSize = f.filesize || f.filesize_approx || 0;
       const existingSize = existing ? (existing._raw_size || 0) : -1;
-      // Keep the format with the larger filesize at the same resolution
       if (!existing || thisSize > existingSize) {
         videoMap[height] = {
           format_id: f.format_id,
@@ -98,7 +108,6 @@ function normalizeFormats(formats) {
     }
   }
 
-  // Remove internal _raw_size before returning
   const video = Object.values(videoMap)
     .map(({ _raw_size, ...rest }) => rest)
     .sort((a, b) => b.height - a.height);
@@ -110,6 +119,9 @@ function normalizeFormats(formats) {
 
 function friendlyError(rawMsg) {
   const msg = rawMsg || '';
+  // YouTube bot / sign-in detection (common from datacenter IPs)
+  if (msg.includes('Sign in to confirm') || msg.includes('not a bot') || msg.includes('cookies') || msg.includes('bot detection'))
+    return 'YouTube is blocking this server request. This is common for cloud-hosted tools. Try again in a moment.';
   if (msg.includes('not supported') || msg.includes('Unsupported URL'))
     return 'This platform is not supported. Try YouTube, Instagram, TikTok, or Twitter/X.';
   if (msg.includes('Private video') || msg.includes('private'))
@@ -120,6 +132,8 @@ function friendlyError(rawMsg) {
     return 'Video not found. It may have been removed or is unavailable.';
   if (msg.includes('age') && msg.includes('restrict'))
     return 'This video is age-restricted and cannot be downloaded.';
+  if (msg.includes('Failed to start') || msg.includes('ENOENT') || msg.includes('EACCES'))
+    return 'Downloader binary failed to start. The service may need to be redeployed.';
   if (msg.includes('Unable to extract') || msg.includes('Could not'))
     return 'Could not extract video information. The URL may be invalid or the platform may have changed.';
   return 'Failed to fetch video information. Please check the URL and try again.';
@@ -141,14 +155,17 @@ exports.handler = async (event) => {
     return { statusCode: 405, headers, body: JSON.stringify({ error: 'Method not allowed' }) };
   }
 
-  // Make sure the binary was bundled at build time
-  if (!fs.existsSync(BINARY_PATH)) {
+  const binaryPath = getBinaryPath();
+  if (!binaryPath) {
+    console.error('[get-video-info] Binary not found. Searched:', BINARY_CANDIDATES);
     return {
       statusCode: 503,
       headers,
-      body: JSON.stringify({ error: 'Downloader service is not available. Binary not found.' }),
+      body: JSON.stringify({ error: 'Downloader service is not available. Please try again later.' }),
     };
   }
+
+  console.log('[get-video-info] Using binary at:', binaryPath);
 
   let url;
   try {
@@ -166,17 +183,33 @@ exports.handler = async (event) => {
     return { statusCode: 400, headers, body: JSON.stringify({ error: 'Please enter a valid HTTP/HTTPS URL.' }) };
   }
 
-  try {
-    const jsonStr = await runYtDlp([
-      '--dump-json',
-      '--no-playlist',
-      '--no-warnings',
-      '--socket-timeout', '8',
-      '--no-check-certificates',
-      trimmedUrl,
-    ]);
+  // Detect YouTube URLs so we can apply the iOS client workaround
+  const isYouTube = /youtube\.com|youtu\.be/i.test(trimmedUrl);
 
-    const info = JSON.parse(jsonStr);
+  const args = [
+    '--dump-json',
+    '--no-playlist',
+    '--no-warnings',
+    '--quiet',
+    '--socket-timeout', '8',
+    '--no-check-certificates',
+  ];
+
+  // iOS client bypasses YouTube's bot-detection for datacenter IPs
+  if (isYouTube) {
+    args.push('--extractor-args', 'youtube:player_client=ios');
+  }
+
+  args.push(trimmedUrl);
+
+  try {
+    const jsonStr = await runYtDlp(binaryPath, args);
+
+    // Guard against any non-JSON prefix/suffix in the output
+    const start = jsonStr.indexOf('{');
+    if (start === -1) throw new Error(`yt-dlp returned no JSON. Output: ${jsonStr.slice(0, 200)}`);
+    const info = JSON.parse(jsonStr.slice(start));
+
     const formats = normalizeFormats(info.formats);
 
     return {
@@ -192,11 +225,16 @@ exports.handler = async (event) => {
       }),
     };
   } catch (err) {
+    // Log the full raw error for Netlify function logs
     console.error('[get-video-info] yt-dlp error:', err.message);
     return {
       statusCode: 422,
       headers,
-      body: JSON.stringify({ error: friendlyError(err.message) }),
+      body: JSON.stringify({
+        error: friendlyError(err.message),
+        // Include truncated raw error so the UI can surface it for debugging
+        rawError: err.message.slice(0, 400),
+      }),
     };
   }
 };
