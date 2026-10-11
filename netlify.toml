@@ -1,5 +1,5 @@
 [build]
-  command = "npm install && curl -fsSL https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o netlify/functions/get-video-info/yt-dlp && chmod +x netlify/functions/get-video-info/yt-dlp && npm run build"
+  command = "npm install && curl -fsSL https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_linux -o netlify/functions/get-video-info/yt-dlp && chmod +x netlify/functions/get-video-info/yt-dlp && npm run build"
   publish = "dist"
   functions = "netlify/functions"
 
